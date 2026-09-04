@@ -1,98 +1,273 @@
-const markets=[
-["R_10","Volatility 10 Index"],
-["R_10_1S","Volatility 10 (1s)"],
-["R_15_1S","Volatility 15 (1s)"],
-["R_25","Volatility 25 Index"],
-["R_25_1S","Volatility 25 (1s)"],
-["R_30_1S","Volatility 30 (1s)"],
-["R_50","Volatility 50 Index"],
-["R_50_1S","Volatility 50 (1s)"],
-["R_75","Volatility 75 Index"],
-["R_75_1S","Volatility 75 (1s)"],
-["R_90_1S","Volatility 90 (1s)"],
-["R_100","Volatility 100 Index"],
-["R_100_1S","Volatility 100 (1s)"]
+const markets = [
+  ["R_10", "Volatility 10 Index"],
+  ["R_10_1S", "Volatility 10 (1s)"],
+  ["R_15_1S", "Volatility 15 (1s)"],
+  ["R_25", "Volatility 25 Index"],
+  ["R_25_1S", "Volatility 25 (1s)"],
+  ["R_30_1S", "Volatility 30 (1s)"],
+  ["R_50", "Volatility 50 Index"],
+  ["R_50_1S", "Volatility 50 (1s)"],
+  ["R_75", "Volatility 75 Index"],
+  ["R_75_1S", "Volatility 75 (1s)"],
+  ["R_90_1S", "Volatility 90 (1s)"],
+  ["R_100", "Volatility 100 Index"],
+  ["R_100_1S", "Volatility 100 (1s)"]
 ];
 
-let selected=markets[0][0];
+let selected = markets[0][0];
 
-const $=s=>document.querySelector(s);
-const $$=s=>document.querySelectorAll(s);
+const $ = s => document.querySelector(s);
+const $$ = s => document.querySelectorAll(s);
 
-function page(id){
-  $$(".page").forEach(x=>x.classList.add("hidden"));
-  $("#"+id).classList.remove("hidden");
-  scrollTo(0,0);
+
+// ==========================================
+// PAGE NAVIGATION
+// ==========================================
+
+function page(id) {
+
+  $$(".page").forEach(x => {
+    x.classList.add("hidden");
+  });
+
+  const target = $("#" + id);
+
+  if (target) {
+    target.classList.remove("hidden");
+  }
+
+  scrollTo(0, 0);
 }
 
-function analyzeMarket(symbol){
 
-  const seed=[...symbol]
-    .reduce((a,c)=>a+c.charCodeAt(0),0);
+// ==========================================
+// DERIV LIVE DATA
+// ==========================================
 
-  const momentum=(Date.now()/1000+seed)%100;
+let derivWS = null;
 
-  const confidence=Math.round(
-    55+(momentum*0.38)
+let liveTicks = {};
+
+let tickHistory = {};
+
+
+// ==========================================
+// NORMALIZE MARKET NAMES
+// ==========================================
+
+function normalizeName(name) {
+
+  return String(name || "")
+    .toLowerCase()
+    .replace(/\s+/g, " ")
+    .trim();
+
+}
+
+
+// ==========================================
+// REAL-TICK ANALYSIS ENGINE
+// ==========================================
+
+function analyzeMarket(symbol) {
+
+  const history = tickHistory[symbol] || [];
+
+
+  // Need enough live ticks first
+
+  if (history.length < 10) {
+
+    return {
+      confidence: 0,
+      signal: "WAIT",
+      reason: "Collecting live ticks"
+    };
+
+  }
+
+
+  // Use latest 20 ticks
+
+  const recent = history.slice(-20);
+
+  let rises = 0;
+
+  let falls = 0;
+
+
+  // Compare each tick with the previous tick
+
+  for (let i = 1; i < recent.length; i++) {
+
+    if (recent[i].quote > recent[i - 1].quote) {
+      rises++;
+    }
+
+    if (recent[i].quote < recent[i - 1].quote) {
+      falls++;
+    }
+
+  }
+
+
+  const totalMoves = rises + falls;
+
+
+  // Market did not move
+
+  if (totalMoves === 0) {
+
+    return {
+      confidence: 0,
+      signal: "NO TRADE",
+      reason: "Market is flat"
+    };
+
+  }
+
+
+  // Calculate movement strength
+
+  const riseStrength = Math.round(
+    (rises / totalMoves) * 100
   );
 
-  let signal=
-    confidence>=75
-      ?"TRADE"
-      :"NO TRADE";
+  const fallStrength = Math.round(
+    (falls / totalMoves) * 100
+  );
 
-  let reason=
-    confidence>=75
-      ?"Strong setup detected"
-      :"Weak setup filtered";
+
+  let direction;
+
+  let strength;
+
+
+  if (riseStrength > fallStrength) {
+
+    direction = "RISE";
+    strength = riseStrength;
+
+  } else {
+
+    direction = "FALL";
+    strength = fallStrength;
+
+  }
+
+
+  // Calculate analysis confidence
+
+  let confidence = Math.round(
+    50 +
+    Math.abs(riseStrength - fallStrength) * 0.7
+  );
+
+
+  // Keep confidence below 100
+
+  confidence = Math.min(95, confidence);
+
+
+  let signal;
+
+  let reason;
+
+
+  if (confidence >= 75) {
+
+    signal = "TRADE";
+
+    reason =
+      direction +
+      " momentum detected from " +
+      recent.length +
+      " live ticks";
+
+  } else {
+
+    signal = "NO TRADE";
+
+    reason =
+      "Weak " +
+      direction.toLowerCase() +
+      " momentum";
+
+  }
+
 
   return {
-    confidence,
-    signal,
-    reason
+    confidence: confidence,
+    signal: signal,
+    reason: reason,
+    direction: direction,
+    rises: rises,
+    falls: falls
   };
+
 }
 
-function renderMarkets(scan=false){
 
-  $("#marketList").innerHTML=markets.map(m=>{
+// ==========================================
+// MARKET DISPLAY
+// ==========================================
 
-    const a=scan
-      ?analyzeMarket(m[0])
-      :{
-        confidence:null,
-        signal:"READY",
-        reason:"Waiting for scan"
-      };
+function renderMarkets(scan = false) {
+
+  const marketList = $("#marketList");
+
+  if (!marketList) {
+    return;
+  }
+
+
+  marketList.innerHTML = markets.map(m => {
+
+    const analysis = scan
+
+      ? analyzeMarket(m[0])
+
+      : {
+          confidence: null,
+          signal: "READY",
+          reason: "Waiting for scan"
+        };
+
 
     return `
       <button
-        class="market-item ${m[0]===selected?"selected":""}"
+        class="market-item ${m[0] === selected ? "selected" : ""}"
         data-symbol="${m[0]}"
       >
 
         <div>
+
           <b>${m[1]}</b>
 
           <div class="market-meta">
-            ${m[0]} · ${a.reason}
+            ${m[0]} · ${analysis.reason}
           </div>
+
         </div>
+
 
         <div class="market-signal">
 
           <span class="signal ${
-            a.confidence>=75
-              ?"good"
-              :"wait"
+            analysis.signal === "TRADE"
+              ? "good"
+              : "wait"
           }">
-            ${a.signal}
+
+            ${analysis.signal}
+
           </span>
 
+
           ${
-            a.confidence
-              ?`<div>${a.confidence}%</div>`
-              :""
+            analysis.confidence
+              ? `<div>${analysis.confidence}%</div>`
+              : ""
           }
 
         </div>
@@ -102,207 +277,317 @@ function renderMarkets(scan=false){
 
   }).join("");
 
-  $$(".market-item").forEach(b=>{
 
-    b.onclick=()=>{
+  // Market selection
 
-      selected=b.dataset.symbol;
+  $$(".market-item").forEach(button => {
+
+    button.onclick = () => {
+
+      selected = button.dataset.symbol;
 
       renderMarkets(scan);
 
     };
 
   });
+
 }
+
+
+// ==========================================
+// INITIAL MARKET DISPLAY
+// ==========================================
 
 renderMarkets();
 
-$("#scanAll").onclick=()=>{
 
-  renderMarkets(true);
+// ==========================================
+// SCAN ALL MARKETS
+// ==========================================
 
-  $("#engineStatus").innerHTML=
-    '<small>AI SCAN COMPLETE</small>'+
-    '<strong>READY</strong>'+
-    '<b>Weak setups are filtered as NO TRADE</b>';
-};
+const scanButton = $("#scanAll");
 
-$$(".mode button").forEach(b=>{
+if (scanButton) {
 
-  b.onclick=()=>{
+  scanButton.onclick = () => {
 
-    $$(".mode button")
-      .forEach(x=>x.classList.remove("active"));
+    renderMarkets(true);
 
-    b.classList.add("active");
+
+    const status = $("#engineStatus");
+
+    if (status) {
+
+      status.innerHTML =
+        '<small>LIVE AI ANALYSIS</small>' +
+        '<strong>SCANNED</strong>' +
+        '<b>Analyzing recent Deriv tick data</b>';
+
+    }
+
+  };
+
+}
+
+
+// ==========================================
+// STRATEGY / MODE BUTTONS
+// ==========================================
+
+$$(".mode button").forEach(button => {
+
+  button.onclick = () => {
+
+    $$(".mode button").forEach(item => {
+      item.classList.remove("active");
+    });
+
+    button.classList.add("active");
 
   };
 
 });
 
-function startBot(){
 
-  let btn=$("#start");
+// ==========================================
+// START / STOP BOT
+// ==========================================
 
-  let running=
-    btn.dataset.running==="1";
+function startBot() {
 
-  if(!running){
+  const button = $("#start");
 
-    btn.dataset.running="1";
+  if (!button) {
+    return;
+  }
 
-    btn.textContent="Stop Trading Bot";
 
-    $("#engineStatus").innerHTML=
-      '<small>BOT RUNNING</small>'+
-      '<strong>LIVE</strong>'+
-      '<b>AI Engine Analyzing Market</b>';
+  const running =
+    button.dataset.running === "1";
 
-  }else{
 
-    btn.dataset.running="0";
+  if (!running) {
 
-    btn.textContent="Start Trading Bot";
+    button.dataset.running = "1";
 
-    $("#engineStatus").innerHTML=
-      '<small>WAITING...</small>'+
-      '<strong>--</strong>'+
-      '<b>AI Engine Ready to Start</b>';
+    button.textContent =
+      "Stop Trading Bot";
+
+
+    const status = $("#engineStatus");
+
+    if (status) {
+
+      status.innerHTML =
+        '<small>BOT RUNNING</small>' +
+        '<strong>LIVE</strong>' +
+        '<b>Analyzing live market data</b>';
+
+    }
+
+  } else {
+
+    button.dataset.running = "0";
+
+    button.textContent =
+      "Start Trading Bot";
+
+
+    const status = $("#engineStatus");
+
+    if (status) {
+
+      status.innerHTML =
+        '<small>WAITING...</small>' +
+        '<strong>--</strong>' +
+        '<b>AI Engine Ready to Start</b>';
+
+    }
 
   }
 
 }
 
-$("#start").onclick=startBot;
 
-$("#account").onchange=e=>
-  $("#ptype").textContent=e.target.value;
+const startButton = $("#start");
+
+if (startButton) {
+  startButton.onclick = startBot;
+}
 
 
 // ==========================================
-// KRISHWAVE V2.1 - DERIV LIVE MARKET DATA
+// ACCOUNT TYPE
 // ==========================================
 
-let derivWS=null;
+const accountSelector = $("#account");
 
-let liveTicks={};
+if (accountSelector) {
 
-let tickHistory={};
+  accountSelector.onchange = event => {
 
+    const type = $("#ptype");
 
-function normalizeName(name){
+    if (type) {
+      type.textContent = event.target.value;
+    }
 
-  return String(name||"")
-    .toLowerCase()
-    .replace(/\s+/g," ")
-    .trim();
+  };
 
 }
 
 
-function connectDeriv(){
+// ==========================================
+// CONNECT TO DERIV
+// ==========================================
 
-  derivWS=new WebSocket(
+function connectDeriv() {
+
+  console.log(
+    "KRISHWAVE: Connecting to Deriv..."
+  );
+
+
+  derivWS = new WebSocket(
     "wss://api.derivws.com/trading/v1/options/ws/public"
   );
 
 
-  derivWS.onopen=()=>{
+  // ========================================
+  // CONNECTION OPEN
+  // ========================================
+
+  derivWS.onopen = () => {
 
     console.log(
       "KRISHWAVE: Connected to Deriv"
     );
 
-    $("#engineStatus").innerHTML=
-      '<small>DERIV CONNECTION</small>'+
-      '<strong>CONNECTED</strong>'+
-      '<b>Loading active markets...</b>';
+
+    const status = $("#engineStatus");
+
+    if (status) {
+
+      status.innerHTML =
+        '<small>DERIV CONNECTION</small>' +
+        '<strong>CONNECTED</strong>' +
+        '<b>Loading active markets...</b>';
+
+    }
 
 
-    derivWS.send(JSON.stringify({
+    // Ask Deriv for currently active markets
 
-      active_symbols:"brief",
-
-      req_id:1
-
-    }));
+    derivWS.send(
+      JSON.stringify({
+        active_symbols: "brief",
+        req_id: 1
+      })
+    );
 
   };
 
 
-  derivWS.onmessage=(event)=>{
+  // ========================================
+  // RECEIVE DERIV MESSAGES
+  // ========================================
 
-    const data=JSON.parse(event.data);
+  derivWS.onmessage = event => {
+
+    let data;
+
+
+    try {
+
+      data = JSON.parse(event.data);
+
+    } catch (error) {
+
+      console.error(
+        "KRISHWAVE: Invalid Deriv message",
+        error
+      );
+
+      return;
+
+    }
 
 
     // ======================================
-    // RECEIVE ACTIVE DERIV MARKETS
+    // ACTIVE SYMBOLS RESPONSE
     // ======================================
 
-    if(data.msg_type==="active_symbols"){
+    if (data.msg_type === "active_symbols") {
 
-      const active=
-        data.active_symbols||[];
-
-
-      const byName=new Map();
+      const active =
+        data.active_symbols || [];
 
 
-      active.forEach(symbol=>{
+      const byName = new Map();
 
-        const name=
+
+      // Build current Deriv symbol map
+
+      active.forEach(symbol => {
+
+        const name =
           normalizeName(
             symbol.underlying_symbol_name
           );
 
-        const id=
+        const id =
           symbol.underlying_symbol;
 
 
-        if(name && id){
+        if (name && id) {
 
-          byName.set(
-            name,
-            id
-          );
+          byName.set(name, id);
 
         }
 
       });
 
 
-      let connectedMarkets=0;
+      let connectedMarkets = 0;
 
 
-      markets.forEach((market,index)=>{
+      // Subscribe to our 13 Volatility markets
 
-        const name=
-          normalizeName(
-            market[1]
-          );
+      markets.forEach((market, index) => {
 
-        const realSymbol=
-          byName.get(name);
+        const marketName =
+          normalizeName(market[1]);
 
 
-        if(realSymbol){
+        const realSymbol =
+          byName.get(marketName);
 
-          markets[index][0]=
+
+        if (realSymbol) {
+
+          // Replace old symbol with current Deriv symbol
+
+          markets[index][0] =
             realSymbol;
 
 
           connectedMarkets++;
 
 
-          derivWS.send(JSON.stringify({
+          // Subscribe to live ticks
 
-            ticks:realSymbol,
+          derivWS.send(
+            JSON.stringify({
 
-            subscribe:1,
+              ticks: realSymbol,
 
-            req_id:100+index
+              subscribe: 1,
 
-          }));
+              req_id: 100 + index
+
+            })
+          );
 
 
           console.log(
@@ -311,8 +596,7 @@ function connectDeriv(){
             realSymbol
           );
 
-
-        }else{
+        } else {
 
           console.warn(
             "KRISHWAVE MARKET NOT FOUND:",
@@ -324,12 +608,22 @@ function connectDeriv(){
       });
 
 
-      $("#engineStatus").innerHTML=
-        '<small>DERIV CONNECTION</small>'+
-        '<strong>LIVE</strong>'+
-        '<b>'+
-        connectedMarkets+
-        ' markets receiving live ticks</b>';
+      // Update connection status
+
+      const status =
+        $("#engineStatus");
+
+
+      if (status) {
+
+        status.innerHTML =
+          '<small>DERIV CONNECTION</small>' +
+          '<strong>LIVE</strong>' +
+          '<b>' +
+          connectedMarkets +
+          ' markets receiving live ticks</b>';
+
+      }
 
 
       return;
@@ -338,56 +632,65 @@ function connectDeriv(){
 
 
     // ======================================
-    // RECEIVE LIVE TICKS
+    // LIVE TICK RESPONSE
     // ======================================
 
-    if(
-      data.msg_type==="tick" &&
+    if (
+      data.msg_type === "tick" &&
       data.tick
-    ){
+    ) {
 
-      const symbol=
+      const symbol =
         data.tick.symbol;
 
-      const quote=
+
+      const quote =
         Number(data.tick.quote);
 
 
-      if(!Number.isFinite(quote)){
+      if (!Number.isFinite(quote)) {
+
         return;
+
       }
 
 
-      liveTicks[symbol]={
+      // Store latest tick
 
-        quote:quote,
+      liveTicks[symbol] = {
 
-        epoch:data.tick.epoch
+        quote: quote,
+
+        epoch: data.tick.epoch
 
       };
 
 
-      if(!tickHistory[symbol]){
+      // Create history if necessary
 
-        tickHistory[symbol]=[];
+      if (!tickHistory[symbol]) {
+
+        tickHistory[symbol] = [];
 
       }
 
 
+      // Add live tick
+
       tickHistory[symbol].push({
 
-        quote:quote,
+        quote: quote,
 
-        epoch:data.tick.epoch
+        epoch: data.tick.epoch
 
       });
 
 
       // Keep latest 100 ticks
 
-      if(
-        tickHistory[symbol].length>100
-      ){
+      if (
+        tickHistory[symbol].length > 100
+      ) {
 
         tickHistory[symbol].shift();
 
@@ -400,6 +703,40 @@ function connectDeriv(){
         quote
       );
 
+
+      // Analyze selected market when enough data exists
+
+      if (symbol === selected) {
+
+        const analysis =
+          analyzeMarket(symbol);
+
+
+        if (
+          analysis.confidence > 0
+        ) {
+
+          const status =
+            $("#engineStatus");
+
+
+          if (status) {
+
+            status.innerHTML =
+              '<small>LIVE ANALYSIS</small>' +
+              '<strong>' +
+              analysis.direction +
+              '</strong>' +
+              '<b>' +
+              analysis.confidence +
+              '% analysis strength</b>';
+
+          }
+
+        }
+
+      }
+
     }
 
 
@@ -407,50 +744,92 @@ function connectDeriv(){
     // DERIV API ERROR
     // ======================================
 
-    if(data.error){
+    if (data.error) {
 
       console.error(
         "DERIV API ERROR:",
         data.error
       );
 
+
+      const status =
+        $("#engineStatus");
+
+
+      if (status) {
+
+        status.innerHTML =
+          '<small>DERIV API</small>' +
+          '<strong>ERROR</strong>' +
+          '<b>' +
+          (data.error.message || "API error") +
+          '</b>';
+
+      }
+
     }
 
   };
 
 
-  derivWS.onerror=()=>{
+  // ========================================
+  // CONNECTION ERROR
+  // ========================================
+
+  derivWS.onerror = () => {
 
     console.error(
       "KRISHWAVE: Deriv connection error"
     );
 
 
-    $("#engineStatus").innerHTML=
-      '<small>DERIV CONNECTION</small>'+
-      '<strong>ERROR</strong>'+
-      '<b>Connection problem</b>';
+    const status =
+      $("#engineStatus");
+
+
+    if (status) {
+
+      status.innerHTML =
+        '<small>DERIV CONNECTION</small>' +
+        '<strong>ERROR</strong>' +
+        '<b>Connection problem</b>';
+
+    }
 
   };
 
 
-  derivWS.onclose=()=>{
+  // ========================================
+  // CONNECTION CLOSED
+  // ========================================
+
+  derivWS.onclose = () => {
 
     console.log(
       "KRISHWAVE: Deriv connection closed"
     );
 
 
-    $("#engineStatus").innerHTML=
-      '<small>DERIV CONNECTION</small>'+
-      '<strong>OFFLINE</strong>'+
-      '<b>Connection closed</b>';
+    const status =
+      $("#engineStatus");
+
+
+    if (status) {
+
+      status.innerHTML =
+        '<small>DERIV CONNECTION</small>' +
+        '<strong>OFFLINE</strong>' +
+        '<b>Connection closed</b>';
+
+    }
 
   };
 
 }
 
 
-// Start Deriv connection
+// ==========================================
+// START DERIV LIVE CONNECTION
+// ==========================================
 
 connectDeriv();
