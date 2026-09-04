@@ -36,7 +36,7 @@ function page(id) {
     target.classList.remove("hidden");
   }
 
-  scrollTo(0, 0);
+  window.scrollTo(0, 0);
 }
 
 
@@ -52,7 +52,7 @@ let tickHistory = {};
 
 
 // ==========================================
-// NORMALIZE MARKET NAMES
+// MARKET NAME NORMALIZER
 // ==========================================
 
 function normalizeName(name) {
@@ -66,144 +66,415 @@ function normalizeName(name) {
 
 
 // ==========================================
-// REAL-TICK ANALYSIS ENGINE
+// GET LAST DIGIT
 // ==========================================
 
-function analyzeMarket(symbol) {
+function getLastDigit(quote) {
 
-  const history = tickHistory[symbol] || [];
+  const text = String(quote);
+
+  const digits = text.replace(/\D/g, "");
+
+  if (!digits.length) {
+    return null;
+  }
+
+  return Number(
+    digits.charAt(digits.length - 1)
+  );
+
+}
 
 
-  // Need enough live ticks first
+// ==========================================
+// DIGIT ANALYSIS
+// ==========================================
+
+function analyzeDigits(symbol) {
+
+  const history =
+    tickHistory[symbol] || [];
+
 
   if (history.length < 10) {
 
     return {
+
+      ready: false,
+
+      message: "Collecting live ticks",
+
       confidence: 0,
-      signal: "WAIT",
-      reason: "Collecting live ticks"
+
+      signal: "WAIT"
+
     };
 
   }
 
 
-  // Use latest 20 ticks
+  const recent =
+    history.slice(-50);
 
-  const recent = history.slice(-20);
+
+  const digits = recent
+
+    .map(tick =>
+      getLastDigit(tick.quote)
+    )
+
+    .filter(digit =>
+      digit !== null
+    );
+
+
+  if (digits.length < 10) {
+
+    return {
+
+      ready: false,
+
+      message: "Waiting for digit data",
+
+      confidence: 0,
+
+      signal: "WAIT"
+
+    };
+
+  }
+
+
+  // ========================================
+  // EVEN / ODD
+  // ========================================
+
+  let even = 0;
+
+  let odd = 0;
+
+
+  digits.forEach(digit => {
+
+    if (digit % 2 === 0) {
+      even++;
+    } else {
+      odd++;
+    }
+
+  });
+
+
+  const total =
+    even + odd;
+
+
+  const evenPercent =
+    Math.round((even / total) * 100);
+
+
+  const oddPercent =
+    Math.round((odd / total) * 100);
+
+
+  // ========================================
+  // OVER / UNDER
+  // ========================================
+
+  let over = 0;
+
+  let under = 0;
+
+
+  digits.forEach(digit => {
+
+    if (digit > 4) {
+      over++;
+    } else {
+      under++;
+    }
+
+  });
+
+
+  const overPercent =
+    Math.round((over / total) * 100);
+
+
+  const underPercent =
+    Math.round((under / total) * 100);
+
+
+  // ========================================
+  // MATCH / DIFFER
+  // ========================================
+
+  const counts = [
+    0,0,0,0,0,
+    0,0,0,0,0
+  ];
+
+
+  digits.forEach(digit => {
+
+    counts[digit]++;
+
+  });
+
+
+  let mostCommonDigit = 0;
+
+
+  for (let i = 1; i < 10; i++) {
+
+    if (
+      counts[i] >
+      counts[mostCommonDigit]
+    ) {
+
+      mostCommonDigit = i;
+
+    }
+
+  }
+
+
+  const matchPercent =
+    Math.round(
+      (counts[mostCommonDigit] / total) * 100
+    );
+
+
+  const differPercent =
+    100 - matchPercent;
+
+
+  // ========================================
+  // RISE / FALL
+  // ========================================
 
   let rises = 0;
 
   let falls = 0;
 
 
-  // Compare each tick with the previous tick
+  for (
+    let i = 1;
+    i < recent.length;
+    i++
+  ) {
 
-  for (let i = 1; i < recent.length; i++) {
+    const previous =
+      Number(
+        recent[i - 1].quote
+      );
 
-    if (recent[i].quote > recent[i - 1].quote) {
+    const current =
+      Number(
+        recent[i].quote
+      );
+
+
+    if (current > previous) {
+
       rises++;
+
     }
 
-    if (recent[i].quote < recent[i - 1].quote) {
+
+    if (current < previous) {
+
       falls++;
+
     }
 
   }
 
 
-  const totalMoves = rises + falls;
+  const movementTotal =
+    rises + falls;
 
 
-  // Market did not move
+  let risePercent = 50;
 
-  if (totalMoves === 0) {
-
-    return {
-      confidence: 0,
-      signal: "NO TRADE",
-      reason: "Market is flat"
-    };
-
-  }
+  let fallPercent = 50;
 
 
-  // Calculate movement strength
+  if (movementTotal > 0) {
 
-  const riseStrength = Math.round(
-    (rises / totalMoves) * 100
-  );
+    risePercent =
+      Math.round(
+        (rises / movementTotal) * 100
+      );
 
-  const fallStrength = Math.round(
-    (falls / totalMoves) * 100
-  );
-
-
-  let direction;
-
-  let strength;
-
-
-  if (riseStrength > fallStrength) {
-
-    direction = "RISE";
-    strength = riseStrength;
-
-  } else {
-
-    direction = "FALL";
-    strength = fallStrength;
+    fallPercent =
+      Math.round(
+        (falls / movementTotal) * 100
+      );
 
   }
 
 
-  // Calculate analysis confidence
+  // ========================================
+  // FIND STRONGEST SETUP
+  // ========================================
 
-  let confidence = Math.round(
-    50 +
-    Math.abs(riseStrength - fallStrength) * 0.7
+  const strategies = [
+
+    {
+      name: "EVEN",
+      strength: evenPercent
+    },
+
+    {
+      name: "ODD",
+      strength: oddPercent
+    },
+
+    {
+      name: "OVER",
+      strength: overPercent
+    },
+
+    {
+      name: "UNDER",
+      strength: underPercent
+    },
+
+    {
+      name: "MATCH",
+      strength: matchPercent
+    },
+
+    {
+      name: "DIFFER",
+      strength: differPercent
+    },
+
+    {
+      name: "RISE",
+      strength: risePercent
+    },
+
+    {
+      name: "FALL",
+      strength: fallPercent
+    }
+
+  ];
+
+
+  strategies.sort(
+    (a, b) =>
+      b.strength - a.strength
   );
 
 
-  // Keep confidence below 100
+  const best =
+    strategies[0];
 
-  confidence = Math.min(95, confidence);
+
+  // ========================================
+  // ANALYSIS SCORE
+  // ========================================
+
+  let confidence =
+    Math.round(
+      best.strength
+    );
+
+
+  confidence =
+    Math.min(
+      95,
+      confidence
+    );
 
 
   let signal;
 
-  let reason;
 
-
-  if (confidence >= 75) {
+  if (confidence >= 70) {
 
     signal = "TRADE";
-
-    reason =
-      direction +
-      " momentum detected from " +
-      recent.length +
-      " live ticks";
 
   } else {
 
     signal = "NO TRADE";
 
+  }
+
+
+  // ========================================
+  // REASON
+  // ========================================
+
+  let reason;
+
+
+  if (signal === "TRADE") {
+
     reason =
-      "Weak " +
-      direction.toLowerCase() +
-      " momentum";
+      best.name +
+      " currently has the strongest recent pattern";
+
+  } else {
+
+    reason =
+      "No sufficiently strong setup detected";
 
   }
 
 
   return {
-    confidence: confidence,
+
+    ready: true,
+
     signal: signal,
+
+    strategy: best.name,
+
+    confidence: confidence,
+
     reason: reason,
-    direction: direction,
-    rises: rises,
-    falls: falls
+
+    lastDigit:
+      digits[digits.length - 1],
+
+    evenPercent: evenPercent,
+
+    oddPercent: oddPercent,
+
+    overPercent: overPercent,
+
+    underPercent: underPercent,
+
+    matchPercent: matchPercent,
+
+    differPercent: differPercent,
+
+    risePercent: risePercent,
+
+    fallPercent: fallPercent,
+
+    mostCommonDigit:
+      mostCommonDigit,
+
+    sampleSize:
+      digits.length
+
   };
+
+}
+
+
+// ==========================================
+// MAIN MARKET ANALYSIS
+// ==========================================
+
+function analyzeMarket(symbol) {
+
+  return analyzeDigits(symbol);
 
 }
 
@@ -214,99 +485,128 @@ function analyzeMarket(symbol) {
 
 function renderMarkets(scan = false) {
 
-  const marketList = $("#marketList");
+  const marketList =
+    $("#marketList");
+
 
   if (!marketList) {
     return;
   }
 
 
-  marketList.innerHTML = markets.map(m => {
+  marketList.innerHTML =
+    markets.map(m => {
 
-    const analysis = scan
+      const analysis =
+        scan
 
-      ? analyzeMarket(m[0])
+        ? analyzeMarket(m[0])
 
-      : {
-          confidence: null,
-          signal: "READY",
-          reason: "Waiting for scan"
-        };
+        : {
+
+            confidence: null,
+
+            signal: "READY",
+
+            reason:
+              "Waiting for scan"
+
+          };
 
 
-    return `
-      <button
-        class="market-item ${m[0] === selected ? "selected" : ""}"
-        data-symbol="${m[0]}"
-      >
+      return `
 
-        <div>
+        <button
 
-          <b>${m[1]}</b>
+          class="market-item ${
+            m[0] === selected
+              ? "selected"
+              : ""
+          }"
 
-          <div class="market-meta">
-            ${m[0]} · ${analysis.reason}
+          data-symbol="${m[0]}"
+
+        >
+
+          <div>
+
+            <b>${m[1]}</b>
+
+            <div class="market-meta">
+
+              ${m[0]} ·
+              ${analysis.reason}
+
+            </div>
+
           </div>
 
-        </div>
+
+          <div class="market-signal">
+
+            <span class="signal ${
+              analysis.signal === "TRADE"
+                ? "good"
+                : "wait"
+            }">
+
+              ${analysis.signal}
+
+            </span>
 
 
-        <div class="market-signal">
+            ${
+              analysis.confidence
 
-          <span class="signal ${
-            analysis.signal === "TRADE"
-              ? "good"
-              : "wait"
-          }">
+              ? `<div>
+                  ${analysis.confidence}%
+                </div>`
 
-            ${analysis.signal}
-
-          </span>
-
-
-          ${
-            analysis.confidence
-              ? `<div>${analysis.confidence}%</div>`
               : ""
-          }
 
-        </div>
+            }
 
-      </button>
-    `;
+          </div>
 
-  }).join("");
+        </button>
+
+      `;
+
+    }).join("");
 
 
-  // Market selection
+  $$(".market-item").forEach(
+    button => {
 
-  $$(".market-item").forEach(button => {
+      button.onclick = () => {
 
-    button.onclick = () => {
+        selected =
+          button.dataset.symbol;
 
-      selected = button.dataset.symbol;
+        renderMarkets(scan);
 
-      renderMarkets(scan);
+      };
 
-    };
-
-  });
+    }
+  );
 
 }
 
 
 // ==========================================
-// INITIAL MARKET DISPLAY
+// INITIAL DISPLAY
 // ==========================================
 
 renderMarkets();
 
 
 // ==========================================
-// SCAN ALL MARKETS
+// SCAN ALL
 // ==========================================
 
-const scanButton = $("#scanAll");
+const scanButton =
+  $("#scanAll");
+
 
 if (scanButton) {
 
@@ -315,14 +615,19 @@ if (scanButton) {
     renderMarkets(true);
 
 
-    const status = $("#engineStatus");
+    const status =
+      $("#engineStatus");
+
 
     if (status) {
 
       status.innerHTML =
-        '<small>LIVE AI ANALYSIS</small>' +
+
+        '<small>LIVE DIGIT AI</small>' +
+
         '<strong>SCANNED</strong>' +
-        '<b>Analyzing recent Deriv tick data</b>';
+
+        '<b>Analyzing recent live tick patterns</b>';
 
     }
 
@@ -332,22 +637,32 @@ if (scanButton) {
 
 
 // ==========================================
-// STRATEGY / MODE BUTTONS
+// STRATEGY BUTTONS
 // ==========================================
 
-$$(".mode button").forEach(button => {
+$$(".mode button").forEach(
+  button => {
 
-  button.onclick = () => {
+    button.onclick = () => {
 
-    $$(".mode button").forEach(item => {
-      item.classList.remove("active");
-    });
+      $$(".mode button")
+        .forEach(item => {
 
-    button.classList.add("active");
+          item.classList.remove(
+            "active"
+          );
 
-  };
+        });
 
-});
+
+      button.classList.add(
+        "active"
+      );
+
+    };
+
+  }
+);
 
 
 // ==========================================
@@ -356,7 +671,9 @@ $$(".mode button").forEach(button => {
 
 function startBot() {
 
-  const button = $("#start");
+  const button =
+    $("#start");
+
 
   if (!button) {
     return;
@@ -375,14 +692,19 @@ function startBot() {
       "Stop Trading Bot";
 
 
-    const status = $("#engineStatus");
+    const status =
+      $("#engineStatus");
+
 
     if (status) {
 
       status.innerHTML =
+
         '<small>BOT RUNNING</small>' +
+
         '<strong>LIVE</strong>' +
-        '<b>Analyzing live market data</b>';
+
+        '<b>Analyzing live digit patterns</b>';
 
     }
 
@@ -394,13 +716,18 @@ function startBot() {
       "Start Trading Bot";
 
 
-    const status = $("#engineStatus");
+    const status =
+      $("#engineStatus");
+
 
     if (status) {
 
       status.innerHTML =
+
         '<small>WAITING...</small>' +
+
         '<strong>--</strong>' +
+
         '<b>AI Engine Ready to Start</b>';
 
     }
@@ -410,10 +737,15 @@ function startBot() {
 }
 
 
-const startButton = $("#start");
+const startButton =
+  $("#start");
+
 
 if (startButton) {
-  startButton.onclick = startBot;
+
+  startButton.onclick =
+    startBot;
+
 }
 
 
@@ -421,19 +753,27 @@ if (startButton) {
 // ACCOUNT TYPE
 // ==========================================
 
-const accountSelector = $("#account");
+const accountSelector =
+  $("#account");
+
 
 if (accountSelector) {
 
-  accountSelector.onchange = event => {
+  accountSelector.onchange =
+    event => {
 
-    const type = $("#ptype");
+      const type =
+        $("#ptype");
 
-    if (type) {
-      type.textContent = event.target.value;
-    }
 
-  };
+      if (type) {
+
+        type.textContent =
+          event.target.value;
+
+      }
+
+    };
 
 }
 
@@ -449,9 +789,10 @@ function connectDeriv() {
   );
 
 
-  derivWS = new WebSocket(
-    "wss://api.derivws.com/trading/v1/options/ws/public"
-  );
+  derivWS =
+    new WebSocket(
+      "wss://api.derivws.com/trading/v1/options/ws/public"
+    );
 
 
   // ========================================
@@ -465,271 +806,346 @@ function connectDeriv() {
     );
 
 
-    const status = $("#engineStatus");
+    const status =
+      $("#engineStatus");
+
 
     if (status) {
 
       status.innerHTML =
+
         '<small>DERIV CONNECTION</small>' +
+
         '<strong>CONNECTED</strong>' +
+
         '<b>Loading active markets...</b>';
 
     }
 
 
-    // Ask Deriv for currently active markets
-
     derivWS.send(
+
       JSON.stringify({
-        active_symbols: "brief",
+
+        active_symbols:
+          "brief",
+
         req_id: 1
+
       })
+
     );
 
   };
 
 
   // ========================================
-  // RECEIVE DERIV MESSAGES
+  // DERIV MESSAGE
   // ========================================
 
-  derivWS.onmessage = event => {
+  derivWS.onmessage =
+    event => {
 
-    let data;
-
-
-    try {
-
-      data = JSON.parse(event.data);
-
-    } catch (error) {
-
-      console.error(
-        "KRISHWAVE: Invalid Deriv message",
-        error
-      );
-
-      return;
-
-    }
+      let data;
 
 
-    // ======================================
-    // ACTIVE SYMBOLS RESPONSE
-    // ======================================
+      try {
 
-    if (data.msg_type === "active_symbols") {
-
-      const active =
-        data.active_symbols || [];
-
-
-      const byName = new Map();
-
-
-      // Build current Deriv symbol map
-
-      active.forEach(symbol => {
-
-        const name =
-          normalizeName(
-            symbol.underlying_symbol_name
+        data =
+          JSON.parse(
+            event.data
           );
 
-        const id =
-          symbol.underlying_symbol;
+      } catch (error) {
 
-
-        if (name && id) {
-
-          byName.set(name, id);
-
-        }
-
-      });
-
-
-      let connectedMarkets = 0;
-
-
-      // Subscribe to our 13 Volatility markets
-
-      markets.forEach((market, index) => {
-
-        const marketName =
-          normalizeName(market[1]);
-
-
-        const realSymbol =
-          byName.get(marketName);
-
-
-        if (realSymbol) {
-
-          // Replace old symbol with current Deriv symbol
-
-          markets[index][0] =
-            realSymbol;
-
-
-          connectedMarkets++;
-
-
-          // Subscribe to live ticks
-
-          derivWS.send(
-            JSON.stringify({
-
-              ticks: realSymbol,
-
-              subscribe: 1,
-
-              req_id: 100 + index
-
-            })
-          );
-
-
-          console.log(
-            "KRISHWAVE SUBSCRIBED:",
-            market[1],
-            realSymbol
-          );
-
-        } else {
-
-          console.warn(
-            "KRISHWAVE MARKET NOT FOUND:",
-            market[1]
-          );
-
-        }
-
-      });
-
-
-      // Update connection status
-
-      const status =
-        $("#engineStatus");
-
-
-      if (status) {
-
-        status.innerHTML =
-          '<small>DERIV CONNECTION</small>' +
-          '<strong>LIVE</strong>' +
-          '<b>' +
-          connectedMarkets +
-          ' markets receiving live ticks</b>';
-
-      }
-
-
-      return;
-
-    }
-
-
-    // ======================================
-    // LIVE TICK RESPONSE
-    // ======================================
-
-    if (
-      data.msg_type === "tick" &&
-      data.tick
-    ) {
-
-      const symbol =
-        data.tick.symbol;
-
-
-      const quote =
-        Number(data.tick.quote);
-
-
-      if (!Number.isFinite(quote)) {
+        console.error(
+          "Invalid Deriv message",
+          error
+        );
 
         return;
 
       }
 
 
-      // Store latest tick
-
-      liveTicks[symbol] = {
-
-        quote: quote,
-
-        epoch: data.tick.epoch
-
-      };
-
-
-      // Create history if necessary
-
-      if (!tickHistory[symbol]) {
-
-        tickHistory[symbol] = [];
-
-      }
-
-
-      // Add live tick
-
-      tickHistory[symbol].push({
-
-        quote: quote,
-
-        epoch: data.tick.epoch
-
-      });
-
-
-      // Keep latest 100 ticks
+      // ====================================
+      // ACTIVE SYMBOLS
+      // ====================================
 
       if (
-        tickHistory[symbol].length > 100
+        data.msg_type ===
+        "active_symbols"
       ) {
 
-        tickHistory[symbol].shift();
+        const active =
+          data.active_symbols || [];
+
+
+        const byName =
+          new Map();
+
+
+        active.forEach(
+          symbol => {
+
+            const name =
+              normalizeName(
+                symbol
+                  .underlying_symbol_name
+              );
+
+
+            const id =
+              symbol
+                .underlying_symbol;
+
+
+            if (name && id) {
+
+              byName.set(
+                name,
+                id
+              );
+
+            }
+
+          }
+        );
+
+
+        let connectedMarkets = 0;
+
+
+        markets.forEach(
+          (market, index) => {
+
+            const marketName =
+              normalizeName(
+                market[1]
+              );
+
+
+            const realSymbol =
+              byName.get(
+                marketName
+              );
+
+
+            if (realSymbol) {
+
+              markets[index][0] =
+                realSymbol;
+
+
+              connectedMarkets++;
+
+
+              derivWS.send(
+
+                JSON.stringify({
+
+                  ticks:
+                    realSymbol,
+
+                  subscribe:
+                    1,
+
+                  req_id:
+                    100 + index
+
+                })
+
+              );
+
+
+              console.log(
+
+                "KRISHWAVE SUBSCRIBED:",
+
+                market[1],
+
+                realSymbol
+
+              );
+
+            } else {
+
+              console.warn(
+
+                "MARKET NOT FOUND:",
+
+                market[1]
+
+              );
+
+            }
+
+          }
+        );
+
+
+        const status =
+          $("#engineStatus");
+
+
+        if (status) {
+
+          status.innerHTML =
+
+            '<small>DERIV CONNECTION</small>' +
+
+            '<strong>LIVE</strong>' +
+
+            '<b>' +
+
+            connectedMarkets +
+
+            ' markets receiving live ticks</b>';
+
+        }
+
+
+        return;
 
       }
 
 
-      console.log(
-        "KRISHWAVE LIVE TICK:",
-        symbol,
-        quote
-      );
+      // ====================================
+      // LIVE TICK
+      // ====================================
+
+      if (
+
+        data.msg_type === "tick" &&
+        data.tick
+
+      ) {
+
+        const symbol =
+          data.tick.symbol;
 
 
-      // Analyze selected market when enough data exists
-
-      if (symbol === selected) {
-
-        const analysis =
-          analyzeMarket(symbol);
+        const quote =
+          Number(
+            data.tick.quote
+          );
 
 
         if (
-          analysis.confidence > 0
+          !Number.isFinite(
+            quote
+          )
         ) {
 
-          const status =
-            $("#engineStatus");
+          return;
+
+        }
 
 
-          if (status) {
+        // Store latest tick
 
-            status.innerHTML =
-              '<small>LIVE ANALYSIS</small>' +
-              '<strong>' +
-              analysis.direction +
-              '</strong>' +
-              '<b>' +
-              analysis.confidence +
-              '% analysis strength</b>';
+        liveTicks[symbol] = {
+
+          quote: quote,
+
+          epoch:
+            data.tick.epoch
+
+        };
+
+
+        // Create history
+
+        if (
+          !tickHistory[symbol]
+        ) {
+
+          tickHistory[symbol] = [];
+
+        }
+
+
+        // Store tick
+
+        tickHistory[symbol].push({
+
+          quote: quote,
+
+          epoch:
+            data.tick.epoch
+
+        });
+
+
+        // Keep latest 100
+
+        if (
+          tickHistory[symbol]
+            .length > 100
+        ) {
+
+          tickHistory[symbol]
+            .shift();
+
+        }
+
+
+        console.log(
+
+          "KRISHWAVE LIVE TICK:",
+
+          symbol,
+
+          quote
+
+        );
+
+
+        // =================================
+        // LIVE SELECTED MARKET ANALYSIS
+        // =================================
+
+        if (
+          symbol === selected
+        ) {
+
+          const analysis =
+            analyzeMarket(
+              symbol
+            );
+
+
+          if (
+            analysis.ready
+          ) {
+
+            const status =
+              $("#engineStatus");
+
+
+            if (status) {
+
+              status.innerHTML =
+
+                '<small>LIVE DIGIT ANALYSIS</small>' +
+
+                '<strong>' +
+
+                analysis.strategy +
+
+                '</strong>' +
+
+                '<b>' +
+
+                analysis.confidence +
+
+                '% analysis score · Last digit ' +
+
+                analysis.lastDigit +
+
+                '</b>';
+
+            }
 
           }
 
@@ -737,39 +1153,48 @@ function connectDeriv() {
 
       }
 
-    }
+
+      // ====================================
+      // API ERROR
+      // ====================================
+
+      if (data.error) {
+
+        console.error(
+
+          "DERIV API ERROR:",
+
+          data.error
+
+        );
 
 
-    // ======================================
-    // DERIV API ERROR
-    // ======================================
-
-    if (data.error) {
-
-      console.error(
-        "DERIV API ERROR:",
-        data.error
-      );
+        const status =
+          $("#engineStatus");
 
 
-      const status =
-        $("#engineStatus");
+        if (status) {
 
+          status.innerHTML =
 
-      if (status) {
+            '<small>DERIV API</small>' +
 
-        status.innerHTML =
-          '<small>DERIV API</small>' +
-          '<strong>ERROR</strong>' +
-          '<b>' +
-          (data.error.message || "API error") +
-          '</b>';
+            '<strong>ERROR</strong>' +
+
+            '<b>' +
+
+            (
+              data.error.message ||
+              "API error"
+            ) +
+
+            '</b>';
+
+        }
 
       }
 
-    }
-
-  };
+    };
 
 
   // ========================================
@@ -790,8 +1215,11 @@ function connectDeriv() {
     if (status) {
 
       status.innerHTML =
+
         '<small>DERIV CONNECTION</small>' +
+
         '<strong>ERROR</strong>' +
+
         '<b>Connection problem</b>';
 
     }
@@ -817,8 +1245,11 @@ function connectDeriv() {
     if (status) {
 
       status.innerHTML =
+
         '<small>DERIV CONNECTION</small>' +
+
         '<strong>OFFLINE</strong>' +
+
         '<b>Connection closed</b>';
 
     }
