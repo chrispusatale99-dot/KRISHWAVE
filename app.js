@@ -1160,9 +1160,20 @@ function connectDeriv() {
       "<b>Connecting to live market data...</b>";
   }
 
+  /*
+   * FIXED: correct Deriv WebSocket endpoint.
+   * The old URL (api.derivws.com/trading/v1/options/ws/public)
+   * was not a valid Deriv API endpoint, which is why the
+   * connection never stayed open long enough for live ticks
+   * to stream in (price + digit stats looked frozen).
+   *
+   * 1089 is Deriv's public test app_id — fine for market data.
+   * Register your own app_id at https://api.deriv.com if you
+   * plan to add login, balance, or trading later.
+   */
   derivWS =
     new WebSocket(
-      "wss://api.derivws.com/trading/v1/options/ws/public"
+      "wss://ws.derivws.com/websockets/v3?app_id=1089"
     );
 
   derivWS.onopen = () => {
@@ -1841,3 +1852,4 @@ updateTickCounter();
 updateConnectionCounters();
 
 connectDeriv();
+
