@@ -20,14 +20,25 @@ const $ = s => document.querySelector(s);
 const $$ = s => document.querySelectorAll(s);
 
 let derivWS = null;
+
 let liveTicks = {};
 let tickHistory = {};
 let digitStats = {};
 let marketNames = {};
 let marketMeta = {};
+
 let ticksReceived = 0;
+let connectedMarkets = 0;
+
 let reconnectTimer = null;
 let requestCounter = 1000;
+
+/*
+ * Track every history request.
+ * This prevents the history response from
+ * depending on echo_req being present.
+ */
+const historyRequests = {};
 
 const MAX_HISTORY = 200;
 const MIN_SAMPLE = 30;
@@ -52,13 +63,6 @@ function escapeHTML(value) {
     .replace(/'/g, "&#039;");
 }
 
-/*
- * Convert pip size into decimal places.
- * Example:
- * 0.1  -> 1
- * 0.01 -> 2
- * 0.001 -> 3
- */
 function decimalPlacesFromPip(pipSize) {
   const pip = Number(pipSize);
 
@@ -72,10 +76,6 @@ function decimalPlacesFromPip(pipSize) {
   );
 }
 
-/*
- * Get the final displayed digit using
- * the instrument's pip precision.
- */
 function getLastDigit(quote, pipSize) {
   const number = Number(quote);
 
@@ -109,8 +109,7 @@ function getLastDigit(quote, pipSize) {
     );
   }
 
-  const text =
-    String(quote);
+  const text = String(quote);
 
   const cleaned =
     text.replace(/[^0-9]/g, "");
@@ -144,6 +143,66 @@ function resetMarketData(symbol) {
     0, 0, 0, 0, 0,
     0, 0, 0, 0, 0
   ];
+
+  delete liveTicks[symbol];
+}
+
+function updateTickCounter() {
+  /*
+   * Supports several possible counter IDs
+   * without breaking the page if one does
+   * not exist.
+   */
+
+  const possibleCounters = [
+    "#liveTicks",
+    "#liveTickCount",
+    "#ticksReceived",
+    "#tickCount",
+    "#totalTicks"
+  ];
+
+  possibleCounters.forEach(selector => {
+    const element = $(selector);
+
+    if (element) {
+      element.textContent =
+        String(ticksReceived);
+    }
+  });
+
+  /*
+   * Also supports:
+   * <span data-live-ticks></span>
+   */
+  $$("[data-live-ticks]")
+    .forEach(element => {
+      element.textContent =
+        String(ticksReceived);
+    });
+}
+
+function updateConnectionCounters() {
+  const possibleCounters = [
+    "#connectedMarkets",
+    "#marketCount",
+    "#liveMarkets"
+  ];
+
+  possibleCounters.forEach(selector => {
+    const element = $(selector);
+
+    if (element) {
+      element.textContent =
+        String(connectedMarkets);
+    }
+  });
+
+  $$("[data-live-markets]")
+    .forEach(element => {
+      element.textContent =
+        String(connectedMarkets);
+    });
 }
 
 function page(id) {
@@ -328,7 +387,7 @@ function analyzeDigits(symbol) {
     100 - matchPercent;
 
   /* =====================
-     RECENT DIGIT MOMENTUM
+     RECENT DIGIT
   ===================== */
 
   let strongestRecentDigit = 0;
@@ -514,7 +573,7 @@ function analyzeDigits(symbol) {
     );
 
   /* =====================
-     MULTI-FACTOR SCORES
+     STRATEGY SCORES
   ===================== */
 
   const candidates = [];
@@ -539,11 +598,6 @@ function analyzeDigits(symbol) {
       underPercent - 50
     ) * 2;
 
-  /*
-   * Match becomes stronger only when
-   * one digit is meaningfully above
-   * the normal 10% baseline.
-   */
   const matchStrength =
     Math.max(
       0,
@@ -551,11 +605,6 @@ function analyzeDigits(symbol) {
         2
     );
 
-  /*
-   * Differ becomes stronger when
-   * the dominant digit is not too
-   * dominant.
-   */
   const differStrength =
     Math.max(
       0,
@@ -631,13 +680,8 @@ function analyzeDigits(symbol) {
     candidates[0];
 
   /* =====================
-     CONFIDENCE SCORE
+     CONFIDENCE
   ===================== */
-
-  /*
-   * This is an analysis score,
-   * NOT a guaranteed probability.
-   */
 
   let confidence =
     Math.round(
@@ -649,7 +693,7 @@ function analyzeDigits(symbol) {
     );
 
   /* =====================
-     AGREEMENT BONUSES
+     AGREEMENT
   ===================== */
 
   if (
@@ -674,9 +718,6 @@ function analyzeDigits(symbol) {
     confidence += 4;
   }
 
-  /*
-   * Recent digit agreement.
-   */
   if (
     (
       best.name === "EVEN" &&
@@ -692,9 +733,6 @@ function analyzeDigits(symbol) {
     confidence += 3;
   }
 
-  /*
-   * Over/Under recent agreement.
-   */
   if (
     best.name === "OVER" &&
     strongestRecentDigit > 4
@@ -742,16 +780,11 @@ function analyzeDigits(symbol) {
     signal = "TRADE";
   }
 
-  let reason;
-
-  if (signal === "TRADE") {
-    reason =
-      best.name +
-      " has the strongest multi-factor setup";
-  } else {
-    reason =
-      "Evidence is not strong enough for a trade";
-  }
+  const reason =
+    signal === "TRADE"
+      ? best.name +
+        " has the strongest multi-factor setup"
+      : "Evidence is not strong enough for a trade";
 
   return {
     ready: true,
@@ -879,8 +912,11 @@ function renderMarkets(
           button.dataset.symbol;
 
         renderMarkets(scan);
-        updateSelectedAnalysis();
         updateSelectedMarketDisplay();
+        updateSelectedAnalysis();
+        updateDigitTable(
+          selected
+        );
       };
     });
 }
@@ -1042,6 +1078,12 @@ function requestHistory(
     return;
   }
 
+  const reqId =
+    requestCounter++ + index;
+
+  historyRequests[reqId] =
+    symbol;
+
   derivWS.send(
     JSON.stringify({
       ticks_history:
@@ -1052,8 +1094,7 @@ function requestHistory(
       style: "ticks",
       subscribe: 0,
       req_id:
-        requestCounter++ +
-        index
+        reqId
     })
   );
 }
@@ -1076,7 +1117,8 @@ function subscribeTick(
 
   derivWS.send(
     JSON.stringify({
-      ticks: symbol,
+      ticks:
+        symbol,
       subscribe: 1,
       req_id:
         5000 + index
@@ -1102,8 +1144,11 @@ function connectDeriv() {
   }
 
   console.log(
-    "KRISHWAVE V2.5: Connecting..."
+    "KRISHWAVE V2.6: Connecting..."
   );
+
+  connectedMarkets = 0;
+  updateConnectionCounters();
 
   const status =
     $("#engineStatus");
@@ -1122,14 +1167,14 @@ function connectDeriv() {
 
   derivWS.onopen = () => {
     console.log(
-      "KRISHWAVE V2.5: Connected"
+      "KRISHWAVE V2.6: Connected"
     );
 
     if (status) {
       status.innerHTML =
         "<small>DERIV CONNECTION</small>" +
         "<strong>CONNECTED</strong>" +
-        "<b>Loading live volatility markets...</b>";
+        "<b>Discovering live volatility markets...</b>";
     }
 
     derivWS.send(
@@ -1155,6 +1200,7 @@ function connectDeriv() {
           "KRISHWAVE: Invalid JSON",
           error
         );
+
         return;
       }
 
@@ -1203,8 +1249,7 @@ function connectDeriv() {
           }
         );
 
-        let subscribed =
-          0;
+        connectedMarkets = 0;
 
         markets.forEach(
           (
@@ -1230,6 +1275,10 @@ function connectDeriv() {
               return;
             }
 
+            /*
+             * Replace the temporary symbol
+             * with Deriv's actual current symbol.
+             */
             market[0] =
               realSymbol;
 
@@ -1247,16 +1296,22 @@ function connectDeriv() {
               index
             );
 
-            subscribed++;
+            connectedMarkets++;
 
             console.log(
               "KRISHWAVE:",
               market[1],
               "→",
-              realSymbol
+              realSymbol,
+              "pip:",
+              marketMeta[
+                realSymbol
+              ]?.pip_size
             );
           }
         );
+
+        updateConnectionCounters();
 
         renderMarkets(false);
         updateSelectedMarketDisplay();
@@ -1266,8 +1321,8 @@ function connectDeriv() {
             "<small>DERIV CONNECTION</small>" +
             "<strong>LIVE</strong>" +
             "<b>" +
-            subscribed +
-            " markets connected · Loading tick history...</b>";
+            connectedMarkets +
+            " markets connected · Waiting for ticks...</b>";
         }
 
         return;
@@ -1282,13 +1337,31 @@ function connectDeriv() {
           "history" &&
         data.history
       ) {
-        const request =
-          data.echo_req || {};
+        const reqId =
+          data.echo_req?.req_id;
 
-        const symbol =
-          request.ticks_history;
+        let symbol =
+          reqId !== undefined
+            ? historyRequests[
+                reqId
+              ]
+            : null;
+
+        /*
+         * Fallback to echo_req symbol
+         * if available.
+         */
+        if (!symbol) {
+          symbol =
+            data.echo_req
+              ?.ticks_history;
+        }
 
         if (!symbol) {
+          console.warn(
+            "KRISHWAVE: History response has no symbol"
+          );
+
           return;
         }
 
@@ -1300,6 +1373,12 @@ function connectDeriv() {
           data.history.times ||
           [];
 
+        const pipSize =
+          data.pip_size ||
+          marketMeta[
+            symbol
+          ]?.pip_size;
+
         tickHistory[
           symbol
         ] = [];
@@ -1310,12 +1389,6 @@ function connectDeriv() {
           0, 0, 0, 0, 0,
           0, 0, 0, 0, 0
         ];
-
-        const pipSize =
-          data.pip_size ||
-          marketMeta[
-            symbol
-          ]?.pip_size;
 
         prices.forEach(
           (
@@ -1378,8 +1451,8 @@ function connectDeriv() {
           symbol ===
           selected
         ) {
-          updateSelectedAnalysis();
           updateSelectedMarketDisplay();
+          updateSelectedAnalysis();
         }
 
         renderMarkets(true);
@@ -1421,6 +1494,11 @@ function connectDeriv() {
 
         ticksReceived++;
 
+        updateTickCounter();
+
+        /*
+         * Store the latest quote.
+         */
         liveTicks[
           symbol
         ] = {
@@ -1430,6 +1508,9 @@ function connectDeriv() {
             data.tick.epoch
         };
 
+        /*
+         * Make sure history exists.
+         */
         if (
           !tickHistory[
             symbol
@@ -1440,6 +1521,9 @@ function connectDeriv() {
           ] = [];
         }
 
+        /*
+         * Add live tick.
+         */
         tickHistory[
           symbol
         ].push({
@@ -1449,6 +1533,9 @@ function connectDeriv() {
             data.tick.epoch
         });
 
+        /*
+         * Keep maximum history.
+         */
         if (
           tickHistory[
             symbol
@@ -1460,63 +1547,63 @@ function connectDeriv() {
           ].shift();
         }
 
+        /*
+         * Get pip precision.
+         */
         const pipSize =
           marketMeta[
             symbol
           ]?.pip_size;
 
-        const digit =
-          getLastDigit(
-            quote,
-            pipSize
-          );
-
-        if (
-          Number.isInteger(
-            digit
-          ) &&
-          digit >= 0 &&
-          digit <= 9
-        ) {
-          const recent =
-            tickHistory[
-              symbol
-            ].slice(-100);
-
-          digitStats[
+        /*
+         * Rebuild digit statistics
+         * from the latest 100 ticks.
+         */
+        const recent =
+          tickHistory[
             symbol
-          ] = [
-            0, 0, 0, 0, 0,
-            0, 0, 0, 0, 0
-          ];
+          ].slice(-100);
 
-          recent.forEach(
-            tick => {
-              const d =
-                getLastDigit(
-                  tick.quote,
-                  pipSize
-                );
+        digitStats[
+          symbol
+        ] = [
+          0, 0, 0, 0, 0,
+          0, 0, 0, 0, 0
+        ];
 
-              if (
-                Number.isInteger(
-                  d
-                ) &&
-                d >= 0 &&
-                d <= 9
-              ) {
-                digitStats[
-                  symbol
-                ][d]++;
-              }
+        recent.forEach(
+          tick => {
+            const digit =
+              getLastDigit(
+                tick.quote,
+                pipSize
+              );
+
+            if (
+              Number.isInteger(
+                digit
+              ) &&
+              digit >= 0 &&
+              digit <= 9
+            ) {
+              digitStats[
+                symbol
+              ][digit]++;
             }
-          );
+          }
+        );
 
-          updateDigitTable(
-            symbol
-          );
-        }
+        /*
+         * Update digit table immediately.
+         */
+        updateDigitTable(
+          symbol
+        );
 
+        /*
+         * Update selected market
+         * immediately.
+         */
         if (
           symbol ===
           selected
@@ -1527,7 +1614,7 @@ function connectDeriv() {
 
         /*
          * Refresh market cards
-         * every 5 received ticks.
+         * every 5 ticks.
          */
         if (
           ticksReceived % 5 ===
@@ -1535,6 +1622,19 @@ function connectDeriv() {
         ) {
           renderMarkets(true);
         }
+
+        console.log(
+          "KRISHWAVE TICK:",
+          symbol,
+          quote,
+          "digit:",
+          getLastDigit(
+            quote,
+            pipSize
+          ),
+          "total:",
+          ticksReceived
+        );
 
         return;
       }
@@ -1563,6 +1663,10 @@ function connectDeriv() {
       }
     };
 
+  /* =====================
+     WEBSOCKET ERROR
+  ===================== */
+
   derivWS.onerror =
     error => {
       console.error(
@@ -1580,6 +1684,10 @@ function connectDeriv() {
           "<b>Unable to connect to live data</b>";
       }
     };
+
+  /* =====================
+     WEBSOCKET CLOSE
+  ===================== */
 
   derivWS.onclose =
     () => {
@@ -1729,5 +1837,7 @@ if (accountSelector) {
 renderMarkets(false);
 updateSelectedMarketDisplay();
 updateSelectedAnalysis();
+updateTickCounter();
+updateConnectionCounters();
 
 connectDeriv();
