@@ -1,1061 +1,1465 @@
-const markets = [
-  ["R_10", "Volatility 10 Index"],
-  ["R_10_1S", "Volatility 10 (1s)"],
-  ["R_15_1S", "Volatility 15 (1s)"],
-  ["R_25", "Volatility 25 Index"],
-  ["R_25_1S", "Volatility 25 (1s)"],
-  ["R_30_1S", "Volatility 30 (1s)"],
-  ["R_50", "Volatility 50 Index"],
-  ["R_50_1S", "Volatility 50 (1s)"],
-  ["R_75", "Volatility 75 Index"],
-  ["R_75_1S", "Volatility 75 (1s)"],
-  ["R_90_1S", "Volatility 90 (1s)"],
-  ["R_100", "Volatility 100 Index"],
-  ["R_100_1S", "Volatility 100 (1s)"]
-];
+/* =========================================================
+   KRISHWAVE V3
+   LIVE DERIV MARKET INTELLIGENCE ENGINE
+   ========================================================= */
 
-let selected = markets[0][0];
+"use strict";
 
-const $ = s => document.querySelector(s);
-const $$ = s => document.querySelectorAll(s);
+/* =========================================================
+   CONFIGURATION
+   ========================================================= */
 
-let derivWS = null;
-
-let liveTicks = {};
-let tickHistory = {};
-let digitStats = {};
-let marketNames = {};
-let marketMeta = {};
-
-let ticksReceived = 0;
-let connectedMarkets = 0;
-
-let reconnectTimer = null;
-let requestCounter = 1000;
-
-/*
- * Track every history request.
- * This prevents the history response from
- * depending on echo_req being present.
- */
-const historyRequests = {};
+const DERIV_WS_URL =
+  "wss://api.derivws.com/trading/v1/options/ws/public";
 
 const MAX_HISTORY = 200;
 const MIN_SAMPLE = 30;
+const RECONNECT_DELAY = 3000;
 
-/* =========================
-   HELPERS
-========================= */
+/*
+ * The 13 markets requested for KRISHWAVE.
+ * The actual symbol will be confirmed against Deriv
+ * active_symbols data before subscribing.
+ */
+const MARKET_DEFINITIONS = [
+  {
+    name: "Volatility 10 Index",
+    symbol: "R_10",
+    aliases: ["R_10"]
+  },
+  {
+    name: "Volatility 10 (1s)",
+    symbol: "R_10_1S",
+    aliases: ["R_10_1S"]
+  },
+  {
+    name: "Volatility 15 (1s)",
+    symbol: "R_15_1S",
+    aliases: ["R_15_1S"]
+  },
+  {
+    name: "Volatility 25 Index",
+    symbol: "R_25",
+    aliases: ["R_25"]
+  },
+  {
+    name: "Volatility 25 (1s)",
+    symbol: "R_25_1S",
+    aliases: ["R_25_1S"]
+  },
+  {
+    name: "Volatility 30 (1s)",
+    symbol: "R_30_1S",
+    aliases: ["R_30_1S"]
+  },
+  {
+    name: "Volatility 50 Index",
+    symbol: "R_50",
+    aliases: ["R_50"]
+  },
+  {
+    name: "Volatility 50 (1s)",
+    symbol: "R_50_1S",
+    aliases: ["R_50_1S"]
+  },
+  {
+    name: "Volatility 75 Index",
+    symbol: "R_75",
+    aliases: ["R_75"]
+  },
+  {
+    name: "Volatility 75 (1s)",
+    symbol: "R_75_1S",
+    aliases: ["R_75_1S"]
+  },
+  {
+    name: "Volatility 90 (1s)",
+    symbol: "R_90_1S",
+    aliases: ["R_90_1S"]
+  },
+  {
+    name: "Volatility 100 Index",
+    symbol: "R_100",
+    aliases: ["R_100"]
+  },
+  {
+    name: "Volatility 100 (1s)",
+    symbol: "R_100_1S",
+    aliases: ["R_100_1S"]
+  }
+];
 
-function normalizeName(name) {
-  return String(name || "")
-    .toLowerCase()
-    .replace(/\s+/g, " ")
-    .replace(/[^a-z0-9]/g, "")
-    .trim();
+/* =========================================================
+   STATE
+   ========================================================= */
+
+const state = {
+  socket: null,
+  connected: false,
+  reconnectTimer: null,
+
+  running: true,
+
+  selectedSymbol: "R_10",
+
+  markets: new Map(),
+
+  requestCounter: 1,
+
+  requestMap: new Map(),
+
+  subscriptions: new Map(),
+
+  totalTicks: 0,
+
+  lastConnectionAttempt: 0,
+
+  activeSymbolsLoaded: false,
+
+  strategy: "AUTO"
+};
+
+/* =========================================================
+   INITIAL MARKET STATE
+   ========================================================= */
+
+for (const definition of MARKET_DEFINITIONS) {
+  state.markets.set(definition.symbol, {
+    ...definition,
+
+    available: false,
+
+    quote: null,
+    epoch: null,
+    pipSize: null,
+
+    ticks: [],
+
+    digits: Array(10).fill(0),
+
+    lastDigit: null,
+
+    previousQuote: null,
+
+    direction: "FLAT",
+
+    streakType: null,
+    streakLength: 0,
+
+    subscriptionId: null,
+
+    lastUpdate: null
+  });
 }
 
-function escapeHTML(value) {
-  return String(value)
-    .replace(/&/g, "&amp;")
-    .replace(/</g, "&lt;")
-    .replace(/>/g, "&gt;")
-    .replace(/"/g, "&quot;")
-    .replace(/'/g, "&#039;");
+/* =========================================================
+   DOM HELPERS
+   ========================================================= */
+
+const $ = (id) => document.getElementById(id);
+
+function setText(id, value) {
+  const element = $(id);
+
+  if (element) {
+    element.textContent = value;
+  }
 }
 
-function decimalPlacesFromPip(pipSize) {
-  const pip = Number(pipSize);
-
-  if (!Number.isFinite(pip) || pip <= 0) {
-    return null;
+function formatNumber(value, decimals = 2) {
+  if (value === null || value === undefined || !Number.isFinite(Number(value))) {
+    return "--";
   }
 
-  return Math.max(
-    0,
-    Math.round(-Math.log10(pip))
+  return Number(value).toFixed(decimals);
+}
+
+function formatTime(epoch) {
+  if (!epoch) {
+    return "--";
+  }
+
+  const date = new Date(Number(epoch) * 1000);
+
+  return date.toLocaleTimeString([], {
+    hour: "2-digit",
+    minute: "2-digit",
+    second: "2-digit"
+  });
+}
+
+/* =========================================================
+   CONNECTION UI
+   ========================================================= */
+
+function setConnectionStatus(status, message) {
+  const pill = $("connectionPill");
+  const text = $("connectionText");
+  const heroStatus = $("heroStreamStatus");
+  const footerStatus = $("footerStatus");
+
+  if (text) {
+    text.textContent = message;
+  }
+
+  if (heroStatus) {
+    heroStatus.textContent = message;
+  }
+
+  if (footerStatus) {
+    footerStatus.textContent = status === "LIVE"
+      ? "Live Deriv market data connected"
+      : message;
+  }
+
+  if (pill) {
+    pill.classList.toggle("live", status === "LIVE");
+  }
+
+  document.querySelectorAll(".live-badge").forEach((badge) => {
+    badge.classList.toggle("live", status === "LIVE");
+  });
+}
+
+/* =========================================================
+   MARKET LIST
+   ========================================================= */
+
+function renderMarketList() {
+  const container = $("marketList");
+
+  if (!container) {
+    return;
+  }
+
+  container.innerHTML = "";
+
+  for (const market of state.markets.values()) {
+    const button = document.createElement("button");
+
+    button.type = "button";
+    button.className = "market-item";
+
+    if (market.symbol === state.selectedSymbol) {
+      button.classList.add("active");
+    }
+
+    const price = market.quote !== null
+      ? formatNumber(market.quote, market.pipSize ?? 2)
+      : "Waiting...";
+
+    const status = market.available
+      ? "LIVE"
+      : "WAITING";
+
+    button.innerHTML = `
+      <div>
+        <span class="market-name">${escapeHtml(market.name)}</span>
+        <span class="market-code">${escapeHtml(market.symbol)}</span>
+      </div>
+
+      <div class="market-price">
+        <strong>${escapeHtml(price)}</strong>
+        <small>${status}</small>
+      </div>
+    `;
+
+    button.addEventListener("click", () => {
+      selectMarket(market.symbol);
+    });
+
+    container.appendChild(button);
+  }
+}
+
+/* =========================================================
+   MARKET SELECTION
+   ========================================================= */
+
+function selectMarket(symbol) {
+  if (!state.markets.has(symbol)) {
+    return;
+  }
+
+  state.selectedSymbol = symbol;
+
+  renderMarketList();
+  updateSelectedMarket();
+
+  const market = state.markets.get(symbol);
+
+  if (market) {
+    updateMarketAnalysis(market);
+  }
+}
+
+/* =========================================================
+   SELECTED MARKET UI
+   ========================================================= */
+
+function updateSelectedMarket() {
+  const market = state.markets.get(state.selectedSymbol);
+
+  if (!market) {
+    return;
+  }
+
+  setText("selectedMarketName", market.name);
+  setText("selectedMarketCodeLarge", market.symbol);
+
+  setText(
+    "selectedMarketShort",
+    market.name
+      .replace("Volatility ", "V")
+      .replace(" Index", "")
+      .replace(" (1s)", " 1s")
+  );
+
+  setText("selectedMarketCode", market.symbol);
+
+  if (market.quote !== null) {
+    setText(
+      "liveQuote",
+      formatNumber(
+        market.quote,
+        market.pipSize ?? inferDecimals(market.quote)
+      )
+    );
+  } else {
+    setText("liveQuote", "Waiting...");
+  }
+
+  setText(
+    "quoteTime",
+    market.epoch
+      ? `Last tick ${formatTime(market.epoch)}`
+      : "Waiting for tick..."
+  );
+
+  setText(
+    "lastDigit",
+    market.lastDigit === null
+      ? "--"
+      : String(market.lastDigit)
+  );
+
+  setText(
+    "sampleSize",
+    String(market.ticks.length)
+  );
+
+  setText(
+    "streakValue",
+    market.streakLength > 0
+      ? `${market.streakType} ${market.streakLength}`
+      : "--"
   );
 }
+
+/* =========================================================
+   DIGIT STATISTICS
+   ========================================================= */
+
+function updateDigitStats(market) {
+  const total = market.ticks.length;
+
+  for (let digit = 0; digit <= 9; digit++) {
+    const count = market.digits[digit] || 0;
+
+    const percent = total > 0
+      ? (count / total) * 100
+      : 0;
+
+    const valueElement = document.querySelector(
+      `[data-digit="${digit}"]`
+    );
+
+    const fillElement = document.querySelector(
+      `[data-fill-digit="${digit}"]`
+    );
+
+    if (valueElement) {
+      valueElement.textContent = `${percent.toFixed(1)}%`;
+    }
+
+    if (fillElement) {
+      fillElement.style.width = `${Math.min(percent, 100)}%`;
+    }
+  }
+}
+
+/* =========================================================
+   LAST DIGIT EXTRACTION
+   ========================================================= */
 
 function getLastDigit(quote, pipSize) {
-  const number = Number(quote);
-
-  if (!Number.isFinite(number)) {
+  if (quote === null || quote === undefined) {
     return null;
   }
 
-  const precision = decimalPlacesFromPip(pipSize);
+  const numericQuote = Number(quote);
 
-  if (precision !== null) {
-    const formatted = number.toFixed(precision);
-    const parts = formatted.split(".");
-    const decimals = parts[1] || "";
-
-    if (decimals.length > 0) {
-      return Number(decimals.charAt(decimals.length - 1));
-    }
-
-    return Number(formatted.slice(-1));
-  }
-
-  const text = String(quote);
-  const cleaned = text.replace(/[^0-9]/g, "");
-
-  if (!cleaned) {
+  if (!Number.isFinite(numericQuote)) {
     return null;
   }
 
-  return Number(cleaned.charAt(cleaned.length - 1));
-}
+  let decimals = Number(pipSize);
 
-function formatQuote(quote) {
-  if (quote === undefined || quote === null) {
-    return "Waiting...";
+  if (!Number.isInteger(decimals) || decimals < 0 || decimals > 10) {
+    decimals = inferDecimals(quote);
   }
 
-  return String(quote);
-}
-
-function resetMarketData(symbol) {
-  tickHistory[symbol] = [];
-
-  digitStats[symbol] = [
-    0, 0, 0, 0, 0,
-    0, 0, 0, 0, 0
-  ];
-
-  delete liveTicks[symbol];
-}
-
-function updateTickCounter() {
-  const possibleCounters = [
-    "#liveTicks",
-    "#liveTickCount",
-    "#ticksReceived",
-    "#tickCount",
-    "#totalTicks"
-  ];
-
-  possibleCounters.forEach(selector => {
-    const element = $(selector);
-    if (element) {
-      element.textContent = String(ticksReceived);
-    }
-  });
-
-  $$("[data-live-ticks]").forEach(element => {
-    element.textContent = String(ticksReceived);
-  });
-}
-
-function updateConnectionCounters() {
-  const possibleCounters = [
-    "#connectedMarkets",
-    "#marketCount",
-    "#liveMarkets"
-  ];
-
-  possibleCounters.forEach(selector => {
-    const element = $(selector);
-    if (element) {
-      element.textContent = String(connectedMarkets);
-    }
-  });
-
-  $$("[data-live-markets]").forEach(element => {
-    element.textContent = String(connectedMarkets);
-  });
-}
-
-function page(id) {
-  $$(".page").forEach(x => x.classList.add("hidden"));
-
-  const target = $("#" + id);
-  if (target) {
-    target.classList.remove("hidden");
-  }
-
-  window.scrollTo(0, 0);
-}
-
-/* =========================
-   ANALYSIS ENGINE
-========================= */
-
-function analyzeDigits(symbol) {
-  const history = tickHistory[symbol] || [];
-
-  if (history.length < MIN_SAMPLE) {
-    return {
-      ready: false,
-      signal: "WAIT",
-      strategy: "--",
-      confidence: 0,
-      reason: "Collecting live ticks (" + history.length + "/" + MIN_SAMPLE + ")"
-    };
-  }
-
-  const recent = history.slice(-100);
-  const shortWindow = history.slice(-30);
-  const pipSize = marketMeta[symbol]?.pip_size;
-
-  const digits = recent
-    .map(tick => getLastDigit(tick.quote, pipSize))
-    .filter(digit => Number.isInteger(digit) && digit >= 0 && digit <= 9);
-
-  const shortDigits = shortWindow
-    .map(tick => getLastDigit(tick.quote, pipSize))
-    .filter(digit => Number.isInteger(digit) && digit >= 0 && digit <= 9);
-
-  if (digits.length < MIN_SAMPLE) {
-    return {
-      ready: false,
-      signal: "WAIT",
-      strategy: "--",
-      confidence: 0,
-      reason: "Waiting for valid digit data"
-    };
-  }
-
-  const total = digits.length;
-
-  /* =====================
-     DIGIT COUNTS
-  ===================== */
-
-  const counts = [0, 0, 0, 0, 0, 0, 0, 0, 0, 0];
-  const shortCounts = [0, 0, 0, 0, 0, 0, 0, 0, 0, 0];
-
-  let even = 0;
-  let odd = 0;
-  let over = 0;
-  let under = 0;
-
-  digits.forEach(digit => {
-    counts[digit]++;
-    if (digit % 2 === 0) even++;
-    else odd++;
-
-    if (digit > 4) over++;
-    else under++;
-  });
-
-  shortDigits.forEach(digit => {
-    shortCounts[digit]++;
-  });
-
-  const evenPercent = Math.round((even / total) * 100);
-  const oddPercent = Math.round((odd / total) * 100);
-  const overPercent = Math.round((over / total) * 100);
-  const underPercent = Math.round((under / total) * 100);
-
-  /* =====================
-     MOST COMMON DIGIT
-  ===================== */
-
-  let mostCommonDigit = 0;
-  for (let i = 1; i <= 9; i++) {
-    if (counts[i] > counts[mostCommonDigit]) {
-      mostCommonDigit = i;
-    }
-  }
-
-  const matchPercent = Math.round((counts[mostCommonDigit] / total) * 100);
-  const differPercent = 100 - matchPercent;
-
-  /* =====================
-     RECENT DIGIT
-  ===================== */
-
-  let strongestRecentDigit = 0;
-  for (let i = 1; i <= 9; i++) {
-    if (shortCounts[i] > shortCounts[strongestRecentDigit]) {
-      strongestRecentDigit = i;
-    }
-  }
-
-  const recentDigitPercent = Math.round(
-    (shortCounts[strongestRecentDigit] / Math.max(shortDigits.length, 1)) * 100
+  const scaled = Math.round(
+    numericQuote * Math.pow(10, decimals)
   );
 
-  /* =====================
-     RISE / FALL
-  ===================== */
+  return Math.abs(scaled) % 10;
+}
 
-  let rises = 0;
-  let falls = 0;
+/* =========================================================
+   DECIMAL INFERENCE
+   ========================================================= */
 
-  for (let i = 1; i < recent.length; i++) {
-    const previous = Number(recent[i - 1].quote);
-    const current = Number(recent[i].quote);
+function inferDecimals(value) {
+  const text = String(value);
 
-    if (!Number.isFinite(previous) || !Number.isFinite(current)) continue;
-
-    if (current > previous) rises++;
-    else if (current < previous) falls++;
+  if (!text.includes(".")) {
+    return 0;
   }
 
-  const movement = rises + falls;
-  let risePercent = 50;
-  let fallPercent = 50;
-
-  if (movement > 0) {
-    risePercent = Math.round((rises / movement) * 100);
-    fallPercent = Math.round((falls / movement) * 100);
-  }
-
-  /* =====================
-     STREAK
-  ===================== */
-
-  let streakType = "";
-  let streakLength = 0;
-
-  if (recent.length >= 2) {
-    let direction = null;
-
-    for (let i = recent.length - 1; i > 0; i--) {
-      const current = Number(recent[i].quote);
-      const previous = Number(recent[i - 1].quote);
-      let currentDirection = null;
-
-      if (current > previous) currentDirection = "RISE";
-      else if (current < previous) currentDirection = "FALL";
-
-      if (!currentDirection) break;
-
-      if (!direction) {
-        direction = currentDirection;
-        streakLength = 1;
-      } else if (direction === currentDirection) {
-        streakLength++;
-      } else {
-        break;
-      }
-    }
-
-    streakType = direction || "";
-  }
-
-  /* =====================
-     CONSISTENCY
-  ===================== */
-
-  const maxDigitCount = Math.max(...counts);
-  const minDigitCount = Math.min(...counts);
-  const distributionSpread = maxDigitCount - minDigitCount;
-
-  const consistencyScore = Math.max(
-    0,
-    Math.min(100, 100 - distributionSpread * 3)
+  return Math.min(
+    text.split(".")[1].length,
+    10
   );
+}
 
-  /* =====================
-     STRATEGY SCORES
-  ===================== */
+/* =========================================================
+   PROCESS TICK
+   ========================================================= */
 
-  const candidates = [];
-
-  const evenStrength = Math.abs(evenPercent - 50) * 2;
-  const oddStrength = Math.abs(oddPercent - 50) * 2;
-  const overStrength = Math.abs(overPercent - 50) * 2;
-  const underStrength = Math.abs(underPercent - 50) * 2;
-  const matchStrength = Math.max(0, (matchPercent - 10) * 2);
-  const differStrength = Math.max(0, (differPercent - 50) * 1.2);
-  const riseStrength = Math.abs(risePercent - 50) * 2;
-  const fallStrength = Math.abs(fallPercent - 50) * 2;
-
-  candidates.push({ name: "EVEN", strength: evenStrength, raw: evenPercent });
-  candidates.push({ name: "ODD", strength: oddStrength, raw: oddPercent });
-  candidates.push({ name: "OVER", strength: overStrength, raw: overPercent });
-  candidates.push({ name: "UNDER", strength: underStrength, raw: underPercent });
-  candidates.push({ name: "MATCH", strength: matchStrength, raw: matchPercent });
-  candidates.push({ name: "DIFFER", strength: differStrength, raw: differPercent });
-  candidates.push({ name: "RISE", strength: riseStrength, raw: risePercent });
-  candidates.push({ name: "FALL", strength: fallStrength, raw: fallPercent });
-
-  candidates.sort((a, b) => b.strength - a.strength);
-  const best = candidates[0];
-
-  /* =====================
-     CONFIDENCE
-  ===================== */
-
-  let confidence = Math.round(
-    50 + best.strength * 0.45 + consistencyScore * 0.20
-  );
-
-  /* =====================
-     AGREEMENT
-  ===================== */
-
-  if (best.name === "MATCH" && strongestRecentDigit === mostCommonDigit) {
-    confidence += 5;
+function processTick(tick) {
+  if (!tick) {
+    return;
   }
-  if (best.name === "RISE" && risePercent >= 60) {
-    confidence += 4;
+
+  const symbol = tick.symbol;
+
+  if (!symbol || !state.markets.has(symbol)) {
+    return;
   }
-  if (best.name === "FALL" && fallPercent >= 60) {
-    confidence += 4;
+
+  const market = state.markets.get(symbol);
+
+  const quote = Number(tick.quote);
+
+  if (!Number.isFinite(quote)) {
+    return;
   }
+
+  const previousQuote = market.quote;
+
+  market.previousQuote = previousQuote;
+  market.quote = quote;
+  market.epoch = Number(tick.epoch) || Math.floor(Date.now() / 1000);
+
   if (
-    (best.name === "EVEN" && strongestRecentDigit % 2 === 0) ||
-    (best.name === "ODD" && strongestRecentDigit % 2 === 1)
+    tick.pip_size !== undefined &&
+    tick.pip_size !== null
   ) {
-    confidence += 3;
-  }
-  if (best.name === "OVER" && strongestRecentDigit > 4) {
-    confidence += 3;
-  }
-  if (best.name === "UNDER" && strongestRecentDigit <= 4) {
-    confidence += 3;
+    market.pipSize = Number(tick.pip_size);
   }
 
-  confidence = Math.max(0, Math.min(95, confidence));
+  const digit = getLastDigit(
+    quote,
+    market.pipSize
+  );
 
-  /* =====================
-     TRADE FILTER
-  ===================== */
+  market.lastDigit = digit;
 
-  const sufficientSample = total >= MIN_SAMPLE;
-  const strongEnough = confidence >= 68;
-  const directionalEvidence = best.strength >= 12;
+  if (digit !== null) {
+    market.digits[digit]++;
 
-  let signal = "NO TRADE";
-
-  if (sufficientSample && strongEnough && directionalEvidence) {
-    signal = "TRADE";
-  }
-
-  const reason =
-    signal === "TRADE"
-      ? best.name + " has the strongest multi-factor setup"
-      : "Evidence is not strong enough for a trade";
-
-  return {
-    ready: true,
-    signal,
-    strategy: best.name,
-    confidence,
-    reason,
-    lastDigit: digits[digits.length - 1],
-    evenPercent,
-    oddPercent,
-    overPercent,
-    underPercent,
-    matchPercent,
-    differPercent,
-    risePercent,
-    fallPercent,
-    mostCommonDigit,
-    strongestRecentDigit,
-    recentDigitPercent,
-    consistencyScore,
-    distributionSpread,
-    streakType,
-    streakLength,
-    sampleSize: total,
-    counts
-  };
-}
-
-function analyzeMarket(symbol) {
-  return analyzeDigits(symbol);
-}
-
-/* =========================
-   MARKET DISPLAY
-========================= */
-
-function renderMarkets(scan = false) {
-  const list = $("#marketList");
-
-  if (!list) {
-    return;
-  }
-
-  list.innerHTML = markets
-    .map(market => {
-      const analysis = scan
-        ? analyzeMarket(market[0])
-        : {
-            signal: "READY",
-            confidence: null,
-            reason: "Waiting for live data"
-          };
-
-      return `
-        <button
-          class="market-item ${market[0] === selected ? "selected" : ""}"
-          data-symbol="${escapeHTML(market[0])}"
-        >
-          <div>
-            <b>${escapeHTML(market[1])}</b>
-            <div class="market-meta">
-              ${escapeHTML(market[0])} · ${escapeHTML(analysis.reason)}
-            </div>
-          </div>
-
-          <div class="market-signal">
-            <span class="signal ${analysis.signal === "TRADE" ? "good" : "wait"}">
-              ${escapeHTML(analysis.signal)}
-            </span>
-            ${
-              analysis.confidence
-                ? `<div>${analysis.confidence}%</div>`
-                : ""
-            }
-          </div>
-        </button>
-      `;
-    })
-    .join("");
-
-  $$(".market-item").forEach(button => {
-    button.onclick = () => {
-      selected = button.dataset.symbol;
-
-      renderMarkets(scan);
-      updateSelectedMarketDisplay();
-      updateSelectedAnalysis();
-      updateDigitTable(selected);
-    };
-  });
-}
-
-/* =========================
-   SELECTED MARKET
-========================= */
-
-function updateSelectedMarketDisplay() {
-  const market = markets.find(item => item[0] === selected);
-  const name = $("#selectedMarketName");
-  const quote = $("#liveQuote");
-
-  if (name && market) {
-    name.textContent = market[1];
-  }
-
-  if (quote) {
-    const live = liveTicks[selected];
-    quote.textContent = live ? formatQuote(live.quote) : "Waiting...";
-  }
-}
-
-/* =========================
-   ENGINE STATUS
-========================= */
-
-function updateSelectedAnalysis() {
-  const analysis = analyzeMarket(selected);
-  const status = $("#engineStatus");
-
-  if (!status) {
-    return;
-  }
-
-  if (!analysis.ready) {
-    status.innerHTML =
-      "<small>LIVE DATA</small>" +
-      "<strong>WAIT</strong>" +
-      "<b>" + escapeHTML(analysis.reason) + "</b>";
-    return;
-  }
-
-  status.innerHTML =
-    "<small>LIVE DIGIT ANALYSIS</small>" +
-    "<strong>" + escapeHTML(analysis.strategy) + "</strong>" +
-    "<b>" +
-    escapeHTML(String(analysis.confidence)) +
-    "% analysis score · Last digit " +
-    escapeHTML(String(analysis.lastDigit)) +
-    " · Sample " +
-    escapeHTML(String(analysis.sampleSize)) +
-    "</b>";
-}
-
-/* =========================
-   DIGIT TABLE
-========================= */
-
-function updateDigitTable(symbol) {
-  const stats = digitStats[symbol];
-
-  if (!stats) {
-    return;
-  }
-
-  const total = stats.reduce((sum, value) => sum + value, 0);
-
-  for (let i = 0; i <= 9; i++) {
-    const percent = total > 0 ? ((stats[i] / total) * 100).toFixed(1) : "0.0";
-
-    // Target elements with either [data-digit="X"] or #digit-X / .digit-X selectors
-    const selectors = [
-      `[data-digit="${i}"]`,
-      `#digit-${i}`,
-      `.digit-${i}`
-    ];
-
-    selectors.forEach(selector => {
-      const elements = document.querySelectorAll(selector);
-      elements.forEach(element => {
-        element.textContent = percent + "%";
-      });
+    market.ticks.push({
+      quote,
+      digit,
+      epoch: market.epoch
     });
   }
-}
 
-/* =========================
-   LOAD HISTORY
-========================= */
+  if (market.ticks.length > MAX_HISTORY) {
+    const removed = market.ticks.shift();
 
-function requestHistory(symbol, index) {
-  if (!derivWS || derivWS.readyState !== WebSocket.OPEN) {
-    return;
+    if (removed && Number.isInteger(removed.digit)) {
+      market.digits[removed.digit] =
+        Math.max(
+          0,
+          market.digits[removed.digit] - 1
+        );
+    }
   }
 
-  const reqId = requestCounter++ + index;
-  historyRequests[reqId] = symbol;
-
-  derivWS.send(
-    JSON.stringify({
-      ticks_history: symbol,
-      end: "latest",
-      count: MAX_HISTORY,
-      style: "ticks",
-      subscribe: 0,
-      req_id: reqId
-    })
-  );
-}
-
-/* =========================
-   SUBSCRIBE LIVE TICKS
-========================= */
-
-function subscribeTick(symbol, index) {
-  if (!derivWS || derivWS.readyState !== WebSocket.OPEN) {
-    return;
+  if (previousQuote !== null) {
+    if (quote > previousQuote) {
+      updateStreak(market, "RISE");
+    } else if (quote < previousQuote) {
+      updateStreak(market, "FALL");
+    } else {
+      updateStreak(market, "FLAT");
+    }
   }
 
-  derivWS.send(
-    JSON.stringify({
-      ticks: symbol,
-      subscribe: 1,
-      req_id: 5000 + index
-    })
-  );
+  market.available = true;
+  market.lastUpdate = Date.now();
+
+  state.totalTicks++;
+
+  updateMarketCard(market);
+
+  if (symbol === state.selectedSymbol) {
+    updateSelectedMarket();
+    updateDigitStats(market);
+    updateMarketAnalysis(market);
+  }
+
+  updateGlobalStats();
 }
 
-/* =========================
-   CONNECT DERIV
-========================= */
+/* =========================================================
+   STREAK
+   ========================================================= */
 
-function connectDeriv() {
+function updateStreak(market, type) {
+  if (market.streakType === type) {
+    market.streakLength++;
+  } else {
+    market.streakType = type;
+    market.streakLength = 1;
+  }
+}
+
+/* =========================================================
+   MARKET CARD UPDATE
+   ========================================================= */
+
+function updateMarketCard(market) {
+  const cards = document.querySelectorAll(".market-item");
+
+  for (const card of cards) {
+    const code = card.querySelector(".market-code");
+
+    if (!code) {
+      continue;
+    }
+
+    if (code.textContent === market.symbol) {
+      const price = card.querySelector(".market-price strong");
+      const status = card.querySelector(".market-price small");
+
+      if (price) {
+        price.textContent =
+          market.quote === null
+            ? "Waiting..."
+            : formatNumber(
+                market.quote,
+                market.pipSize ?? inferDecimals(market.quote)
+              );
+      }
+
+      if (status) {
+        status.textContent = market.available
+          ? "LIVE"
+          : "WAITING";
+      }
+    }
+  }
+}
+
+/* =========================================================
+   GLOBAL STATS
+   ========================================================= */
+
+function updateGlobalStats() {
+  let connected = 0;
+
+  for (const market of state.markets.values()) {
+    if (market.available) {
+      connected++;
+    }
+  }
+
+  setText(
+    "connectedMarkets",
+    String(connected)
+  );
+
+  setText(
+    "liveTicks",
+    String(state.totalTicks)
+  );
+
+  const selected = state.markets.get(
+    state.selectedSymbol
+  );
+
+  if (selected) {
+    setText(
+      "engineState",
+      selected.ticks.length >= MIN_SAMPLE
+        ? "READY"
+        : "WAIT"
+    );
+
+    setText(
+      "engineStateDetail",
+      selected.ticks.length >= MIN_SAMPLE
+        ? `${selected.ticks.length} observations`
+        : `Need ${Math.max(
+            0,
+            MIN_SAMPLE - selected.ticks.length
+          )} more ticks`
+    );
+  }
+}
+
+/* =========================================================
+   ANALYSIS ENGINE
+   ========================================================= */
+
+function calculateAnalysis(market) {
+  const total = market.ticks.length;
+
+  if (total === 0) {
+    return {
+      ready: false,
+      signal: "WAIT",
+      strategy: "--",
+      confidence: 0,
+      reason: "Waiting for live tick data.",
+      dominantDigit: null,
+      dominantRate: 0,
+      even: 0,
+      odd: 0,
+      over: 0,
+      under: 0,
+      match: 0,
+      differ: 0,
+      rise: 0,
+      fall: 0
+    };
+  }
+
+  const evenCount = market.ticks.filter(
+    (item) => item.digit % 2 === 0
+  ).length;
+
+  const oddCount = total - evenCount;
+
+  const overCount = market.ticks.filter(
+    (item) => item.digit >= 5
+  ).length;
+
+  const underCount = total - overCount;
+
+  const digitCounts = [...market.digits];
+
+  let dominantDigit = 0;
+
+  for (let digit = 1; digit <= 9; digit++) {
+    if (digitCounts[digit] > digitCounts[dominantDigit]) {
+      dominantDigit = digit;
+    }
+  }
+
+  const dominantCount =
+    digitCounts[dominantDigit] || 0;
+
+  const dominantRate =
+    total > 0
+      ? (dominantCount / total) * 100
+      : 0;
+
+  const match = dominantRate;
+
+  const differ = 100 - match;
+
+  let riseCount = 0;
+  let fallCount = 0;
+
+  for (let i = 1; i < market.ticks.length; i++) {
+    if (
+      market.ticks[i].quote >
+      market.ticks[i - 1].quote
+    ) {
+      riseCount++;
+    } else if (
+      market.ticks[i].quote <
+      market.ticks[i - 1].quote
+    ) {
+      fallCount++;
+    }
+  }
+
+  const directionSamples =
+    Math.max(1, riseCount + fallCount);
+
+  const rise =
+    (riseCount / directionSamples) * 100;
+
+  const fall =
+    (fallCount / directionSamples) * 100;
+
+  const values = {
+    EVEN: evenCount / total * 100,
+    ODD: oddCount / total * 100,
+    OVER: overCount / total * 100,
+    UNDER: underCount / total * 100,
+    MATCH: match,
+    DIFFER: differ,
+    RISE: rise,
+    FALL: fall
+  };
+
+  const strongest = Object.entries(values)
+    .sort((a, b) => b[1] - a[1])[0];
+
+  const selectedStrategy =
+    state.strategy === "AUTO"
+      ? strongest[0]
+      : state.strategy;
+
+  const selectedValue =
+    values[selectedStrategy] || 0;
+
+  /*
+   * Confidence is deliberately conservative.
+   * A percentage near 50% should not become a high
+   * confidence signal.
+   */
+  const edge = Math.abs(
+    selectedValue - 50
+  );
+
+  let confidence =
+    50 + edge * 1.6;
+
+  if (total < MIN_SAMPLE) {
+    confidence *= total / MIN_SAMPLE;
+  }
+
+  confidence = Math.max(
+    0,
+    Math.min(95, confidence)
+  );
+
+  let signal = "WAIT";
+
   if (
-    derivWS &&
-    (derivWS.readyState === WebSocket.OPEN ||
-      derivWS.readyState === WebSocket.CONNECTING)
+    total >= MIN_SAMPLE &&
+    confidence >= 65
+  ) {
+    signal =
+      selectedStrategy === "EVEN"
+        ? "EVEN BIAS"
+        : selectedStrategy === "ODD"
+          ? "ODD BIAS"
+          : selectedStrategy === "OVER"
+            ? "OVER 4"
+            : selectedStrategy === "UNDER"
+              ? "UNDER 5"
+              : selectedStrategy === "MATCH"
+                ? "MATCH"
+                : selectedStrategy === "DIFFER"
+                  ? "DIFFER"
+                  : selectedStrategy === "RISE"
+                    ? "RISE"
+                    : selectedStrategy === "FALL"
+                      ? "FALL"
+                      : "SCAN";
+  }
+
+  let reason;
+
+  if (total < MIN_SAMPLE) {
+    reason =
+      `Collecting data: ${total}/${MIN_SAMPLE} ticks.`;
+  } else {
+    reason =
+      `${selectedStrategy} currently leads with ` +
+      `${selectedValue.toFixed(1)}% historical frequency ` +
+      `across ${total} recent ticks.`;
+  }
+
+  return {
+    ready: total >= MIN_SAMPLE,
+    signal,
+    strategy: selectedStrategy,
+    confidence,
+    reason,
+    dominantDigit,
+    dominantRate,
+    even: values.EVEN,
+    odd: values.ODD,
+    over: values.OVER,
+    under: values.UNDER,
+    match: values.MATCH,
+    differ: values.DIFFER,
+    rise: values.RISE,
+    fall: values.FALL
+  };
+}
+
+/* =========================================================
+   UPDATE ANALYSIS UI
+   ========================================================= */
+
+function updateMarketAnalysis(market) {
+  const analysis = calculateAnalysis(market);
+
+  setText(
+    "analysisSignal",
+    analysis.signal
+  );
+
+  setText(
+    "analysisStrategy",
+    analysis.strategy
+  );
+
+  setText(
+    "analysisConfidence",
+    `${analysis.confidence.toFixed(0)}%`
+  );
+
+  setText(
+    "analysisReason",
+    analysis.reason
+  );
+
+  setText(
+    "dominantDigit",
+    analysis.dominantDigit === null
+      ? "--"
+      : String(analysis.dominantDigit)
+  );
+
+  setText(
+    "dominantDigitRate",
+    `${analysis.dominantRate.toFixed(1)}%`
+  );
+
+  setText(
+    "evenPercent",
+    `${analysis.even.toFixed(1)}%`
+  );
+
+  setText(
+    "oddPercent",
+    `${analysis.odd.toFixed(1)}%`
+  );
+
+  setText(
+    "overPercent",
+    `${analysis.over.toFixed(1)}%`
+  );
+
+  setText(
+    "underPercent",
+    `${analysis.under.toFixed(1)}%`
+  );
+
+  setText(
+    "matchPercent",
+    `${analysis.match.toFixed(1)}%`
+  );
+
+  setText(
+    "differPercent",
+    `${analysis.differ.toFixed(1)}%`
+  );
+
+  setText(
+    "risePercent",
+    `${analysis.rise.toFixed(1)}%`
+  );
+
+  setText(
+    "fallPercent",
+    `${analysis.fall.toFixed(1)}%`
+  );
+
+  const engineBadge = $("engineStatus");
+
+  if (engineBadge) {
+    const strong = engineBadge.querySelector("strong");
+    const small = engineBadge.querySelector("small");
+
+    if (strong) {
+      strong.textContent =
+        analysis.ready ? "READY" : "WAIT";
+    }
+
+    if (small) {
+      small.textContent =
+        analysis.ready
+          ? "Analysis available"
+          : "Collecting live ticks";
+    }
+  }
+}
+
+/* =========================================================
+   STRATEGY BUTTONS
+   ========================================================= */
+
+function setupStrategies() {
+  const buttons =
+    document.querySelectorAll(
+      ".strategy-card"
+    );
+
+  buttons.forEach((button) => {
+    button.addEventListener("click", () => {
+
+      buttons.forEach((item) => {
+        item.classList.remove("active");
+      });
+
+      button.classList.add("active");
+
+      state.strategy =
+        button.dataset.strategy || "AUTO";
+
+      const market =
+        state.markets.get(
+          state.selectedSymbol
+        );
+
+      if (market) {
+        updateMarketAnalysis(market);
+      }
+    });
+  });
+}
+
+/* =========================================================
+   SCAN ALL
+   ========================================================= */
+
+function scanAllMarkets() {
+  let best = null;
+
+  for (const market of state.markets.values()) {
+    if (market.ticks.length < MIN_SAMPLE) {
+      continue;
+    }
+
+    const analysis =
+      calculateAnalysis(market);
+
+    if (!best || analysis.confidence > best.confidence) {
+      best = {
+        symbol: market.symbol,
+        confidence: analysis.confidence
+      };
+    }
+  }
+
+  if (best) {
+    selectMarket(best.symbol);
+  }
+}
+
+/* =========================================================
+   WEBSOCKET
+   ========================================================= */
+
+function connect() {
+  if (
+    state.socket &&
+    (
+      state.socket.readyState === WebSocket.OPEN ||
+      state.socket.readyState === WebSocket.CONNECTING
+    )
   ) {
     return;
   }
 
-  console.log("KRISHWAVE V2.6: Connecting...");
+  clearTimeout(state.reconnectTimer);
 
-  connectedMarkets = 0;
-  updateConnectionCounters();
+  state.lastConnectionAttempt = Date.now();
 
-  const status = $("#engineStatus");
+  setConnectionStatus(
+    "CONNECTING",
+    "CONNECTING"
+  );
 
-  if (status) {
-    status.innerHTML =
-      "<small>DERIV CONNECTION</small>" +
-      "<strong>CONNECTING</strong>" +
-      "<b>Connecting to live market data...</b>";
-  }
+  let socket;
 
-  // Uses standard public Deriv WebSocket Endpoint with default App ID 1089
-  derivWS = new WebSocket("wss://ws.derivws.com/websockets/v3?app_id=1089");
-
-  derivWS.onopen = () => {
-    console.log("KRISHWAVE V2.6: Connected");
-
-    if (status) {
-      status.innerHTML =
-        "<small>DERIV CONNECTION</small>" +
-        "<strong>CONNECTED</strong>" +
-        "<b>Discovering live volatility markets...</b>";
-    }
-
-    derivWS.send(
-      JSON.stringify({
-        active_symbols: "brief",
-        req_id: 1
-      })
+  try {
+    socket = new WebSocket(DERIV_WS_URL);
+  } catch (error) {
+    console.error(
+      "KRISHWAVE WebSocket error:",
+      error
     );
-  };
 
-  derivWS.onmessage = event => {
-    let data;
-
-    try {
-      data = JSON.parse(event.data);
-    } catch (error) {
-      console.error("KRISHWAVE: Invalid JSON", error);
-      return;
-    }
-
-    /* =====================
-       ACTIVE SYMBOLS
-    ===================== */
-
-    if (data.msg_type === "active_symbols") {
-      const active = data.active_symbols || [];
-
-      marketNames = {};
-      marketMeta = {};
-
-      active.forEach(symbol => {
-        const rawName = symbol.display_name || symbol.underlying_symbol_name;
-        const normalized = normalizeName(rawName);
-        const id = symbol.symbol || symbol.underlying_symbol;
-
-        if (id) {
-          marketNames[normalized] = id;
-          marketNames[normalizeName(id)] = id;
-
-          marketMeta[id] = {
-            pip_size: symbol.pip_size,
-            name: rawName
-          };
-        }
-      });
-
-      connectedMarkets = 0;
-
-      markets.forEach((market, index) => {
-        const wantedName = normalizeName(market[1]);
-        const wantedSymbol = normalizeName(market[0]);
-
-        // Flexible matching against display name or underlying symbol code
-        const realSymbol =
-          marketNames[wantedName] || marketNames[wantedSymbol] || market[0];
-
-        market[0] = realSymbol;
-
-        resetMarketData(realSymbol);
-        requestHistory(realSymbol, index);
-        subscribeTick(realSymbol, index);
-
-        connectedMarkets++;
-
-        console.log(
-          "KRISHWAVE:",
-          market[1],
-          "→",
-          realSymbol,
-          "pip:",
-          marketMeta[realSymbol]?.pip_size
-        );
-      });
-
-      updateConnectionCounters();
-      renderMarkets(false);
-      updateSelectedMarketDisplay();
-
-      if (status) {
-        status.innerHTML =
-          "<small>DERIV CONNECTION</small>" +
-          "<strong>LIVE</strong>" +
-          "<b>" + connectedMarkets + " markets connected · Subscribed to live ticks...</b>";
-      }
-
-      return;
-    }
-
-    /* =====================
-       HISTORICAL TICKS
-    ===================== */
-
-    if (data.msg_type === "history" && data.history) {
-      const reqId = data.echo_req?.req_id;
-
-      let symbol = reqId !== undefined ? historyRequests[reqId] : null;
-
-      if (!symbol) {
-        symbol = data.echo_req?.ticks_history;
-      }
-
-      if (!symbol) {
-        console.warn("KRISHWAVE: History response has no symbol");
-        return;
-      }
-
-      const prices = data.history.prices || [];
-      const times = data.history.times || [];
-      const pipSize = data.pip_size || marketMeta[symbol]?.pip_size;
-
-      tickHistory[symbol] = [];
-      digitStats[symbol] = [0, 0, 0, 0, 0, 0, 0, 0, 0, 0];
-
-      prices.forEach((price, index) => {
-        const item = {
-          quote: price,
-          epoch: times[index] || 0
-        };
-
-        tickHistory[symbol].push(item);
-
-        const digit = getLastDigit(price, pipSize);
-
-        if (Number.isInteger(digit) && digit >= 0 && digit <= 9) {
-          digitStats[symbol][digit]++;
-        }
-      });
-
-      if (tickHistory[symbol].length > MAX_HISTORY) {
-        tickHistory[symbol] = tickHistory[symbol].slice(-MAX_HISTORY);
-      }
-
-      updateDigitTable(symbol);
-
-      if (symbol === selected) {
-        updateSelectedMarketDisplay();
-        updateSelectedAnalysis();
-      }
-
-      renderMarkets(true);
-
-      console.log(
-        "KRISHWAVE HISTORY:",
-        symbol,
-        prices.length,
-        "ticks loaded"
-      );
-
-      return;
-    }
-
-    /* =====================
-       LIVE TICK
-    ===================== */
-
-    if (data.msg_type === "tick" && data.tick) {
-      const symbol = data.tick.symbol;
-      const quote = data.tick.quote;
-
-      if (!symbol || quote === undefined || quote === null) {
-        return;
-      }
-
-      ticksReceived++;
-      updateTickCounter();
-
-      liveTicks[symbol] = {
-        quote: quote,
-        epoch: data.tick.epoch
-      };
-
-      if (!tickHistory[symbol]) {
-        tickHistory[symbol] = [];
-      }
-
-      tickHistory[symbol].push({
-        quote: quote,
-        epoch: data.tick.epoch
-      });
-
-      if (tickHistory[symbol].length > MAX_HISTORY) {
-        tickHistory[symbol].shift();
-      }
-
-      const pipSize = marketMeta[symbol]?.pip_size;
-      const recent = tickHistory[symbol].slice(-100);
-
-      digitStats[symbol] = [0, 0, 0, 0, 0, 0, 0, 0, 0, 0];
-
-      recent.forEach(tick => {
-        const digit = getLastDigit(tick.quote, pipSize);
-
-        if (Number.isInteger(digit) && digit >= 0 && digit <= 9) {
-          digitStats[symbol][digit]++;
-        }
-      });
-
-      updateDigitTable(symbol);
-
-      if (symbol === selected) {
-        updateSelectedMarketDisplay();
-        updateSelectedAnalysis();
-      }
-
-      if (ticksReceived % 5 === 0) {
-        renderMarkets(true);
-      }
-
-      console.log(
-        "KRISHWAVE TICK:",
-        symbol,
-        quote,
-        "digit:",
-        getLastDigit(quote, pipSize),
-        "total:",
-        ticksReceived
-      );
-
-      return;
-    }
-
-    /* =====================
-       API ERROR
-    ===================== */
-
-    if (data.error) {
-      console.error("KRISHWAVE DERIV ERROR:", data.error);
-
-      if (status) {
-        status.innerHTML =
-          "<small>DERIV API</small>" +
-          "<strong>ERROR</strong>" +
-          "<b>" +
-          escapeHTML(data.error.message || "API error") +
-          "</b>";
-      }
-    }
-  };
-
-  /* =====================
-     WEBSOCKET ERROR
-  ===================== */
-
-  derivWS.onerror = error => {
-    console.error("KRISHWAVE WebSocket error:", error);
-
-    const status = $("#engineStatus");
-
-    if (status) {
-      status.innerHTML =
-        "<small>DERIV CONNECTION</small>" +
-        "<strong>ERROR</strong>" +
-        "<b>Unable to connect to live data</b>";
-    }
-  };
-
-  /* =====================
-     WEBSOCKET CLOSE
-  ===================== */
-
-  derivWS.onclose = () => {
-    console.warn("KRISHWAVE: Connection closed");
-
-    const status = $("#engineStatus");
-
-    if (status) {
-      status.innerHTML =
-        "<small>DERIV CONNECTION</small>" +
-        "<strong>OFFLINE</strong>" +
-        "<b>Reconnecting...</b>";
-    }
-
-    if (reconnectTimer) {
-      clearTimeout(reconnectTimer);
-    }
-
-    reconnectTimer = setTimeout(() => {
-      connectDeriv();
-    }, 5000);
-  };
-}
-
-/* =========================
-   SCAN ALL
-========================= */
-
-const scanButton = $("#scanAll");
-
-if (scanButton) {
-  scanButton.onclick = () => {
-    renderMarkets(true);
-    updateSelectedAnalysis();
-  };
-}
-
-/* =========================
-   MODE BUTTONS
-========================= */
-
-$$(".mode button").forEach(button => {
-  button.onclick = () => {
-    $$(".mode button").forEach(item => item.classList.remove("active"));
-    button.classList.add("active");
-  };
-});
-
-/* =========================
-   START / STOP BOT
-========================= */
-
-function startBot() {
-  const button = $("#start");
-
-  if (!button) {
+    scheduleReconnect();
     return;
   }
 
-  const running = button.dataset.running === "1";
+  state.socket = socket;
 
-  if (!running) {
-    button.dataset.running = "1";
-    button.textContent = "Stop Trading Bot";
+  socket.addEventListener(
+    "open",
+    handleSocketOpen
+  );
 
-    const status = $("#engineStatus");
+  socket.addEventListener(
+    "message",
+    handleSocketMessage
+  );
 
-    if (status) {
-      status.innerHTML =
-        "<small>ANALYSIS BOT</small>" +
-        "<strong>RUNNING</strong>" +
-        "<b>Monitoring live market data</b>";
-    }
-  } else {
-    button.dataset.running = "0";
-    button.textContent = "Start Trading Bot";
+  socket.addEventListener(
+    "error",
+    handleSocketError
+  );
 
-    updateSelectedAnalysis();
+  socket.addEventListener(
+    "close",
+    handleSocketClose
+  );
+}
+
+/* =========================================================
+   SOCKET OPEN
+   ========================================================= */
+
+function handleSocketOpen() {
+  state.connected = true;
+
+  setConnectionStatus(
+    "LIVE",
+    "LIVE"
+  );
+
+  requestActiveSymbols();
+}
+
+/* =========================================================
+   SOCKET MESSAGE
+   ========================================================= */
+
+function handleSocketMessage(event) {
+  let data;
+
+  try {
+    data = JSON.parse(event.data);
+  } catch (error) {
+    console.warn(
+      "KRISHWAVE received non-JSON message:",
+      event.data
+    );
+
+    return;
+  }
+
+  if (!data) {
+    return;
+  }
+
+  if (data.error) {
+    console.warn(
+      "Deriv API error:",
+      data.error
+    );
+
+    handleApiError(data.error);
+    return;
+  }
+
+  switch (data.msg_type) {
+
+    case "active_symbols":
+      handleActiveSymbols(data);
+      break;
+
+    case "tick":
+      handleTickMessage(data);
+      break;
+
+    case "ping":
+      break;
+
+    case "time":
+      break;
+
+    default:
+      break;
   }
 }
 
-const startButton = $("#start");
+/* =========================================================
+   ACTIVE SYMBOLS
+   ========================================================= */
 
-if (startButton) {
-  startButton.onclick = startBot;
+function requestActiveSymbols() {
+  const reqId = nextRequestId();
+
+  rememberRequest(
+    reqId,
+    "active_symbols"
+  );
+
+  send({
+    active_symbols: "brief",
+    product_type: "basic",
+    req_id: reqId
+  });
 }
 
-/* =========================
-   ACCOUNT TYPE
-========================= */
+function handleActiveSymbols(data) {
+  const symbols =
+    Array.isArray(data.active_symbols)
+      ? data.active_symbols
+      : [];
 
-const accountSelector = $("#account");
+  state.activeSymbolsLoaded = true;
 
-if (accountSelector) {
-  accountSelector.onchange = event => {
-    const type = $("#ptype");
+  const availableSymbols =
+    new Set(
+      symbols
+        .map((item) =>
+          item?.underlying_symbol
+        )
+        .filter(Boolean)
+    );
 
-    if (type) {
-      type.textContent = event.target.value;
+  for (const market of state.markets.values()) {
+    market.available =
+      availableSymbols.has(
+        market.symbol
+      );
+  }
+
+  renderMarketList();
+
+  /*
+   * Subscribe only to symbols confirmed by
+   * the current active_symbols response.
+   */
+  for (const market of state.markets.values()) {
+    if (market.available) {
+      subscribeToTicks(market.symbol);
     }
-  };
+  }
+
+  updateGlobalStats();
 }
 
-/* =========================
-   INITIAL DISPLAY
-========================= */
+/* =========================================================
+   TICK SUBSCRIPTION
+   ========================================================= */
 
-renderMarkets(false);
-updateSelectedMarketDisplay();
-updateSelectedAnalysis();
-updateTickCounter();
-updateConnectionCounters();
+function subscribeToTicks(symbol) {
+  if (!state.connected) {
+    return;
+  }
 
-connectDeriv();
-    
+  const market = state.markets.get(symbol);
+
+  if (!market) {
+    return;
+  }
+
+  if (market.subscriptionId) {
+    return;
+  }
+
+  const reqId = nextRequestId();
+
+  rememberRequest(
+    reqId,
+    "ticks",
+    symbol
+  );
+
+  send({
+    ticks: symbol,
+    subscribe: 1,
+    req_id: reqId
+  });
+}
+
+/* =========================================================
+   TICK MESSAGE
+   ========================================================= */
+
+function handleTickMessage(data) {
+  if (!data.tick) {
+    return;
+  }
+
+  const tick = data.tick;
+
+  /*
+   * The current API provides the symbol directly
+   * inside tick.symbol. Do not depend on echo_req.
+   */
+  const symbol = tick.symbol;
+
+  if (!symbol || !state.markets.has(symbol)) {
+    return;
+  }
+
+  if (
+    tick.subscription &&
+    tick.subscription.id
+  ) {
+    const market =
+      state.markets.get(symbol);
+
+    market.subscriptionId =
+      tick.subscription.id;
+
+    state.subscriptions.set(
+      symbol,
+      tick.subscription.id
+    );
+  }
+
+  processTick(tick);
+}
+
+/* =========================================================
+   SOCKET ERROR
+   ========================================================= */
+
+function handleSocketError(error) {
+  console.warn(
+    "KRISHWAVE WebSocket error:",
+    error
+  );
+
+  setConnectionStatus(
+    "ERROR",
+    "CONNECTION ERROR"
+  );
+}
+
+/* =========================================================
+   SOCKET CLOSE
+   ========================================================= */
+
+function handleSocketClose() {
+  state.connected = false;
+
+  for (const market of state.markets.values()) {
+    market.subscriptionId = null;
+  }
+
+  state.subscriptions.clear();
+
+  setConnectionStatus(
+    "OFFLINE",
+    "RECONNECTING"
+  );
+
+  scheduleReconnect();
+}
+
+/* =========================================================
+   RECONNECT
+   ========================================================= */
+
+function scheduleReconnect() {
+  clearTimeout(state.reconnectTimer);
+
+  state.reconnectTimer =
+    setTimeout(() => {
+      connect();
+    }, RECONNECT_DELAY);
+}
+
+/* =========================================================
+   SEND
+   ========================================================= */
+
+function send(payload) {
+  if (
+    !state.socket ||
+    state.socket.readyState !== WebSocket.OPEN
+  ) {
+    return false;
+  }
+
+  try {
+    state.socket.send(
+      JSON.stringify(payload)
+    );
+
+    return true;
+  } catch (error) {
+    console.error(
+      "KRISHWAVE send error:",
+      error
+    );
+
+    return false;
+  }
+}
+
+/* =========================================================
+   REQUEST IDs
+   ========================================================= */
+
+function nextRequestId() {
+  return state.requestCounter++;
+}
+
+function rememberRequest(
+  reqId,
+  type,
+  symbol = null
+) {
+  state.requestMap.set(
+    reqId,
+    {
+      type,
+      symbol,
+      createdAt: Date.now()
+    }
+  );
+}
+
+/* =========================================================
+   API ERROR
+   ========================================================= */
+
+function handleApiError(error) {
+  const message =
+    typeof error === "string"
+      ? error
+      : error?.message || "Unknown API error";
+
+  setText(
+    "footerStatus",
+    `API error: ${message}`
+  );
+}
+
+/* =========================================================
+   MONITOR CONTROLS
+   ========================================================= */
+
+function startMonitor() {
+  state.running = true;
+
+  setText(
+    "engineState",
+    "RUNNING"
+  );
+
+  setText(
+    "engineStateDetail",
+    "Live analysis monitor active"
+  );
+
+  if (
+    !state.socket ||
+    state.socket.readyState !== WebSocket.OPEN
+  ) {
+    connect();
+  }
+}
+
+function stopMonitor() {
+  state.running = false;
+
+  setText(
+    "engineState",
+    "STOPPED"
+  );
+
+  setText(
+    "engineStateDetail",
+    "Analysis monitor paused"
+  );
+}
+
+/* =========================================================
+   BUTTON SETUP
+   ========================================================= */
+
+function setupControls() {
+  const startButton = $("start");
+  const stopButton = $("stop");
+  const scanButton = $("scanAll");
+
+  if (startButton) {
+    startButton.addEventListener(
+      "click",
+      startMonitor
+    );
+  }
+
+  if (stopButton) {
+    stopButton.addEventListener(
+      "click",
+      stopMonitor
+    );
+  }
+
+  if (scanButton) {
+    scanButton.addEventListener(
+      "click",
+      scanAllMarkets
+    );
+  }
+}
+
+/* =========================================================
+   ESCAPE HTML
+   ========================================================= */
+
+function escapeHtml(value) {
+  return String(value)
+    .replaceAll("&", "&amp;")
+    .replaceAll("<", "&lt;")
+    .replaceAll(">", "&gt;")
+    .replaceAll('"', "&quot;")
+    .replaceAll("'", "&#039;");
+}
+
+/* =========================================================
+   INITIALIZATION
+   ========================================================= */
+
+function initialize() {
+  renderMarketList();
+
+  setupStrategies();
+
+  setupControls();
+
+  selectMarket(
+    state.selectedSymbol
+  );
+
+  updateGlobalStats();
+
+  setConnectionStatus(
+    "CONNECTING",
+    "CONNECTING"
+  );
+
+  connect();
+}
+
+/* =========================================================
+   START
+   ========================================================= */
+
+document.addEventListener(
+  "DOMContentLoaded",
+  initialize
+);
