@@ -1,17 +1,433 @@
-<!doctype html><html><head><meta name="viewport" content="width=device-width,initial-scale=1"><title>KRISHWAVE</title><link rel="stylesheet" href="style.css"></head><body>
-<header><b>KRISH<span>WAVE</span></b><div><button>◐</button><button>↻</button><select id="account"><option>Demo Account</option><option>Real Account</option></select></div></header>
-<main>
-<section id="trade" class="page"><div class="card balance"><div><small>ACCOUNT BALANCE</small><h1>$0.00</h1></div><button class="dark">Deposit</button></div>
-<div class="grid"><div class="card"><b>Deposit Funds</b><small>M-Pesa / Crypto</small></div><div class="card"><b>Withdraw Funds</b><small>Fast Processing</small></div></div>
-<div class="card row"><b>Transaction History</b><span>›</span></div><h3>DERIV VOLATILITY INDICES</h3>
-<div class="scanner-head"><h3>ALL VOLATILITY INDICES</h3><button id="scanAll" class="scan-btn">AI SCAN ALL</button></div>
-<div id="marketList" class="market-list"><div class="scan-loading">Loading available markets...</div></div>
-<div class="card chart"><div><b>Volatility 10 Index</b><strong>8741.51</strong></div><div class="line"></div></div>
-<div class="card"><h3>LAST DIGIT STATS (0 - 9)</h3><div class="digits"><div><b>0</b><small>12.6%</small></div><div><b>1</b><small>9.2%</small></div><div><b>2</b><small>10.6%</small></div><div><b>3</b><small>8.6%</small></div><div><b>4</b><small>10.1%</small></div><div><b>5</b><small>12.4%</small></div><div><b>6</b><small>3.1%</small></div><div><b>7</b><small>10.8%</small></div><div><b>8</b><small>10.7%</small></div><div><b>9</b><small>11.9%</small></div></div></div>
-<div class="card engine"><div class="row"><h2>Trading Engine</h2><span class="live">● LIVE</span></div><div class="mode"><button class="active">AI Bot</button><button>Manual</button></div><div class="status"><small>WAITING FOR CONNECTION...</small><b>--</b><strong>AI Engine Ready to Start</strong></div>
-<label>STAKE ($) <input value="10"></label><label>STRATEGY<select id="strategy"><option value="ai">AI Smart Strategy</option><option>matches">Matches</option><option value="differs">Differs</option><option value="even">Even</option><option value="odd">Odd</option><option value="over">Over</option><option value="under">Under</option><option value="higher">Higher</option><option value="lower">Lower</option></select></label>
-<div class="ai-note">KRISHWAVE compares eligible strategies and can return <b>NO TRADE</b> when the signal is too weak.</div><div class="grid"><label>TAKE PROFIT ($)<input value="50"></label><label>STOP LOSS ($)<input value="100"></label></div><label>MARTINGALE MULTIPLIER<input value="2.1"></label><button id="start" class="primary">Start Trading Bot</button></div></section>
-<section id="history" class="page hidden"><div class="card"><div class="row"><h2>Trading History</h2><button>Clear Logs</button></div><div id="historyBox" class="empty"><h2>No Trading History Yet</h2><p>Your results will appear here after you start trading.</p><button class="primary" onclick="startBot()">Start Trading Bot</button></div></div><div class="card empty"><h3>🤖 Bot Status</h3><b>Bot is not running</b><p>Start the trading bot from the Trade page to see live results here.</p></div></section>
-<section id="profile" class="page hidden"><div class="card profile"><div class="avatar">K</div><h2>KRISHWAVE</h2><p>Trading profile</p><b class="live">● Connected</b></div><div class="card"><h2>Account</h2><p>Account Type: <b id="ptype">Demo Account</b></p><p>Currency: <b>USD</b></p><p>Balance: <b>$0.00</b></p></div><div class="card"><h2>Trading Settings</h2><p>Default Market: <b>Volatility 10 Index</b></p><p>AI Confidence Filter: <b>Enabled</b></p><p>Risk Protection: <b>Enabled</b></p></div><div class="card"><h2>App</h2><p>Notifications</p><p>About KRISHWAVE</p><p>Version 1.0.0</p></div></section>
-</main><nav><button onclick="page('trade')">⌾<small>Trade</small></button><button onclick="page('history')">▥<small>History</small></button><button onclick="page('profile')">●<small>Profile</small></button></nav>
-<script src="app.js"></script></body></html>
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <meta name="theme-color" content="#050914">
+  <meta name="description" content="KRISHWAVE - Deriv Volatility Market Intelligence">
+  <title>KRISHWAVE V3</title>
+
+  <link rel="stylesheet" href="style.css">
+</head>
+
+<body>
+  <div class="app-shell">
+
+    <!-- HEADER -->
+    <header class="topbar">
+      <div class="brand">
+        <div class="brand-mark">K</div>
+
+        <div>
+          <h1>KRISHWAVE</h1>
+          <p>VOLATILITY MARKET INTELLIGENCE</p>
+        </div>
+      </div>
+
+      <div class="connection-pill" id="connectionPill">
+        <span class="connection-dot"></span>
+        <span id="connectionText">CONNECTING</span>
+      </div>
+    </header>
+
+    <!-- HERO -->
+    <section class="hero-card">
+      <div class="hero-copy">
+        <span class="eyebrow">KRISHWAVE V3</span>
+        <h2>Deriv Market Intelligence Engine</h2>
+        <p>
+          Real-time volatility monitoring, digit statistics and
+          multi-strategy market analysis.
+        </p>
+      </div>
+
+      <div class="hero-status">
+        <span>DATA STREAM</span>
+        <strong id="heroStreamStatus">CONNECTING</strong>
+      </div>
+    </section>
+
+    <!-- LIVE OVERVIEW -->
+    <section class="overview-grid">
+
+      <div class="stat-card">
+        <span>LIVE MARKETS</span>
+        <strong id="connectedMarkets">0</strong>
+        <small>markets connected</small>
+      </div>
+
+      <div class="stat-card">
+        <span>TICKS RECEIVED</span>
+        <strong id="liveTicks">0</strong>
+        <small>live tick messages</small>
+      </div>
+
+      <div class="stat-card">
+        <span>SELECTED MARKET</span>
+        <strong id="selectedMarketShort">--</strong>
+        <small id="selectedMarketCode">--</small>
+      </div>
+
+      <div class="stat-card">
+        <span>ENGINE</span>
+        <strong id="engineState">WAIT</strong>
+        <small id="engineStateDetail">Collecting market data</small>
+      </div>
+
+    </section>
+
+    <!-- MAIN GRID -->
+    <main class="main-grid">
+
+      <!-- MARKET SCANNER -->
+      <section class="panel market-panel">
+
+        <div class="panel-header">
+          <div>
+            <span class="section-kicker">MARKET SCANNER</span>
+            <h2>Volatility Markets</h2>
+            <p>Select a market to inspect live intelligence.</p>
+          </div>
+
+          <button id="scanAll" class="primary-button">
+            SCAN ALL
+          </button>
+        </div>
+
+        <div id="marketList" class="market-list"></div>
+
+      </section>
+
+      <!-- RIGHT SIDE -->
+      <section class="right-column">
+
+        <!-- SELECTED MARKET -->
+        <section class="panel selected-panel">
+
+          <div class="panel-header compact">
+            <div>
+              <span class="section-kicker">SELECTED MARKET</span>
+              <h2 id="selectedMarketName">Volatility 10 Index</h2>
+              <p id="selectedMarketCodeLarge">R_10</p>
+            </div>
+
+            <div class="live-badge">
+              <span class="connection-dot"></span>
+              LIVE
+            </div>
+          </div>
+
+          <div class="quote-box">
+            <span>LIVE QUOTE</span>
+            <strong id="liveQuote">Waiting...</strong>
+            <small id="quoteTime">Waiting for tick...</small>
+          </div>
+
+          <div class="selected-metrics">
+
+            <div>
+              <span>LAST DIGIT</span>
+              <strong id="lastDigit">--</strong>
+            </div>
+
+            <div>
+              <span>SAMPLE</span>
+              <strong id="sampleSize">0</strong>
+            </div>
+
+            <div>
+              <span>STREAK</span>
+              <strong id="streakValue">--</strong>
+            </div>
+
+          </div>
+
+        </section>
+
+        <!-- DIGIT STATS -->
+        <section class="panel digit-panel">
+
+          <div class="panel-header compact">
+            <div>
+              <span class="section-kicker">DIGIT INTELLIGENCE</span>
+              <h2>Last Digit Stats</h2>
+              <p>Distribution from recent live ticks.</p>
+            </div>
+          </div>
+
+          <div class="digit-grid">
+
+            <div class="digit-row">
+              <span class="digit-number">0</span>
+              <div class="digit-track"><div class="digit-fill" data-fill-digit="0"></div></div>
+              <strong data-digit="0">0.0%</strong>
+            </div>
+
+            <div class="digit-row">
+              <span class="digit-number">1</span>
+              <div class="digit-track"><div class="digit-fill" data-fill-digit="1"></div></div>
+              <strong data-digit="1">0.0%</strong>
+            </div>
+
+            <div class="digit-row">
+              <span class="digit-number">2</span>
+              <div class="digit-track"><div class="digit-fill" data-fill-digit="2"></div></div>
+              <strong data-digit="2">0.0%</strong>
+            </div>
+
+            <div class="digit-row">
+              <span class="digit-number">3</span>
+              <div class="digit-track"><div class="digit-fill" data-fill-digit="3"></div></div>
+              <strong data-digit="3">0.0%</strong>
+            </div>
+
+            <div class="digit-row">
+              <span class="digit-number">4</span>
+              <div class="digit-track"><div class="digit-fill" data-fill-digit="4"></div></div>
+              <strong data-digit="4">0.0%</strong>
+            </div>
+
+            <div class="digit-row">
+              <span class="digit-number">5</span>
+              <div class="digit-track"><div class="digit-fill" data-fill-digit="5"></div></div>
+              <strong data-digit="5">0.0%</strong>
+            </div>
+
+            <div class="digit-row">
+              <span class="digit-number">6</span>
+              <div class="digit-track"><div class="digit-fill" data-fill-digit="6"></div></div>
+              <strong data-digit="6">0.0%</strong>
+            </div>
+
+            <div class="digit-row">
+              <span class="digit-number">7</span>
+              <div class="digit-track"><div class="digit-fill" data-fill-digit="7"></div></div>
+              <strong data-digit="7">0.0%</strong>
+            </div>
+
+            <div class="digit-row">
+              <span class="digit-number">8</span>
+              <div class="digit-track"><div class="digit-fill" data-fill-digit="8"></div></div>
+              <strong data-digit="8">0.0%</strong>
+            </div>
+
+            <div class="digit-row">
+              <span class="digit-number">9</span>
+              <div class="digit-track"><div class="digit-fill" data-fill-digit="9"></div></div>
+              <strong data-digit="9">0.0%</strong>
+            </div>
+
+          </div>
+
+        </section>
+
+      </section>
+
+    </main>
+
+    <!-- AI ENGINE -->
+    <section class="panel intelligence-panel">
+
+      <div class="panel-header">
+
+        <div>
+          <span class="section-kicker">AI MARKET ENGINE</span>
+          <h2>KRISHWAVE Analysis</h2>
+          <p>
+            Multi-factor analysis based on recent market observations.
+          </p>
+        </div>
+
+        <div class="engine-badge" id="engineStatus">
+          <span>ENGINE</span>
+          <strong>WAIT</strong>
+          <small>Collecting live ticks</small>
+        </div>
+
+      </div>
+
+      <div class="analysis-grid">
+
+        <div class="analysis-card">
+          <span>SIGNAL</span>
+          <strong id="analysisSignal">WAIT</strong>
+          <small id="analysisReason">
+            Waiting for sufficient data.
+          </small>
+        </div>
+
+        <div class="analysis-card">
+          <span>STRATEGY</span>
+          <strong id="analysisStrategy">--</strong>
+          <small>Strongest current setup</small>
+        </div>
+
+        <div class="analysis-card">
+          <span>CONFIDENCE</span>
+          <strong id="analysisConfidence">0%</strong>
+          <small>Analysis score</small>
+        </div>
+
+        <div class="analysis-card">
+          <span>DOMINANT DIGIT</span>
+          <strong id="dominantDigit">--</strong>
+          <small id="dominantDigitRate">0%</small>
+        </div>
+
+      </div>
+
+      <div class="analysis-details">
+
+        <div>
+          <span>EVEN</span>
+          <strong id="evenPercent">0%</strong>
+        </div>
+
+        <div>
+          <span>ODD</span>
+          <strong id="oddPercent">0%</strong>
+        </div>
+
+        <div>
+          <span>OVER 4</span>
+          <strong id="overPercent">0%</strong>
+        </div>
+
+        <div>
+          <span>UNDER 5</span>
+          <strong id="underPercent">0%</strong>
+        </div>
+
+        <div>
+          <span>MATCH</span>
+          <strong id="matchPercent">0%</strong>
+        </div>
+
+        <div>
+          <span>DIFFER</span>
+          <strong id="differPercent">0%</strong>
+        </div>
+
+        <div>
+          <span>RISE</span>
+          <strong id="risePercent">0%</strong>
+        </div>
+
+        <div>
+          <span>FALL</span>
+          <strong id="fallPercent">0%</strong>
+        </div>
+
+      </div>
+
+    </section>
+
+    <!-- STRATEGIES -->
+    <section class="panel strategy-panel">
+
+      <div class="panel-header compact">
+
+        <div>
+          <span class="section-kicker">STRATEGY LAB</span>
+          <h2>Analysis Strategies</h2>
+          <p>Available intelligence modes.</p>
+        </div>
+
+      </div>
+
+      <div class="strategy-grid">
+
+        <button class="strategy-card active" data-strategy="AUTO">
+          <strong>AUTO</strong>
+          <span>Best current setup</span>
+        </button>
+
+        <button class="strategy-card" data-strategy="EVEN">
+          <strong>EVEN</strong>
+          <span>Even digit bias</span>
+        </button>
+
+        <button class="strategy-card" data-strategy="ODD">
+          <strong>ODD</strong>
+          <span>Odd digit bias</span>
+        </button>
+
+        <button class="strategy-card" data-strategy="OVER">
+          <strong>OVER</strong>
+          <span>Digits above 4</span>
+        </button>
+
+        <button class="strategy-card" data-strategy="UNDER">
+          <strong>UNDER</strong>
+          <span>Digits below 5</span>
+        </button>
+
+        <button class="strategy-card" data-strategy="MATCH">
+          <strong>MATCH</strong>
+          <span>Dominant digit</span>
+        </button>
+
+        <button class="strategy-card" data-strategy="DIFFER">
+          <strong>DIFFER</strong>
+          <span>Non-matching digits</span>
+        </button>
+
+        <button class="strategy-card" data-strategy="RISE">
+          <strong>RISE</strong>
+          <span>Upward movement</span>
+        </button>
+
+        <button class="strategy-card" data-strategy="FALL">
+          <strong>FALL</strong>
+          <span>Downward movement</span>
+        </button>
+
+      </div>
+
+    </section>
+
+    <!-- BOT CONTROL -->
+    <section class="panel control-panel">
+
+      <div class="control-copy">
+        <span class="section-kicker">ANALYSIS CONTROL</span>
+        <h2>KRISHWAVE Monitor</h2>
+        <p>
+          Monitoring only. No automatic real-money trading is enabled.
+        </p>
+      </div>
+
+      <div class="control-actions">
+
+        <button id="start" class="primary-button">
+          Start Analysis Monitor
+        </button>
+
+        <button id="stop" class="secondary-button">
+          Stop Monitor
+        </button>
+
+      </div>
+
+    </section>
+
+    <!-- FOOTER -->
+    <footer class="footer">
+
+      <div>
+        <strong>KRISHWAVE V3</strong>
+        <span>Deriv Volatility Intelligence</span>
+      </div>
+
+      <div class="footer-status">
+        <span class="connection-dot"></span>
+        <span id="footerStatus">Initializing live data...</span>
+      </div>
+
+    </footer>
+
+  </div>
+
+  <script src="app.js"></script>
+</body>
+          </html>
