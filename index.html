@@ -16,12 +16,12 @@
 
 <body>
 
-  <!-- =========================
+  <!-- =========================================================
        TOP BAR
-  ========================== -->
+  ========================================================== -->
   <header class="topbar">
 
-    <div class="brand">
+    <div class="brand-area">
       <div class="brand-mark">K</div>
 
       <div class="brand-text">
@@ -30,15 +30,22 @@
       </div>
     </div>
 
-    <div class="top-actions">
+    <div class="topbar-actions">
 
-      <div id="connectionPillWrapper" class="connection-pill">
-        <span id="connectionPill" class="status-dot"></span>
-        <span id="connectionText">DISCONNECTED</span>
+      <div class="connection-pill-wrapper" id="connectionPillWrapper">
+        <div class="connection-pill" id="connectionPill">
+          <span class="connection-dot"></span>
+          <span id="connectionText">CONNECTING</span>
+        </div>
       </div>
 
-      <button id="themeToggle" class="icon-button" type="button">
-        ◐
+      <button
+        type="button"
+        class="theme-toggle"
+        id="themeToggle"
+        aria-label="Toggle theme"
+      >
+        ☾
       </button>
 
     </div>
@@ -46,36 +53,188 @@
   </header>
 
 
-  <main class="container">
+  <!-- =========================================================
+       ACCOUNT PANEL
+  ========================================================== -->
+  <section class="account-panel" id="accountPanel">
 
-    <!-- =========================
-         HERO
-    ========================== -->
+    <div class="account-panel-header">
+
+      <div>
+        <span class="section-kicker">ACCOUNT CONTROL</span>
+        <h2>Trading Account</h2>
+      </div>
+
+      <div class="account-status" id="accountStatus">
+        NOT CONNECTED
+      </div>
+
+    </div>
+
+
+    <div class="account-choice-grid">
+
+      <button
+        type="button"
+        class="account-choice-card active"
+        id="demoMode"
+        data-account="demo"
+      >
+        <div class="account-choice-icon">D</div>
+
+        <div class="account-choice-content">
+          <strong>DEMO ACCOUNT</strong>
+          <span>Safe analysis & testing</span>
+        </div>
+
+        <span class="account-check" id="demoCheck">✓</span>
+      </button>
+
+
+      <button
+        type="button"
+        class="account-choice-card"
+        id="realMode"
+        data-account="real"
+      >
+        <div class="account-choice-icon">R</div>
+
+        <div class="account-choice-content">
+          <strong>REAL ACCOUNT</strong>
+          <span>Real-money trading mode</span>
+        </div>
+
+        <span class="account-check" id="realCheck">✓</span>
+      </button>
+
+    </div>
+
+
+    <div class="account-information">
+
+      <div class="account-info-item">
+        <span>Account Type</span>
+        <strong id="accountType">DEMO</strong>
+      </div>
+
+      <div class="account-info-item">
+        <span>Balance</span>
+        <strong id="accountBalance">—</strong>
+      </div>
+
+      <div class="account-info-item">
+        <span>Currency</span>
+        <strong id="accountCurrency">—</strong>
+      </div>
+
+      <div class="account-info-item">
+        <span>Login Status</span>
+        <strong id="accountLoginStatus">NOT CONNECTED</strong>
+      </div>
+
+    </div>
+
+
+    <div class="account-actions">
+
+      <button
+        type="button"
+        class="primary-button"
+        id="connectDeriv"
+      >
+        CONNECT DERIV
+      </button>
+
+      <button
+        type="button"
+        class="secondary-button"
+        id="disconnectDeriv"
+      >
+        DISCONNECT
+      </button>
+
+    </div>
+
+  </section>
+
+
+  <!-- =========================================================
+       REAL TRADING CONFIRMATION MODAL
+  ========================================================== -->
+  <div
+    class="modal-overlay"
+    id="realTradingModal"
+    hidden
+  >
+
+    <div class="modal-card">
+
+      <div class="modal-icon">!</div>
+
+      <h3>REAL ACCOUNT MODE</h3>
+
+      <p>
+        Real trading can involve real financial losses.
+        KRISHWAVE currently operates in analysis-only mode.
+      </p>
+
+      <div class="modal-actions">
+
+        <button
+          type="button"
+          class="secondary-button"
+          id="cancelRealTrading"
+        >
+          CANCEL
+        </button>
+
+        <button
+          type="button"
+          class="primary-button"
+          id="confirmRealTrading"
+        >
+          CONTINUE
+        </button>
+
+      </div>
+
+    </div>
+
+  </div>
+
+
+  <!-- =========================================================
+       HERO
+  ========================================================== -->
+  <main>
+
     <section class="hero">
 
       <div class="hero-content">
 
-        <div class="eyebrow">
+        <span class="hero-kicker">
           LIVE MARKET INTELLIGENCE
-        </div>
+        </span>
 
         <h1>
-          Trade Smarter.<br>
+          Trade Smarter.
           <span>Read the Wave.</span>
         </h1>
 
         <p>
-          KRISHWAVE V3 analyzes live Deriv Volatility Indices,
-          recent tick behaviour and statistical signals to identify
-          stronger market opportunities.
+          KRISHWAVE V3 continuously studies Deriv volatility markets,
+          live tick behaviour, digit pressure and statistical patterns.
         </p>
 
         <div class="hero-status">
 
-          <span id="heroConnectionDot" class="hero-dot"></span>
+          <span
+            class="hero-connection-dot"
+            id="heroConnectionDot"
+          ></span>
 
           <span id="heroStreamStatus">
-            Waiting for market connection...
+            MARKET STREAM INITIALIZING
           </span>
 
         </div>
@@ -85,248 +244,50 @@
     </section>
 
 
-    <!-- =========================
-         DERIV ACCOUNT
-    ========================== -->
-    <section class="account-panel" id="accountPanel">
-
-      <div class="section-heading">
-
-        <div>
-          <div class="eyebrow">DERIV ACCOUNT</div>
-
-          <h2>Trading Connection</h2>
-
-          <p>
-            Connect KRISHWAVE to your Deriv Demo or Real account.
-            Real-money trading requires explicit confirmation.
-          </p>
-        </div>
-
-        <div class="market-live-badge">
-          <span class="live-dot"></span>
-          MARKET DATA LIVE
-        </div>
-
-      </div>
-
-
-      <!-- ACCOUNT TYPE CARDS -->
-      <div class="account-choice-grid">
-
-        <!-- DEMO -->
-        <button
-          id="demoMode"
-          class="account-choice-card active"
-          data-account="demo"
-          type="button"
-        >
-
-          <div class="account-choice-icon">
-            🧪
-          </div>
-
-          <div class="account-choice-content">
-
-            <strong>DEMO ACCOUNT</strong>
-
-            <span>
-              Practice trading with virtual funds
-            </span>
-
-          </div>
-
-          <div id="demoCheck" class="account-check">
-            ✓
-          </div>
-
-        </button>
-
-
-        <!-- REAL -->
-        <button
-          id="realMode"
-          class="account-choice-card"
-          data-account="real"
-          type="button"
-        >
-
-          <div class="account-choice-icon">
-            💰
-          </div>
-
-          <div class="account-choice-content">
-
-            <strong>REAL ACCOUNT</strong>
-
-            <span>
-              Real-money trading
-            </span>
-
-          </div>
-
-          <div id="realCheck" class="account-check">
-            ✓
-          </div>
-
-        </button>
-
-      </div>
-
-
-      <!-- ACCOUNT INFORMATION -->
-      <div class="account-info-grid">
-
-        <div class="account-info-card">
-          <span>ACCOUNT</span>
-          <strong id="accountType">DEMO</strong>
-        </div>
-
-        <div class="account-info-card">
-          <span>BALANCE</span>
-          <strong id="accountBalance">---</strong>
-        </div>
-
-        <div class="account-info-card">
-          <span>CURRENCY</span>
-          <strong id="accountCurrency">---</strong>
-        </div>
-
-        <div class="account-info-card">
-          <span>LOGIN STATUS</span>
-          <strong id="accountLoginStatus">PUBLIC STREAM</strong>
-        </div>
-
-      </div>
-
-
-      <!-- CONNECTION ACTIONS -->
-      <div class="account-actions">
-
-        <button
-          id="connectDeriv"
-          class="primary-button"
-          type="button"
-        >
-          CONNECT DERIV
-        </button>
-
-        <button
-          id="disconnectDeriv"
-          class="secondary-button"
-          type="button"
-        >
-          DISCONNECT
-        </button>
-
-      </div>
-
-      <div id="accountStatus" class="account-status">
-        NOT CONNECTED
-      </div>
-
-    </section>
-
-
-    <!-- =========================
-         REAL TRADING MODAL
-    ========================== -->
-    <div
-      id="realTradingModal"
-      class="modal-overlay"
-      hidden
-    >
-
-      <div class="modal-card">
-
-        <div class="modal-icon">
-          ⚠️
-        </div>
-
-        <h2>Real Trading Confirmation</h2>
-
-        <p>
-          Real-money trading can result in financial loss.
-          KRISHWAVE does not guarantee trading results.
-        </p>
-
-        <div class="modal-actions">
-
-          <button
-            id="cancelRealTrading"
-            class="secondary-button"
-            type="button"
-          >
-            CANCEL
-          </button>
-
-          <button
-            id="confirmRealTrading"
-            class="danger-button"
-            type="button"
-          >
-            CONFIRM REAL
-          </button>
-
-        </div>
-
-      </div>
-
-    </div>
-
-
-    <!-- =========================
-         MARKET OVERVIEW
-    ========================== -->
+    <!-- =======================================================
+         OVERVIEW
+    ======================================================== -->
     <section class="overview-grid">
 
-      <div class="stat-card">
+      <div class="overview-card">
 
         <span>CONNECTED MARKETS</span>
-
-        <strong id="connectedMarkets">
-          0
-        </strong>
+        <strong id="connectedMarkets">0</strong>
 
       </div>
 
 
-      <div class="stat-card">
+      <div class="overview-card">
 
         <span>LIVE TICKS</span>
-
-        <strong id="liveTicks">
-          0
-        </strong>
+        <strong id="liveTicks">0</strong>
 
       </div>
 
 
-      <div class="stat-card">
+      <div class="overview-card">
 
         <span>SELECTED MARKET</span>
-
-        <strong id="selectedMarketShort">
-          R_10
-        </strong>
-
-        <small id="selectedMarketCode">
-          R_10
-        </small>
+        <strong id="selectedMarketShort">R_10</strong>
 
       </div>
 
 
-      <div class="stat-card">
+      <div class="overview-card">
+
+        <span>MARKET CODE</span>
+        <strong id="selectedMarketCode">R_10</strong>
+
+      </div>
+
+
+      <div class="overview-card">
 
         <span>ENGINE</span>
-
-        <strong id="engineState">
-          OFFLINE
-        </strong>
+        <strong id="engineState">READY</strong>
 
         <small id="engineStateDetail">
-          Waiting to start
+          Select a strategy to begin
         </small>
 
       </div>
@@ -334,35 +295,28 @@
     </section>
 
 
-    <!-- =========================
+    <!-- =======================================================
          MAIN GRID
-    ========================== -->
+    ======================================================== -->
     <section class="main-grid">
 
 
-      <!-- =====================
+      <!-- =====================================================
            MARKET SCANNER
-      ====================== -->
+      ====================================================== -->
       <div class="panel scanner-panel">
 
         <div class="panel-header">
 
           <div>
-
-            <div class="eyebrow">
-              MARKET SCANNER
-            </div>
-
-            <h2>
-              Volatility Indices
-            </h2>
-
+            <span class="section-kicker">MARKET SCANNER</span>
+            <h2>Volatility Markets</h2>
           </div>
 
           <button
-            id="scanAll"
-            class="small-button"
             type="button"
+            class="secondary-button"
+            id="scanAll"
           >
             SCAN ALL
           </button>
@@ -371,74 +325,67 @@
 
 
         <div
-          id="marketList"
           class="market-list"
-        >
-
-          <!-- JavaScript inserts markets here -->
-
-        </div>
+          id="marketList"
+        ></div>
 
       </div>
 
 
-      <!-- =====================
+      <!-- =====================================================
            SELECTED MARKET
-      ====================== -->
+      ====================================================== -->
       <div class="panel market-panel">
 
         <div class="panel-header">
 
           <div>
 
-            <div class="eyebrow">
+            <span class="section-kicker">
               SELECTED MARKET
-            </div>
+            </span>
 
             <h2 id="selectedMarketName">
               Volatility 10 Index
             </h2>
 
-            <small id="selectedMarketCodeLarge">
+            <span
+              class="market-code-large"
+              id="selectedMarketCodeLarge"
+            >
               R_10
-            </small>
+            </span>
 
           </div>
 
-          <div class="live-badge">
-            <span class="live-dot"></span>
+          <span class="live-badge">
             LIVE
+          </span>
+
+        </div>
+
+
+        <div class="quote-area">
+
+          <div class="live-quote" id="liveQuote">
+            —
+          </div>
+
+          <div
+            class="quote-time"
+            id="quoteTime"
+          >
+            Waiting for tick...
           </div>
 
         </div>
 
 
-        <!-- QUOTE -->
-        <div class="quote-box">
-
-          <div>
-
-            <span>LIVE QUOTE</span>
-
-            <strong id="liveQuote">
-              ---
-            </strong>
-
-          </div>
-
-          <small id="quoteTime">
-            Waiting...
-          </small>
-
-        </div>
-
-
-        <!-- DIGIT SUMMARY -->
-        <div class="market-summary">
+        <div class="market-stats-grid">
 
           <div>
             <span>LAST DIGIT</span>
-            <strong id="lastDigit">-</strong>
+            <strong id="lastDigit">—</strong>
           </div>
 
           <div>
@@ -448,21 +395,23 @@
 
           <div>
             <span>STREAK</span>
-            <strong id="streakValue">0</strong>
+            <strong id="streakValue">—</strong>
           </div>
 
         </div>
 
 
         <!-- DIGIT DISTRIBUTION -->
+
         <div class="digit-section">
 
-          <div class="digit-section-title">
-            DIGIT DISTRIBUTION
+          <div class="digit-section-header">
+            <span>DIGIT DISTRIBUTION</span>
+            <small>RECENT TICKS</small>
           </div>
 
 
-          <div class="digit-grid">
+          <div class="digit-list">
 
             <div class="digit-row" data-digit="0">
               <span>0</span>
@@ -551,336 +500,601 @@
       </div>
 
 
-    </section>
+      <!-- =====================================================
+           AI ENGINE
+      ====================================================== -->
+      <div class="panel ai-engine-panel">
 
-
-    <!-- =========================
-         AI ENGINE
-    ========================== -->
-    <section class="panel ai-panel">
-
-      <div class="panel-header">
-
-        <div>
-
-          <div class="eyebrow">
-            KRISHWAVE AI CORE
-          </div>
-
-          <h2>
-            Intelligence Engine
-          </h2>
-
-        </div>
-
-        <div id="engineStatus" class="engine-badge">
-          ENGINE OFFLINE
-        </div>
-
-      </div>
-
-
-      <!-- AI SIGNAL -->
-      <div class="ai-signal-card">
-
-        <div class="signal-main">
-
-          <span>AI SIGNAL</span>
-
-          <strong id="analysisSignal">
-            WAITING
-          </strong>
-
-          <p id="analysisReason">
-            Start the engine to begin statistical market analysis.
-          </p>
-
-        </div>
-
-
-        <div class="signal-confidence">
-
-          <span>CONFIDENCE</span>
-
-          <strong id="analysisConfidence">
-            0%
-          </strong>
-
-        </div>
-
-      </div>
-
-
-      <!-- AI STRATEGY -->
-      <div class="strategy-card">
-
-        <div class="strategy-card-header">
+        <div class="panel-header">
 
           <div>
 
-            <div class="eyebrow">
-              AI STRATEGY
-            </div>
+            <span class="section-kicker">
+              ARTIFICIAL INTELLIGENCE
+            </span>
 
-            <h3>
-              Strategy Selection
-            </h3>
+            <h2>AI Prediction Engine</h2>
 
-            <p>
-              Choose one strategy or allow KRISHWAVE AI to select
-              the strongest statistical setup.
+          </div>
+
+          <span
+            class="engine-status"
+            id="engineStatus"
+          >
+            READY
+          </span>
+
+        </div>
+
+
+        <!-- CURRENT AI SIGNAL -->
+
+        <div class="analysis-signal">
+
+          <div class="signal-main">
+
+            <span>SIGNAL</span>
+
+            <strong id="analysisSignal">
+              WAITING
+            </strong>
+
+          </div>
+
+
+          <div class="signal-reason">
+
+            <span>AI REASON</span>
+
+            <p id="analysisReason">
+              Select a strategy and allow the engine to analyze
+              the selected volatility market.
             </p>
 
           </div>
 
-          <div id="analysisStrategy" class="strategy-current">
-            AUTO
+        </div>
+
+
+        <!-- AI BASIC METRICS -->
+
+        <div class="ai-metrics-grid">
+
+          <div class="ai-metric">
+            <span>STRATEGY</span>
+            <strong id="analysisStrategy">AUTO</strong>
+          </div>
+
+          <div class="ai-metric">
+            <span>CONFIDENCE</span>
+            <strong id="analysisConfidence">—</strong>
+          </div>
+
+          <div class="ai-metric">
+            <span>DOMINANT DIGIT</span>
+            <strong id="dominantDigit">—</strong>
+          </div>
+
+          <div class="ai-metric">
+            <span>DIGIT RATE</span>
+            <strong id="dominantDigitRate">—</strong>
           </div>
 
         </div>
 
 
-        <!-- ALL STRATEGIES IN ONE CARD -->
-        <div class="strategy-options">
+        <!-- AI PROBABILITY METRICS -->
 
-          <button
-            class="strategy-button active"
-            data-strategy="AUTO"
-            type="button"
-          >
-            <span>AUTO</span>
-            <small>AI Select</small>
-          </button>
+        <div class="probability-grid">
 
-          <button
-            class="strategy-button"
-            data-strategy="EVEN"
-            type="button"
-          >
+          <div>
             <span>EVEN</span>
-            <small>0,2,4,6,8</small>
-          </button>
-
-          <button
-            class="strategy-button"
-            data-strategy="ODD"
-            type="button"
-          >
-            <span>ODD</span>
-            <small>1,3,5,7,9</small>
-          </button>
-
-          <button
-            class="strategy-button"
-            data-strategy="OVER"
-            type="button"
-          >
-            <span>OVER</span>
-            <small>Above 4</small>
-          </button>
-
-          <button
-            class="strategy-button"
-            data-strategy="UNDER"
-            type="button"
-          >
-            <span>UNDER</span>
-            <small>Below 5</small>
-          </button>
-
-          <button
-            class="strategy-button"
-            data-strategy="MATCH"
-            type="button"
-          >
-            <span>MATCH</span>
-            <small>Target digit</small>
-          </button>
-
-          <button
-            class="strategy-button"
-            data-strategy="DIFFER"
-            type="button"
-          >
-            <span>DIFFER</span>
-            <small>Avoid target</small>
-          </button>
-
-          <button
-            class="strategy-button"
-            data-strategy="RISE"
-            type="button"
-          >
-            <span>RISE</span>
-            <small>Momentum ↑</small>
-          </button>
-
-          <button
-            class="strategy-button"
-            data-strategy="FALL"
-            type="button"
-          >
-            <span>FALL</span>
-            <small>Momentum ↓</small>
-          </button>
-
-        </div>
-
-      </div>
-
-
-      <!-- AI STATISTICS -->
-      <div class="ai-stats-grid">
-
-        <div class="ai-stat">
-          <span>DOMINANT DIGIT</span>
-          <strong id="dominantDigit">-</strong>
-        </div>
-
-        <div class="ai-stat">
-          <span>DIGIT PRESSURE</span>
-          <strong id="dominantDigitRate">0%</strong>
-        </div>
-
-        <div class="ai-stat">
-          <span>EVEN</span>
-          <strong id="evenPercent">0%</strong>
-        </div>
-
-        <div class="ai-stat">
-          <span>ODD</span>
-          <strong id="oddPercent">0%</strong>
-        </div>
-
-        <div class="ai-stat">
-          <span>OVER</span>
-          <strong id="overPercent">0%</strong>
-        </div>
-
-        <div class="ai-stat">
-          <span>UNDER</span>
-          <strong id="underPercent">0%</strong>
-        </div>
-
-        <div class="ai-stat">
-          <span>MATCH</span>
-          <strong id="matchPercent">0%</strong>
-        </div>
-
-        <div class="ai-stat">
-          <span>DIFFER</span>
-          <strong id="differPercent">0%</strong>
-        </div>
-
-        <div class="ai-stat">
-          <span>RISE</span>
-          <strong id="risePercent">0%</strong>
-        </div>
-
-        <div class="ai-stat">
-          <span>FALL</span>
-          <strong id="fallPercent">0%</strong>
-        </div>
-
-      </div>
-
-
-      <!-- ENGINE CONTROLS -->
-      <div class="engine-controls">
-
-        <button
-          id="start"
-          class="primary-button"
-          type="button"
-          disabled
-        >
-          ▶ START AI ENGINE
-        </button>
-
-        <button
-          id="stop"
-          class="secondary-button"
-          type="button"
-          disabled
-        >
-          ■ STOP ENGINE
-        </button>
-
-      </div>
-
-    </section>
-
-
-    <!-- =========================
-         TRADING STATUS
-    ========================== -->
-    <section
-      id="tradingStatusPanel"
-      class="panel trading-panel"
-    >
-
-      <div class="panel-header">
-
-        <div>
-
-          <div class="eyebrow">
-            TRADING STATUS
+            <strong id="evenPercent">—</strong>
           </div>
 
-          <h2>
-            Execution Monitor
-          </h2>
+          <div>
+            <span>ODD</span>
+            <strong id="oddPercent">—</strong>
+          </div>
+
+          <div>
+            <span>OVER</span>
+            <strong id="overPercent">—</strong>
+          </div>
+
+          <div>
+            <span>UNDER</span>
+            <strong id="underPercent">—</strong>
+          </div>
+
+          <div>
+            <span>MATCH</span>
+            <strong id="matchPercent">—</strong>
+          </div>
+
+          <div>
+            <span>DIFFER</span>
+            <strong id="differPercent">—</strong>
+          </div>
+
+          <div>
+            <span>RISE</span>
+            <strong id="risePercent">—</strong>
+          </div>
+
+          <div>
+            <span>FALL</span>
+            <strong id="fallPercent">—</strong>
+          </div>
 
         </div>
 
-        <div id="tradingModeBadge" class="mode-badge">
-          ANALYSIS ONLY
+
+        <!-- =================================================
+             UNIFIED STRATEGY CARD
+        ================================================== -->
+        <div class="strategy-card">
+
+          <div class="strategy-card-header">
+
+            <div>
+
+              <span class="section-kicker">
+                STRATEGY CONTROL
+              </span>
+
+              <h3>
+                Choose Prediction
+              </h3>
+
+            </div>
+
+            <div
+              class="strategy-current"
+              id="strategyCurrent"
+            >
+              AUTO
+            </div>
+
+          </div>
+
+
+          <div class="strategy-options">
+
+            <button
+              type="button"
+              class="strategy-button active"
+              data-strategy="AUTO"
+            >
+              <span>AUTO</span>
+              <small>AI SELECT</small>
+            </button>
+
+
+            <button
+              type="button"
+              class="strategy-button"
+              data-strategy="EVEN"
+            >
+              <span>EVEN</span>
+              <small>0 2 4 6 8</small>
+            </button>
+
+
+            <button
+              type="button"
+              class="strategy-button"
+              data-strategy="ODD"
+            >
+              <span>ODD</span>
+              <small>1 3 5 7 9</small>
+            </button>
+
+
+            <button
+              type="button"
+              class="strategy-button"
+              data-strategy="OVER"
+            >
+              <span>OVER</span>
+              <small>SET NUMBER</small>
+            </button>
+
+
+            <button
+              type="button"
+              class="strategy-button"
+              data-strategy="UNDER"
+            >
+              <span>UNDER</span>
+              <small>SET NUMBER</small>
+            </button>
+
+
+            <button
+              type="button"
+              class="strategy-button"
+              data-strategy="MATCH"
+            >
+              <span>MATCH</span>
+              <small>SET DIGIT</small>
+            </button>
+
+
+            <button
+              type="button"
+              class="strategy-button"
+              data-strategy="DIFFER"
+            >
+              <span>DIFFER</span>
+              <small>SET DIGIT</small>
+            </button>
+
+
+            <button
+              type="button"
+              class="strategy-button"
+              data-strategy="RISE"
+            >
+              <span>RISE</span>
+              <small>MOMENTUM</small>
+            </button>
+
+
+            <button
+              type="button"
+              class="strategy-button"
+              data-strategy="FALL"
+            >
+              <span>FALL</span>
+              <small>MOMENTUM</small>
+            </button>
+
+          </div>
+
+        </div>
+
+
+        <!-- =================================================
+             KRISHWAVE AI STRUCTURE
+        ================================================== -->
+        <div
+          class="ai-analysis-structure"
+          id="aiAnalysisStructure"
+        >
+
+          <div class="ai-structure-header">
+
+            <div>
+
+              <span class="ai-label">
+                KRISHWAVE AI
+              </span>
+
+              <h3>
+                Prediction Structure
+              </h3>
+
+            </div>
+
+            <span
+              class="ai-live-indicator"
+              id="aiLiveIndicator"
+            >
+              READY
+            </span>
+
+          </div>
+
+
+          <!-- AI CIRCLE -->
+
+          <div class="ai-circle-wrap">
+
+            <div
+              class="ai-circle"
+              id="aiCircle"
+            >
+
+              <div class="ai-circle-inner">
+
+                <span
+                  class="ai-countdown"
+                  id="aiCountdown"
+                >
+                  —
+                </span>
+
+                <span
+                  class="ai-circle-status"
+                  id="aiCircleStatus"
+                >
+                  SELECT STRATEGY
+                </span>
+
+              </div>
+
+            </div>
+
+          </div>
+
+
+          <!-- AI RESULT -->
+
+          <div
+            class="ai-prediction-result"
+            id="aiPredictionResult"
+          >
+
+            <div
+              class="ai-result-status"
+              id="aiResultStatus"
+            >
+              AI READY
+            </div>
+
+            <div
+              class="ai-result-main"
+              id="aiResultMain"
+            >
+              Select a strategy to begin
+            </div>
+
+            <div class="ai-result-confidence">
+
+              <span>Confidence</span>
+
+              <strong
+                id="aiResultConfidence"
+              >
+                —
+              </strong>
+
+            </div>
+
+          </div>
+
+
+          <!-- AI REASONING -->
+
+          <div
+            class="ai-reasoning"
+            id="aiReasoning"
+          >
+
+            <div class="ai-reason-row">
+              <span>Market</span>
+              <strong id="aiStructureMarket">
+                R_10
+              </strong>
+            </div>
+
+            <div class="ai-reason-row">
+              <span>Strategy</span>
+              <strong id="aiStructureStrategy">
+                AUTO
+              </strong>
+            </div>
+
+            <div class="ai-reason-row">
+              <span>Last Digit</span>
+              <strong id="aiStructureDigit">
+                —
+              </strong>
+            </div>
+
+            <div class="ai-reason-row">
+              <span>Digit Pressure</span>
+              <strong id="aiStructurePressure">
+                —
+              </strong>
+            </div>
+
+            <div class="ai-reason-row">
+              <span>Signal Strength</span>
+              <strong id="aiStructureStrength">
+                —
+              </strong>
+            </div>
+
+            <div class="ai-reason-row">
+              <span>Sample</span>
+              <strong id="aiStructureSample">
+                0 ticks
+              </strong>
+            </div>
+
+          </div>
+
+        </div>
+
+
+        <!-- =================================================
+             START / STOP ENGINE
+        ================================================== -->
+        <div class="engine-controls">
+
+          <button
+            type="button"
+            class="primary-button"
+            id="start"
+          >
+            START AI ENGINE
+          </button>
+
+          <button
+            type="button"
+            class="secondary-button"
+            id="stop"
+          >
+            STOP
+          </button>
+
         </div>
 
       </div>
 
 
-      <div class="trading-grid">
+      <!-- =====================================================
+           TRADING STATUS
+      ====================================================== -->
+      <div class="panel trading-status-panel">
 
-        <div class="trading-stat">
-          <span>ACCOUNT MODE</span>
-          <strong id="tradingAccountMode">
-            DEMO
-          </strong>
-        </div>
+        <div class="panel-header">
 
-        <div class="trading-stat">
-          <span>ENGINE STATUS</span>
-          <strong id="tradingEngineStatus">
-            STOPPED
-          </strong>
-        </div>
+          <div>
 
-        <div class="trading-stat">
-          <span>LAST ACTION</span>
-          <strong id="lastTradeAction">
+            <span class="section-kicker">
+              TRADING STATUS
+            </span>
+
+            <h2>Execution Monitor</h2>
+
+          </div>
+
+          <span
+            class="trading-mode-badge"
+            id="tradingModeBadge"
+          >
             ANALYSIS ONLY
-          </strong>
+          </span>
+
         </div>
 
-        <div class="trading-stat">
-          <span>TRADE COUNT</span>
-          <strong id="tradeCount">
-            0
-          </strong>
+
+        <div class="trading-status-grid">
+
+          <div class="trading-status-item">
+
+            <span>ACCOUNT MODE</span>
+
+            <strong id="tradingAccountMode">
+              DEMO
+            </strong>
+
+          </div>
+
+
+          <div class="trading-status-item">
+
+            <span>ENGINE STATUS</span>
+
+            <strong id="tradingEngineStatus">
+              STOPPED
+            </strong>
+
+          </div>
+
+
+          <div class="trading-status-item">
+
+            <span>LAST ACTION</span>
+
+            <strong id="lastTradeAction">
+              ANALYSIS ONLY
+            </strong>
+
+          </div>
+
+
+          <div class="trading-status-item">
+
+            <span>TRADE COUNT</span>
+
+            <strong id="tradeCount">
+              0
+            </strong>
+
+          </div>
+
         </div>
 
       </div>
 
     </section>
-
 
   </main>
 
 
-  <!-- =========================
+  <!-- =========================================================
+       STRATEGY NUMBER CONFIGURATION MODAL
+       MATCH / DIFFER / OVER / UNDER
+  ========================================================== -->
+  <div
+    class="strategy-number-modal"
+    id="strategyNumberModal"
+    hidden
+  >
+
+    <div class="strategy-number-card">
+
+      <div class="strategy-number-icon">
+        AI
+      </div>
+
+      <span class="section-kicker">
+        STRATEGY CONFIGURATION
+      </span>
+
+      <h3 id="strategyNumberTitle">
+        Configure Strategy
+      </h3>
+
+      <p id="strategyNumberDescription">
+        Enter the number you want KRISHWAVE AI to analyze.
+      </p>
+
+
+      <label for="strategyNumberInput">
+        Target Number
+      </label>
+
+      <input
+        id="strategyNumberInput"
+        type="number"
+        min="0"
+        max="9"
+        step="1"
+        inputmode="numeric"
+        placeholder="0 - 9"
+        autocomplete="off"
+      >
+
+
+      <div
+        class="strategy-number-error"
+        id="strategyNumberError"
+      ></div>
+
+
+      <div class="strategy-number-actions">
+
+        <button
+          type="button"
+          class="secondary-button"
+          id="cancelStrategyNumber"
+        >
+          CANCEL
+        </button>
+
+        <button
+          type="button"
+          class="primary-button"
+          id="applyStrategyNumber"
+        >
+          APPLY
+        </button>
+
+      </div>
+
+    </div>
+
+  </div>
+
+
+  <!-- =========================================================
        FOOTER
-  ========================== -->
+  ========================================================== -->
   <footer class="footer">
 
     <div>
@@ -890,40 +1104,44 @@
       </span>
     </div>
 
-    <div id="footerStatus">
+    <div
+      class="footer-status"
+      id="footerStatus"
+    >
       SYSTEM READY
     </div>
 
   </footer>
 
 
-  <!-- =========================
+  <!-- =========================================================
        KRISHWAVE CONFIG
-  ========================== -->
-  <script id="oymztj">
-
+  ========================================================== -->
+  <script id="m75ezu">
     window.KRISHWAVE_CONFIG = {
       derivAppId: "34jzkIFHayWQzG6sXikax",
       defaultAccount: "demo",
       tradingEnabled: false
     };
-
   </script>
 
 
-  <!-- =========================
-       THEME + ACCOUNT UI
-  ========================== -->
+  <!-- =========================================================
+       THEME + ACCOUNT CONTROL
+  ========================================================== -->
   <script>
+    const themeToggle = document.getElementById("themeToggle");
 
-    const themeToggle =
-      document.getElementById("themeToggle");
+    if (themeToggle) {
+      themeToggle.addEventListener("click", () => {
+        document.body.classList.toggle("light-mode");
 
-    themeToggle?.addEventListener("click", () => {
-
-      document.body.classList.toggle("light-mode");
-
-    });
+        themeToggle.textContent =
+          document.body.classList.contains("light-mode")
+            ? "☀"
+            : "☾";
+      });
+    }
 
 
     let selectedAccountMode = "demo";
@@ -942,143 +1160,171 @@
     const realCheck =
       document.getElementById("realCheck");
 
+    const accountStatus =
+      document.getElementById("accountStatus");
+
     const accountType =
       document.getElementById("accountType");
 
     const tradingAccountMode =
       document.getElementById("tradingAccountMode");
 
+
     const realTradingModal =
       document.getElementById("realTradingModal");
+
+    const cancelRealTrading =
+      document.getElementById("cancelRealTrading");
+
+    const confirmRealTrading =
+      document.getElementById("confirmRealTrading");
 
 
     function setAccountMode(mode) {
 
+      selectedAccountMode = mode;
+
       if (mode === "real" && !realTradingConfirmed) {
 
-        realTradingModal.hidden = false;
-        return;
+        if (realTradingModal) {
+          realTradingModal.hidden = false;
+        }
 
+        return;
       }
 
 
-      selectedAccountMode = mode;
+      if (demoMode) {
+        demoMode.classList.toggle(
+          "active",
+          mode === "demo"
+        );
+      }
 
 
-      demoMode?.classList.toggle(
-        "active",
-        mode === "demo"
-      );
-
-      realMode?.classList.toggle(
-        "active",
-        mode === "real"
-      );
+      if (realMode) {
+        realMode.classList.toggle(
+          "active",
+          mode === "real"
+        );
+      }
 
 
       if (demoCheck) {
-
-        demoCheck.style.visibility =
-          mode === "demo" ? "visible" : "hidden";
-
+        demoCheck.textContent =
+          mode === "demo" ? "✓" : "";
       }
 
 
       if (realCheck) {
-
-        realCheck.style.visibility =
-          mode === "real" ? "visible" : "hidden";
-
+        realCheck.textContent =
+          mode === "real" ? "✓" : "";
       }
 
 
       if (accountType) {
-
         accountType.textContent =
           mode.toUpperCase();
-
       }
 
 
       if (tradingAccountMode) {
-
         tradingAccountMode.textContent =
           mode.toUpperCase();
-
       }
+
+
+      if (accountStatus) {
+        accountStatus.textContent =
+          mode === "demo"
+            ? "DEMO MODE"
+            : "REAL MODE";
+      }
+    }
+
+
+    if (demoMode) {
+      demoMode.addEventListener("click", () => {
+        realTradingConfirmed = false;
+        setAccountMode("demo");
+      });
+    }
+
+
+    if (realMode) {
+      realMode.addEventListener("click", () => {
+        setAccountMode("real");
+      });
+    }
+
+
+    if (cancelRealTrading) {
+
+      cancelRealTrading.addEventListener(
+        "click",
+        () => {
+
+          realTradingConfirmed = false;
+
+          if (realTradingModal) {
+            realTradingModal.hidden = true;
+          }
+
+          setAccountMode("demo");
+        }
+      );
 
     }
 
 
-    demoMode?.addEventListener("click", () => {
+    if (confirmRealTrading) {
 
-      setAccountMode("demo");
+      confirmRealTrading.addEventListener(
+        "click",
+        () => {
 
-    });
+          realTradingConfirmed = true;
 
+          if (realTradingModal) {
+            realTradingModal.hidden = true;
+          }
 
-    realMode?.addEventListener("click", () => {
+          setAccountMode("real");
+        }
+      );
 
-      setAccountMode("real");
-
-    });
-
-
-    document
-      .getElementById("cancelRealTrading")
-      ?.addEventListener("click", () => {
-
-        realTradingModal.hidden = true;
-
-        realTradingConfirmed = false;
-
-        setAccountMode("demo");
-
-      });
+    }
 
 
-    document
-      .getElementById("confirmRealTrading")
-      ?.addEventListener("click", () => {
+    document.addEventListener(
+      "keydown",
+      (event) => {
 
-        realTradingConfirmed = true;
+        if (
+          event.key === "Escape" &&
+          realTradingModal &&
+          !realTradingModal.hidden
+        ) {
 
-        realTradingModal.hidden = true;
+          realTradingModal.hidden = true;
 
-        setAccountMode("real");
+          realTradingConfirmed = false;
 
-      });
-
-
-    document.addEventListener("keydown", (event) => {
-
-      if (
-        event.key === "Escape" &&
-        realTradingModal &&
-        !realTradingModal.hidden
-      ) {
-
-        realTradingModal.hidden = true;
-
-        realTradingConfirmed = false;
-
-        setAccountMode("demo");
+          setAccountMode("demo");
+        }
 
       }
+    );
 
-    });
 
-
-    // Default account mode
     setAccountMode("demo");
-
   </script>
 
 
-  <!-- =========================
-       MAIN KRISHWAVE ENGINE
-  ========================== -->
-  <script src="app.js"></script>
+  <!-- =========================================================
+       MAIN ENGINE
+  ========================================================== -->
+  <script id="fp5k3a" src="app.js"></script>
 
 </body>
-  </html>
+</html>
