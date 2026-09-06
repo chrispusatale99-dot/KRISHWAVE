@@ -1,195 +1,2314 @@
-<!-- =========================
-     STRATEGY CONTROL
-========================= -->
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
 
-<section class="section-block" id="strategy-control">
+  <meta
+    name="viewport"
+    content="width=device-width, initial-scale=1.0"
+  >
 
-  <div class="section-heading">
-    <div>
-      <div class="eyebrow">S</div>
-      <h2>STRATEGY CONTROL</h2>
+  <meta
+    name="description"
+    content="KRISHWAVE V3 - Deriv Market Intelligence and AI Analysis"
+  >
+
+  <title>KRISHWAVE V3</title>
+
+  <link rel="stylesheet" href="style.css">
+</head>
+
+<body>
+
+  <!-- =====================================================
+       HEADER
+  ====================================================== -->
+
+  <header class="topbar">
+
+    <div class="brand">
+
+      <div class="brand-mark">
+        KW
+      </div>
+
+      <div>
+        <div class="brand-name">
+          KRISHWAVE
+        </div>
+
+        <div class="brand-version">
+          V3 AI ENGINE
+        </div>
+      </div>
+
     </div>
 
-    <span class="section-badge">AI MODE</span>
-  </div>
 
-  <div class="strategy-control">
+    <div class="connection-pill">
 
-    <!-- SELECTED STRATEGY CARD -->
+      <span class="status-dot"></span>
+
+      <span>
+        DERIV
+      </span>
+
+      <strong id="connectionStatus">
+        CONNECTING
+      </strong>
+
+    </div>
+
+
     <button
-      class="strategy-selected"
-      id="strategySelected"
+      id="themeToggle"
+      class="icon-button"
       type="button"
-      aria-expanded="false"
-      aria-controls="strategyMenu"
+      aria-label="Toggle dark and light mode"
+      aria-pressed="false"
     >
-
-      <div class="strategy-selected-icon" id="strategySelectedIcon">
-        AI
-      </div>
-
-      <div class="strategy-selected-content">
-        <span>ACTIVE STRATEGY</span>
-
-        <strong id="strategySelectedName">
-          AUTO
-        </strong>
-
-        <small id="strategySelectedDescription">
-          AI chooses the strongest strategy
-        </small>
-      </div>
-
-      <div class="strategy-arrow" id="strategyArrow">
-        ˅
-      </div>
-
+      🌙
     </button>
 
+  </header>
 
-    <!-- EXPANDED STRATEGY OPTIONS -->
-    <div
-      class="strategy-menu"
-      id="strategyMenu"
-      hidden
-    >
 
-      <!-- AUTO -->
-      <button
-        class="strategy-option active"
-        type="button"
-        data-strategy="AUTO"
-        data-description="AI chooses the strongest strategy"
-        data-icon="AI"
-      >
+  <!-- =====================================================
+       MAIN APPLICATION
+  ====================================================== -->
 
-        <div class="strategy-option-icon">
+  <main class="app-shell">
+
+
+    <!-- ===================================================
+         ACCOUNT MODE
+    ==================================================== -->
+
+    <section class="section-block">
+
+      <div class="section-heading">
+
+        <div>
+
+          <div class="eyebrow">
+            01
+          </div>
+
+          <h2>
+            ACCOUNT MODE
+          </h2>
+
+        </div>
+
+        <span class="section-badge">
+          CONTROL
+        </span>
+
+      </div>
+
+
+      <div class="account-grid">
+
+        <!-- DEMO -->
+
+        <button
+          id="demoAccount"
+          class="account-card active"
+          type="button"
+          data-account="demo"
+        >
+
+          <div class="card-icon demo-icon">
+            D
+          </div>
+
+          <div class="card-content">
+
+            <span class="card-label">
+              DEMO ACCOUNT
+            </span>
+
+            <strong>
+              PRACTICE MODE
+            </strong>
+
+            <small>
+              Analysis and simulation
+            </small>
+
+          </div>
+
+          <span
+            id="demoCheck"
+            class="card-check"
+          >
+            ✓
+          </span>
+
+        </button>
+
+
+        <!-- REAL -->
+
+        <button
+          id="realAccount"
+          class="account-card"
+          type="button"
+          data-account="real"
+        >
+
+          <div class="card-icon real-icon">
+            R
+          </div>
+
+          <div class="card-content">
+
+            <span class="card-label">
+              REAL ACCOUNT
+            </span>
+
+            <strong>
+              LIVE MODE
+            </strong>
+
+            <small>
+              Trading access disabled
+            </small>
+
+          </div>
+
+          <span class="card-lock">
+            🔒
+          </span>
+
+        </button>
+
+      </div>
+
+
+      <div class="account-info-grid">
+
+        <div class="info-card">
+
+          <span>
+            ACCOUNT
+          </span>
+
+          <strong id="accountType">
+            DEMO
+          </strong>
+
+        </div>
+
+
+        <div class="info-card">
+
+          <span>
+            MODE
+          </span>
+
+          <strong id="accountMode">
+            ANALYSIS
+          </strong>
+
+        </div>
+
+
+        <div class="info-card">
+
+          <span>
+            TRADING
+          </span>
+
+          <strong>
+            DISABLED
+          </strong>
+
+        </div>
+
+
+        <div class="info-card">
+
+          <span>
+            ENGINE
+          </span>
+
+          <strong id="engineStatus">
+            READY
+          </strong>
+
+        </div>
+
+      </div>
+
+
+      <div class="account-actions">
+
+        <button
+          id="connectAccount"
+          class="primary-button"
+          type="button"
+        >
+          CONNECT
+        </button>
+
+        <button
+          id="disconnectAccount"
+          class="secondary-button"
+          type="button"
+        >
+          DISCONNECT
+        </button>
+
+      </div>
+
+    </section>
+
+
+
+    <!-- ===================================================
+         HERO
+    ==================================================== -->
+
+    <section class="hero-card">
+
+      <div class="hero-content">
+
+        <div class="hero-label">
+          DERIV MARKET INTELLIGENCE
+        </div>
+
+        <h1>
+          <span>KRISHWAVE</span>
           AI
+        </h1>
+
+        <p>
+          Real-time market analysis, digit intelligence,
+          statistical signals and automated strategy selection
+          for Deriv Volatility Indices.
+        </p>
+
+      </div>
+
+
+      <div class="hero-engine">
+
+        <div class="engine-ring">
+
+          <span>
+            AI
+          </span>
+
         </div>
 
-        <div class="strategy-option-content">
-          <strong>AUTO</strong>
-          <small>
-            AI chooses the strongest strategy
-          </small>
+        <small>
+          INTELLIGENCE ENGINE
+        </small>
+
+      </div>
+
+    </section>
+
+
+
+    <!-- ===================================================
+         LIVE STREAM
+    ==================================================== -->
+
+    <section class="section-block">
+
+      <div class="section-heading">
+
+        <div>
+
+          <div class="eyebrow">
+            02
+          </div>
+
+          <h2>
+            LIVE MARKET STREAM
+          </h2>
+
         </div>
 
-        <div class="strategy-option-check">
-          ✓
+        <span class="market-live-badge">
+          LIVE
+        </span>
+
+      </div>
+
+
+      <div class="stream-grid">
+
+        <div class="stream-card stream-main">
+
+          <div class="stream-icon">
+            ⚡
+          </div>
+
+          <div>
+
+            <span>
+              ACTIVE MARKET
+            </span>
+
+            <strong id="liveMarket">
+              R_10
+            </strong>
+
+          </div>
+
         </div>
 
-      </button>
+
+        <div class="stream-card">
+
+          <span>
+            LAST DIGIT
+          </span>
+
+          <strong id="liveDigit">
+            —
+          </strong>
+
+        </div>
 
 
-      <!-- MATCH -->
-      <button
-        class="strategy-option"
-        type="button"
-        data-strategy="MATCH"
-        data-description="Predict the next matching digit"
-        data-icon="M"
+        <div class="stream-card">
+
+          <span>
+            LIVE QUOTE
+          </span>
+
+          <strong id="liveQuote">
+            —
+          </strong>
+
+        </div>
+
+
+        <div class="stream-card">
+
+          <span>
+            TICKS
+          </span>
+
+          <strong id="liveTicks">
+            0
+          </strong>
+
+        </div>
+
+      </div>
+
+    </section>
+
+
+
+    <!-- ===================================================
+         MARKET SCANNER
+    ==================================================== -->
+
+    <section class="section-block">
+
+      <div class="section-heading">
+
+        <div>
+
+          <div class="eyebrow">
+            03
+          </div>
+
+          <h2>
+            MARKET SCANNER
+          </h2>
+
+        </div>
+
+        <span class="section-badge">
+          AI SCAN
+        </span>
+
+      </div>
+
+
+      <div class="scanner-header">
+
+        <div>
+
+          <span>
+            MARKET INTELLIGENCE
+          </span>
+
+          <strong id="scannerStatus">
+            Scanning available markets...
+          </strong>
+
+        </div>
+
+
+        <div class="scanner-live">
+
+          <span class="status-dot"></span>
+
+          <span>
+            LIVE
+          </span>
+
+        </div>
+
+
+        <button
+          id="scanAll"
+          class="scan-button"
+          type="button"
+        >
+          SCAN ALL
+        </button>
+
+      </div>
+
+
+      <div
+        id="marketScannerList"
+        class="scanner-grid market-list"
       >
 
-        <div class="strategy-option-icon">
-          M
+        <!-- Dynamic market cards appear here -->
+
+      </div>
+
+    </section>
+
+
+
+    <!-- ===================================================
+         SELECTED MARKET
+    ==================================================== -->
+
+    <section class="section-block">
+
+      <div class="section-heading">
+
+        <div>
+
+          <div class="eyebrow">
+            04
+          </div>
+
+          <h2>
+            SELECTED MARKET
+          </h2>
+
         </div>
 
-        <div class="strategy-option-content">
-          <strong>MATCH</strong>
-          <small>
-            Predict the next matching digit
-          </small>
+        <span class="section-badge">
+          LIVE DATA
+        </span>
+
+      </div>
+
+
+      <div class="selected-market-card">
+
+        <div class="selected-market-top">
+
+          <div>
+
+            <div class="market-caption">
+              SELECTED SYMBOL
+            </div>
+
+            <h3 id="selectedSymbol">
+              R_10
+            </h3>
+
+            <p id="selectedMarketName">
+              Volatility 10 Index
+            </p>
+
+          </div>
+
+
+          <div class="quote-display">
+
+            <span>
+              CURRENT QUOTE
+            </span>
+
+            <strong id="selectedQuote">
+              —
+            </strong>
+
+          </div>
+
         </div>
 
-        <div class="strategy-option-check">
-          ✓
+
+        <div class="market-metrics">
+
+          <div class="metric-card">
+
+            <span>
+              LAST DIGIT
+            </span>
+
+            <strong id="selectedDigit">
+              —
+            </strong>
+
+          </div>
+
+
+          <div class="metric-card">
+
+            <span>
+              SAMPLE
+            </span>
+
+            <strong id="selectedSample">
+              0
+            </strong>
+
+          </div>
+
+
+          <div class="metric-card">
+
+            <span>
+              MARKET SCORE
+            </span>
+
+            <strong id="selectedScore">
+              —
+            </strong>
+
+          </div>
+
         </div>
 
-      </button>
+      </div>
+
+    </section>
 
 
-      <!-- DIFFER -->
-      <button
-        class="strategy-option"
-        type="button"
-        data-strategy="DIFFER"
-        data-description="Predict the next different digit"
-        data-icon="D"
+
+    <!-- ===================================================
+         DIGIT DISTRIBUTION
+    ==================================================== -->
+
+    <section class="section-block">
+
+      <div class="section-heading">
+
+        <div>
+
+          <div class="eyebrow">
+            05
+          </div>
+
+          <h2>
+            DIGITAL DISTRIBUTION
+          </h2>
+
+        </div>
+
+        <span class="section-badge">
+          0 — 9
+        </span>
+
+      </div>
+
+
+      <div class="digit-grid">
+
+        <div
+          id="digit0"
+          class="digit-item"
+        >
+
+          <div class="digit-number">
+            0
+          </div>
+
+          <strong>
+            0%
+          </strong>
+
+          <div class="digit-bar">
+            <span></span>
+          </div>
+
+        </div>
+
+
+        <div
+          id="digit1"
+          class="digit-item"
+        >
+
+          <div class="digit-number">
+            1
+          </div>
+
+          <strong>
+            0%
+          </strong>
+
+          <div class="digit-bar">
+            <span></span>
+          </div>
+
+        </div>
+
+
+        <div
+          id="digit2"
+          class="digit-item"
+        >
+
+          <div class="digit-number">
+            2
+          </div>
+
+          <strong>
+            0%
+          </strong>
+
+          <div class="digit-bar">
+            <span></span>
+          </div>
+
+        </div>
+
+
+        <div
+          id="digit3"
+          class="digit-item"
+        >
+
+          <div class="digit-number">
+            3
+          </div>
+
+          <strong>
+            0%
+          </strong>
+
+          <div class="digit-bar">
+            <span></span>
+          </div>
+
+        </div>
+
+
+        <div
+          id="digit4"
+          class="digit-item"
+        >
+
+          <div class="digit-number">
+            4
+          </div>
+
+          <strong>
+            0%
+          </strong>
+
+          <div class="digit-bar">
+            <span></span>
+          </div>
+
+        </div>
+
+
+        <div
+          id="digit5"
+          class="digit-item"
+        >
+
+          <div class="digit-number">
+            5
+          </div>
+
+          <strong>
+            0%
+          </strong>
+
+          <div class="digit-bar">
+            <span></span>
+          </div>
+
+        </div>
+
+
+        <div
+          id="digit6"
+          class="digit-item"
+        >
+
+          <div class="digit-number">
+            6
+          </div>
+
+          <strong>
+            0%
+          </strong>
+
+          <div class="digit-bar">
+            <span></span>
+          </div>
+
+        </div>
+
+
+        <div
+          id="digit7"
+          class="digit-item"
+        >
+
+          <div class="digit-number">
+            7
+          </div>
+
+          <strong>
+            0%
+          </strong>
+
+          <div class="digit-bar">
+            <span></span>
+          </div>
+
+        </div>
+
+
+        <div
+          id="digit8"
+          class="digit-item"
+        >
+
+          <div class="digit-number">
+            8
+          </div>
+
+          <strong>
+            0%
+          </strong>
+
+          <div class="digit-bar">
+            <span></span>
+          </div>
+
+        </div>
+
+
+        <div
+          id="digit9"
+          class="digit-item"
+        >
+
+          <div class="digit-number">
+            9
+          </div>
+
+          <strong>
+            0%
+          </strong>
+
+          <div class="digit-bar">
+            <span></span>
+          </div>
+
+        </div>
+
+      </div>
+
+    </section>
+
+
+
+    <!-- ===================================================
+         PROBABILITY ANALYSIS
+    ==================================================== -->
+
+    <section class="section-block">
+
+      <div class="section-heading">
+
+        <div>
+
+          <div class="eyebrow">
+            06
+          </div>
+
+          <h2>
+            PROBABILITY ANALYSIS
+          </h2>
+
+        </div>
+
+        <span class="section-badge">
+          AI DATA
+        </span>
+
+      </div>
+
+
+      <div class="probability-grid">
+
+
+        <div class="probability-card">
+
+          <div class="probability-icon">
+            E
+          </div>
+
+          <span>
+            EVEN
+          </span>
+
+          <strong id="evenPercent">
+            0%
+          </strong>
+
+          <div class="probability-bar">
+            <span></span>
+          </div>
+
+        </div>
+
+
+        <div class="probability-card">
+
+          <div class="probability-icon">
+            O
+          </div>
+
+          <span>
+            ODD
+          </span>
+
+          <strong id="oddPercent">
+            0%
+          </strong>
+
+          <div class="probability-bar">
+            <span></span>
+          </div>
+
+        </div>
+
+
+        <div class="probability-card">
+
+          <div class="probability-icon">
+            H
+          </div>
+
+          <span>
+            HIGH
+          </span>
+
+          <strong id="highPercent">
+            0%
+          </strong>
+
+          <div class="probability-bar">
+            <span></span>
+          </div>
+
+        </div>
+
+
+        <div class="probability-card">
+
+          <div class="probability-icon">
+            L
+          </div>
+
+          <span>
+            LOW
+          </span>
+
+          <strong id="lowPercent">
+            0%
+          </strong>
+
+          <div class="probability-bar">
+            <span></span>
+          </div>
+
+        </div>
+
+
+        <div class="probability-card">
+
+          <div class="probability-icon">
+            >
+          </div>
+
+          <span>
+            OVER
+          </span>
+
+          <strong id="overPercent">
+            0%
+          </strong>
+
+          <div class="probability-bar">
+            <span></span>
+          </div>
+
+        </div>
+
+
+        <div class="probability-card">
+
+          <div class="probability-icon">
+            <
+          </div>
+
+          <span>
+            UNDER
+          </span>
+
+          <strong id="underPercent">
+            0%
+          </strong>
+
+          <div class="probability-bar">
+            <span></span>
+          </div>
+
+        </div>
+
+
+        <div class="probability-card">
+
+          <div class="probability-icon">
+            =
+          </div>
+
+          <span>
+            MATCH
+          </span>
+
+          <strong id="matchPercent">
+            0%
+          </strong>
+
+          <div class="probability-bar">
+            <span></span>
+          </div>
+
+        </div>
+
+
+        <div class="probability-card">
+
+          <div class="probability-icon">
+            ≠
+          </div>
+
+          <span>
+            DIFFER
+          </span>
+
+          <strong id="differPercent">
+            0%
+          </strong>
+
+          <div class="probability-bar">
+            <span></span>
+          </div>
+
+        </div>
+
+
+        <div class="probability-card">
+
+          <div class="probability-icon">
+            ↑
+          </div>
+
+          <span>
+            RISE
+          </span>
+
+          <strong id="risePercent">
+            0%
+          </strong>
+
+          <div class="probability-bar">
+            <span></span>
+          </div>
+
+        </div>
+
+
+        <div class="probability-card">
+
+          <div class="probability-icon">
+            ↓
+          </div>
+
+          <span>
+            FALL
+          </span>
+
+          <strong id="fallPercent">
+            0%
+          </strong>
+
+          <div class="probability-bar">
+            <span></span>
+          </div>
+
+        </div>
+
+      </div>
+
+    </section>
+
+
+
+    <!-- ===================================================
+         AI PREDICTION
+    ==================================================== -->
+
+    <section class="section-block">
+
+      <div class="section-heading">
+
+        <div>
+
+          <div class="eyebrow">
+            07
+          </div>
+
+          <h2>
+            AI PREDICTION
+          </h2>
+
+        </div>
+
+        <span class="ai-live-badge">
+          INTELLIGENCE
+        </span>
+
+      </div>
+
+
+      <div class="ai-layout">
+
+
+        <!-- AI RESULT -->
+
+        <div class="ai-result-card">
+
+          <div class="ai-card-header">
+
+            <span>
+              CURRENT AI SIGNAL
+            </span>
+
+            <span>
+              LIVE
+            </span>
+
+          </div>
+
+
+          <div class="ai-main-result">
+
+            <small>
+              SELECTED STRATEGY
+            </small>
+
+            <h3 id="predictionStrategy">
+              AUTO
+            </h3>
+
+            <strong id="predictionResult">
+              WAIT
+            </strong>
+
+            <span id="predictionConfidence">
+              0% CONFIDENCE
+            </span>
+
+          </div>
+
+
+          <div class="ai-stat-row">
+
+            <div>
+
+              <span>
+                TARGET
+              </span>
+
+              <strong id="predictionTarget">
+                —
+              </strong>
+
+            </div>
+
+
+            <div>
+
+              <span>
+                EDGE
+              </span>
+
+              <strong id="predictionEdge">
+                —
+              </strong>
+
+            </div>
+
+
+            <div>
+
+              <span>
+                SAMPLE
+              </span>
+
+              <strong id="predictionSample">
+                0
+              </strong>
+
+            </div>
+
+
+            <div>
+
+              <span>
+                QUALITY
+              </span>
+
+              <strong id="predictionQuality">
+                WAIT
+              </strong>
+
+            </div>
+
+          </div>
+
+        </div>
+
+
+
+        <!-- AI REASON -->
+
+        <div class="ai-reason-card">
+
+          <div class="ai-card-header">
+
+            <span>
+              AI REASONING
+            </span>
+
+            <span>
+              ANALYSIS
+            </span>
+
+          </div>
+
+
+          <p id="aiReasoning">
+            Waiting for sufficient live market data.
+          </p>
+
+
+          <div class="reason-grid">
+
+            <div class="reason-item">
+
+              <span>
+                DIGIT
+              </span>
+
+              <strong id="reasonDigit">
+                —
+              </strong>
+
+            </div>
+
+
+            <div class="reason-item">
+
+              <span>
+                FREQUENCY
+              </span>
+
+              <strong id="reasonFrequency">
+                —
+              </strong>
+
+            </div>
+
+
+            <div class="reason-item">
+
+              <span>
+                MOMENTUM
+              </span>
+
+              <strong id="reasonMomentum">
+                —
+              </strong>
+
+            </div>
+
+          </div>
+
+        </div>
+
+      </div>
+
+    </section>
+
+
+
+    <!-- ===================================================
+         STRATEGY CONTROL
+    ==================================================== -->
+
+    <section class="section-block strategy-control-section">
+
+      <div class="section-heading">
+
+        <div>
+
+          <div class="eyebrow">
+            08
+          </div>
+
+          <h2>
+            STRATEGY CONTROL
+          </h2>
+
+        </div>
+
+        <span class="section-badge">
+          SELECT
+        </span>
+
+      </div>
+
+
+      <!--
+        COMPACT STRATEGY SELECTOR
+
+        AUTO is displayed by default.
+        The button opens the complete strategy list.
+      -->
+
+      <div
+        id="strategySelector"
+        class="strategy-selector"
       >
 
-        <div class="strategy-option-icon">
-          D
+
+        <!-- COMPACT CARD -->
+
+        <button
+          id="strategyCompactButton"
+          class="strategy-compact-card"
+          type="button"
+          aria-expanded="false"
+          aria-controls="strategyOptions"
+        >
+
+          <div class="strategy-compact-left">
+
+            <div
+              id="strategyCompactIcon"
+              class="strategy-compact-icon"
+            >
+              A
+            </div>
+
+            <div class="strategy-compact-text">
+
+              <span>
+                ACTIVE STRATEGY
+              </span>
+
+              <strong id="strategyCompactName">
+                AUTO
+              </strong>
+
+              <small id="strategyCompactDescription">
+                AI selects strongest setup
+              </small>
+
+            </div>
+
+          </div>
+
+
+          <!-- A / V SHAPE -->
+
+          <div
+            id="strategyArrow"
+            class="strategy-arrow"
+          >
+           ⌄
+          </div>
+
+        </button>
+
+
+
+        <!--
+          FULL STRATEGY LIST
+
+          Hidden initially.
+          JavaScript opens it when the compact card
+          is pressed.
+        -->
+
+        <div
+          id="strategyOptions"
+          class="strategy-options strategy-options-collapsed"
+          aria-hidden="true"
+        >
+
+
+          <button
+            class="strategy-button active"
+            type="button"
+            data-strategy="AUTO"
+          >
+
+            <div class="strategy-icon">
+              A
+            </div>
+
+            <div>
+
+              <strong>
+                AUTO
+              </strong>
+
+              <small>
+                AI selects strongest setup
+              </small>
+
+            </div>
+
+          </button>
+
+
+          <button
+            class="strategy-button"
+            type="button"
+            data-strategy="EVEN"
+          >
+
+            <div class="strategy-icon">
+              E
+            </div>
+
+            <div>
+
+              <strong>
+                EVEN
+              </strong>
+
+              <small>
+                Predict even digit
+              </small>
+
+            </div>
+
+          </button>
+
+
+          <button
+            class="strategy-button"
+            type="button"
+            data-strategy="ODD"
+          >
+
+            <div class="strategy-icon">
+              O
+            </div>
+
+            <div>
+
+              <strong>
+                ODD
+              </strong>
+
+              <small>
+                Predict odd digit
+              </small>
+
+            </div>
+
+          </button>
+
+
+          <button
+            class="strategy-button"
+            type="button"
+            data-strategy="HIGH"
+          >
+
+            <div class="strategy-icon">
+              H
+            </div>
+
+            <div>
+
+              <strong>
+                HIGH
+              </strong>
+
+              <small>
+                Digits 5 to 9
+              </small>
+
+            </div>
+
+          </button>
+
+
+          <button
+            class="strategy-button"
+            type="button"
+            data-strategy="LOW"
+          >
+
+            <div class="strategy-icon">
+              L
+            </div>
+
+            <div>
+
+              <strong>
+                LOW
+              </strong>
+
+              <small>
+                Digits 0 to 4
+              </small>
+
+            </div>
+
+          </button>
+
+
+          <button
+            class="strategy-button"
+            type="button"
+            data-strategy="OVER"
+          >
+
+            <div class="strategy-icon">
+              &gt;
+            </div>
+
+            <div>
+
+              <strong>
+                OVER
+              </strong>
+
+              <small>
+                AI chooses threshold
+              </small>
+
+            </div>
+
+          </button>
+
+
+          <button
+            class="strategy-button"
+            type="button"
+            data-strategy="UNDER"
+          >
+
+            <div class="strategy-icon">
+              &lt;
+            </div>
+
+            <div>
+
+              <strong>
+                UNDER
+              </strong>
+
+              <small>
+                AI chooses threshold
+              </small>
+
+            </div>
+
+          </button>
+
+
+          <button
+            class="strategy-button"
+            type="button"
+            data-strategy="MATCH"
+          >
+
+            <div class="strategy-icon">
+              =
+            </div>
+
+            <div>
+
+              <strong>
+                MATCH
+              </strong>
+
+              <small>
+                AI chooses target digit
+              </small>
+
+            </div>
+
+          </button>
+
+
+          <button
+            class="strategy-button"
+            type="button"
+            data-strategy="DIFFER"
+          >
+
+            <div class="strategy-icon">
+              ≠
+            </div>
+
+            <div>
+
+              <strong>
+                DIFFER
+              </strong>
+
+              <small>
+                AI chooses target digit
+              </small>
+
+            </div>
+
+          </button>
+
+
+          <button
+            class="strategy-button"
+            type="button"
+            data-strategy="RISE"
+          >
+
+            <div class="strategy-icon">
+              ↑
+            </div>
+
+            <div>
+
+              <strong>
+                RISE
+              </strong>
+
+              <small>
+                Upward momentum
+              </small>
+
+            </div>
+
+          </button>
+
+
+          <button
+            class="strategy-button"
+            type="button"
+            data-strategy="FALL"
+          >
+
+            <div class="strategy-icon">
+              ↓
+            </div>
+
+            <div>
+
+              <strong>
+                FALL
+              </strong>
+
+              <small>
+                Downward momentum
+              </small>
+
+            </div>
+
+          </button>
+
         </div>
 
-        <div class="strategy-option-content">
-          <strong>DIFFER</strong>
+      </div>
+
+    </section>
+
+
+
+    <!-- ===================================================
+         CIRCULAR AI ENGINE
+    ==================================================== -->
+
+    <section class="ai-engine-section">
+
+
+      <div class="ai-engine-label">
+
+        <span>
+          KRISHWAVE
+        </span>
+
+        <strong>
+          CIRCULAR AI ENGINE
+        </strong>
+
+      </div>
+
+
+
+      <!-- AI CIRCLE -->
+
+      <div class="ai-circle-wrapper">
+
+        <div class="ai-circle">
+
+          <div class="ai-circle-inner">
+
+            <span id="aiCircleStatus">
+              READY
+            </span>
+
+            <strong id="aiCountdown">
+              10
+            </strong>
+
+            <small>
+              ANALYZING
+            </small>
+
+          </div>
+
+        </div>
+
+      </div>
+
+
+
+      <!-- AI LIVE RESULT -->
+
+      <div class="ai-live-result">
+
+        <div>
+
+          <span>
+            STRATEGY
+          </span>
+
+          <strong id="aiPredictionResult">
+            AUTO
+          </strong>
+
+        </div>
+
+
+        <div>
+
+          <span>
+            RESULT
+          </span>
+
+          <strong id="aiResultMain">
+            WAIT
+          </strong>
+
+        </div>
+
+
+        <div>
+
+          <span>
+            CONFIDENCE
+          </span>
+
+          <strong id="aiResultConfidence">
+            0%
+          </strong>
+
+        </div>
+
+      </div>
+
+
+
+      <!-- ENGINE BUTTONS -->
+
+      <div class="engine-actions">
+
+        <button
+          id="startAiEngine"
+          class="start-ai-button"
+          type="button"
+        >
+          START AI ENGINE
+        </button>
+
+        <button
+          id="stopAiEngine"
+          class="stop-ai-button"
+          type="button"
+        >
+          STOP
+        </button>
+
+      </div>
+
+
+      <p class="engine-note">
+
+        AI analyzes the selected market, waits for a qualified
+        setup, runs the entry countdown and signals when the
+        setup reaches the decision point.
+
+      </p>
+
+    </section>
+
+
+
+    <!-- ===================================================
+         TRADING STATUS
+    ==================================================== -->
+
+    <section class="section-block">
+
+      <div class="section-heading">
+
+        <div>
+
+          <div class="eyebrow">
+            09
+          </div>
+
+          <h2>
+            ENGINE STATUS
+          </h2>
+
+        </div>
+
+        <span class="section-badge">
+          MONITOR
+        </span>
+
+      </div>
+
+
+      <div class="status-dashboard">
+
+
+        <div class="status-card">
+
+          <div class="status-card-icon">
+            A
+          </div>
+
           <small>
-            Predict the next different digit
+            ACCOUNT MODE
           </small>
+
+          <strong id="statusAccountMode">
+            DEMO
+          </strong>
+
         </div>
 
-        <div class="strategy-option-check">
-          ✓
-        </div>
 
-      </button>
+        <div class="status-card">
 
+          <div class="status-card-icon">
+            E
+          </div>
 
-      <!-- EVEN -->
-      <button
-        class="strategy-option"
-        type="button"
-        data-strategy="EVEN"
-        data-description="Predict an even final digit"
-        data-icon="E"
-      >
-
-        <div class="strategy-option-icon">
-          E
-        </div>
-
-        <div class="strategy-option-content">
-          <strong>EVEN</strong>
           <small>
-            Predict an even final digit
+            ENGINE
           </small>
+
+          <strong id="statusEngine">
+            READY
+          </strong>
+
         </div>
 
-        <div class="strategy-option-check">
-          ✓
-        </div>
 
-      </button>
+        <div class="status-card">
 
+          <div class="status-card-icon">
+            L
+          </div>
 
-      <!-- ODD -->
-      <button
-        class="strategy-option"
-        type="button"
-        data-strategy="ODD"
-        data-description="Predict an odd final digit"
-        data-icon="O"
-      >
-
-        <div class="strategy-option-icon">
-          O
-        </div>
-
-        <div class="strategy-option-content">
-          <strong>ODD</strong>
           <small>
-            Predict an odd final digit
+            LAST ACTION
           </small>
+
+          <strong id="lastAction">
+            WAITING
+          </strong>
+
         </div>
 
-        <div class="strategy-option-check">
-          ✓
+
+        <div class="status-card">
+
+          <div class="status-card-icon">
+            #
+          </div>
+
+          <small>
+            SIGNAL COUNT
+          </small>
+
+          <strong id="tradeCount">
+            0
+          </strong>
+
         </div>
 
-      </button>
+
+        <div class="status-card">
+
+          <div class="status-card-icon">
+            S
+          </div>
+
+          <small>
+            CURRENT STATE
+          </small>
+
+          <strong id="engineState">
+            IDLE
+          </strong>
+
+        </div>
+
+      </div>
+
+    </section>
+
+
+
+    <!-- ===================================================
+         SAFETY NOTICE
+    ==================================================== -->
+
+    <div class="notice-card">
+
+      <div class="notice-icon">
+        !
+      </div>
+
+      <div>
+
+        <strong>
+          ANALYSIS ONLY
+        </strong>
+
+        <p>
+          KRISHWAVE provides market intelligence and statistical
+          analysis. Automatic real-money trading is disabled.
+          Always verify market conditions before making any
+          trading decision.
+        </p>
+
+      </div>
 
     </div>
 
-  </div>
+  </main>
 
-</section>
+
+
+  <!-- =====================================================
+       FOOTER
+  ====================================================== -->
+
+  <footer class="footer">
+
+    <div>
+
+      <strong>
+        KRISHWAVE V3
+      </strong>
+
+      <span>
+        Deriv Market Intelligence
+      </span>
+
+    </div>
+
+
+    <div class="footer-status">
+
+      <span class="status-dot"></span>
+
+      <span>
+        SYSTEM ONLINE
+      </span>
+
+    </div>
+
+  </footer>
+
+
+
+  <!-- =====================================================
+       CONFIG
+  ====================================================== -->
+
+  <script>
+
+    window.KRISHWAVE_CONFIG = {
+
+      derivAppId:
+        "34jzkIFHayWQzG6sXikax",
+
+      defaultAccount:
+        "demo",
+
+      tradingEnabled:
+        false
+
+    };
+
+  </script>
+
+
+
+  <!-- =====================================================
+       STRATEGY CONTROL UI
+       This handles only the open/close animation and
+       automatic closing after strategy selection.
+  ====================================================== -->
+
+  <script>
+
+    document.addEventListener(
+      "DOMContentLoaded",
+      function () {
+
+        const compactButton =
+          document.getElementById(
+            "strategyCompactButton"
+          );
+
+        const options =
+          document.getElementById(
+            "strategyOptions"
+          );
+
+        const arrow =
+          document.getElementById(
+            "strategyArrow"
+          );
+
+        const compactName =
+          document.getElementById(
+            "strategyCompactName"
+          );
+
+        const compactDescription =
+          document.getElementById(
+            "strategyCompactDescription"
+          );
+
+        const compactIcon =
+          document.getElementById(
+            "strategyCompactIcon"
+          );
+
+        const strategyButtons =
+          document.querySelectorAll(
+            ".strategy-button"
+          );
+
+
+        if (
+          !compactButton ||
+          !options
+        ) {
+          return;
+        }
+
+
+        const descriptions = {
+
+          AUTO:
+            "AI selects strongest setup",
+
+          EVEN:
+            "Predict even digit",
+
+          ODD:
+            "Predict odd digit",
+
+          HIGH:
+            "Digits 5 to 9",
+
+          LOW:
+            "Digits 0 to 4",
+
+          OVER:
+            "AI chooses threshold",
+
+          UNDER:
+            "AI chooses threshold",
+
+          MATCH:
+            "AI chooses target digit",
+
+          DIFFER:
+            "AI chooses target digit",
+
+          RISE:
+            "Upward momentum",
+
+          FALL:
+            "Downward momentum"
+
+        };
+
+
+        const icons = {
+
+          AUTO: "A",
+          EVEN: "E",
+          ODD: "O",
+          HIGH: "H",
+          LOW: "L",
+          OVER: ">",
+          UNDER: "<",
+          MATCH: "=",
+          DIFFER: "≠",
+          RISE: "↑",
+          FALL: "↓"
+
+        };
+
+
+        function openStrategies() {
+
+          options.classList.add(
+            "strategy-options-open"
+          );
+
+          options.classList.remove(
+            "strategy-options-collapsed"
+          );
+
+          options.setAttribute(
+            "aria-hidden",
+            "false"
+          );
+
+          compactButton.setAttribute(
+            "aria-expanded",
+            "true"
+          );
+
+          arrow.textContent = "⌃";
+
+        }
+
+
+        function closeStrategies() {
+
+          options.classList.remove(
+            "strategy-options-open"
+          );
+
+          options.classList.add(
+            "strategy-options-collapsed"
+          );
+
+          options.setAttribute(
+            "aria-hidden",
+            "true"
+          );
+
+          compactButton.setAttribute(
+            "aria-expanded",
+            "false"
+          );
+
+          arrow.textContent = "⌄";
+
+        }
+
+
+        function selectStrategy(
+          strategy
+        ) {
+
+          strategy =
+            String(strategy || "AUTO")
+              .toUpperCase();
+
+
+          if (
+            compactName
+          ) {
+            compactName.textContent =
+              strategy;
+          }
+
+
+          if (
+            compactDescription
+          ) {
+            compactDescription.textContent =
+              descriptions[strategy] ||
+              "AI strategy selected";
+          }
+
+
+          if (
+            compactIcon
+          ) {
+            compactIcon.textContent =
+              icons[strategy] ||
+              "A";
+          }
+
+
+          strategyButtons.forEach(
+            function (button) {
+
+              button.classList.toggle(
+                "active",
+                button.dataset.strategy === strategy
+              );
+
+            }
+          );
+
+
+          /*
+            IMPORTANT:
+
+            After choosing MATCH, DIFFER,
+            EVEN, ODD, etc., the menu closes
+            automatically and returns to the
+            single compact card.
+          */
+
+          closeStrategies();
+
+        }
+
+
+        compactButton.addEventListener(
+          "click",
+          function () {
+
+            const isOpen =
+              compactButton.getAttribute(
+                "aria-expanded"
+              ) === "true";
+
+
+            if (isOpen) {
+
+              closeStrategies();
+
+            } else {
+
+              openStrategies();
+
+            }
+
+          }
+        );
+
+
+        strategyButtons.forEach(
+          function (button) {
+
+            button.addEventListener(
+              "click",
+              function () {
+
+                const strategy =
+                  button.dataset.strategy ||
+                  "AUTO";
+
+
+                /*
+                  Update compact card immediately.
+                */
+
+                selectStrategy(
+                  strategy
+                );
+
+
+                /*
+                  Give the main app.js a chance
+                  to receive the same strategy.
+                */
+
+                document.dispatchEvent(
+                  new CustomEvent(
+                    "krishwave:strategy-selected",
+                    {
+                      detail: {
+                        strategy:
+                          strategy
+                      }
+                    }
+                  )
+                );
+
+              }
+            );
+
+          }
+        );
+
+
+        /*
+          Default state:
+          one AUTO card only.
+        */
+
+        selectStrategy("AUTO");
+
+      }
+
+    );
+
+  </script>
+
+
+
+  <!-- =====================================================
+       MAIN APPLICATION
+  ====================================================== -->
+
+  <script src="app.js"></script>
+
+
+</body>
+</html>
