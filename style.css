@@ -1,8 +1,3 @@
-/* =========================================================
-   KRISHWAVE V4.0
-   AI MARKET INTELLIGENCE
-   ========================================================= */
-
 * {
   box-sizing: border-box;
   margin: 0;
@@ -10,34 +5,26 @@
 }
 
 :root {
-
   --bg: #050811;
   --bg2: #080d18;
-
   --panel: #0b1220;
   --panel2: #101a2c;
   --panel3: #142039;
-
   --border: #20304a;
 
   --text: #f5f8ff;
   --muted: #8795aa;
 
   --green: #20f59a;
-  --blue: #3e8bff;
-  --cyan: #22d3ee;
-  --purple: #9b6cff;
-  --pink: #f472b6;
-
-  --yellow: #facc15;
-  --orange: #fb923c;
+  --blue: #42a5ff;
+  --cyan: #26d9ff;
+  --purple: #9b7cff;
+  --yellow: #ffd447;
+  --orange: #ff9d42;
   --red: #ff4d67;
 
   --shadow:
-    0 18px 50px rgba(0, 0, 0, .28);
-
-  --glow:
-    0 0 25px rgba(32, 245, 154, .12);
+    0 20px 60px rgba(0,0,0,.28);
 
   --radius: 20px;
 }
@@ -47,9 +34,12 @@ html {
 }
 
 body {
-
   min-height: 100vh;
-
+  color: var(--text);
+  background:
+    radial-gradient(circle at 15% 0%, rgba(66,165,255,.12), transparent 30%),
+    radial-gradient(circle at 90% 15%, rgba(32,245,154,.08), transparent 25%),
+    linear-gradient(180deg, var(--bg), var(--bg2));
   font-family:
     Inter,
     system-ui,
@@ -57,1525 +47,863 @@ body {
     BlinkMacSystemFont,
     "Segoe UI",
     sans-serif;
-
-  color: var(--text);
-
-  background:
-    radial-gradient(
-      circle at 15% 10%,
-      rgba(62,139,255,.12),
-      transparent 28%
-    ),
-    radial-gradient(
-      circle at 85% 20%,
-      rgba(32,245,154,.08),
-      transparent 28%
-    ),
-    linear-gradient(
-      180deg,
-      var(--bg),
-      var(--bg2)
-    );
-
-  line-height: 1.5;
 }
-
-body::before {
-
-  content: "";
-
-  position: fixed;
-
-  inset: 0;
-
-  pointer-events: none;
-
-  opacity: .18;
-
-  background-image:
-    linear-gradient(
-      rgba(255,255,255,.025) 1px,
-      transparent 1px
-    ),
-    linear-gradient(
-      90deg,
-      rgba(255,255,255,.025) 1px,
-      transparent 1px
-    );
-
-  background-size: 35px 35px;
-
-  z-index: -1;
-}
-
-
-/* =========================================================
-   TOP BAR
-   ========================================================= */
-
-.topbar {
-
-  position: sticky;
-
-  top: 0;
-
-  z-index: 100;
-
-  display: flex;
-
-  align-items: center;
-
-  gap: 20px;
-
-  min-height: 76px;
-
-  padding: 12px 24px;
-
-  border-bottom: 1px solid var(--border);
-
-  background:
-    rgba(5,8,17,.86);
-
-  backdrop-filter: blur(18px);
-}
-
-.brand {
-
-  display: flex;
-
-  align-items: center;
-
-  gap: 12px;
-}
-
-.brand-mark {
-
-  width: 46px;
-  height: 46px;
-
-  display: grid;
-
-  place-items: center;
-
-  border-radius: 14px;
-
-  font-weight: 1000;
-
-  color: #03120d;
-
-  background:
-    linear-gradient(
-      135deg,
-      var(--green),
-      var(--cyan)
-    );
-
-  box-shadow:
-    0 0 25px rgba(32,245,154,.2);
-}
-
-.brand-name {
-
-  font-size: 18px;
-
-  font-weight: 1000;
-
-  letter-spacing: 1.5px;
-}
-
-.brand-version {
-
-  margin-top: 2px;
-
-  color: var(--muted);
-
-  font-size: 10px;
-
-  font-weight: 800;
-
-  letter-spacing: 1px;
-}
-
-.topbar-actions {
-
-  margin-left: auto;
-
-  display: flex;
-
-  align-items: center;
-
-  gap: 10px;
-}
-
-.connection-pill {
-
-  min-height: 40px;
-
-  display: flex;
-
-  align-items: center;
-
-  gap: 8px;
-
-  padding: 8px 13px;
-
-  border: 1px solid var(--border);
-
-  border-radius: 999px;
-
-  background: var(--panel);
-
-  font-size: 11px;
-
-  font-weight: 800;
-}
-
-.status-dot {
-
-  width: 9px;
-  height: 9px;
-
-  border-radius: 50%;
-
-  background: var(--yellow);
-
-  box-shadow:
-    0 0 12px rgba(250,204,21,.5);
-}
-
-.icon-button {
-
-  width: 40px;
-  height: 40px;
-
-  border: 1px solid var(--border);
-
-  border-radius: 12px;
-
-  background: var(--panel);
-
-  color: var(--text);
-
-  cursor: pointer;
-
-  font-size: 18px;
-}
-
-
-/* =========================================================
-   LAYOUT
-   ========================================================= */
-
-.app-shell {
-
-  width: min(1400px, calc(100% - 30px));
-
-  margin: 0 auto;
-
-  padding: 25px 0 50px;
-}
-
-.section-block {
-
-  margin-bottom: 24px;
-}
-
-.section-heading {
-
-  display: flex;
-
-  align-items: center;
-
-  justify-content: space-between;
-
-  gap: 15px;
-
-  margin-bottom: 14px;
-}
-
-.section-heading h2 {
-
-  font-size: 22px;
-
-  line-height: 1.2;
-
-  margin-top: 4px;
-}
-
-.eyebrow {
-
-  display: inline-block;
-
-  color: var(--green);
-
-  font-size: 10px;
-
-  font-weight: 1000;
-
-  letter-spacing: 1.8px;
-}
-
-.section-badge {
-
-  display: inline-flex;
-
-  align-items: center;
-
-  min-height: 30px;
-
-  padding: 6px 10px;
-
-  border: 1px solid var(--border);
-
-  border-radius: 999px;
-
-  color: var(--muted);
-
-  background: rgba(255,255,255,.025);
-
-  font-size: 10px;
-
-  font-weight: 900;
-
-  white-space: nowrap;
-}
-
-.heading-actions {
-
-  display: flex;
-
-  align-items: center;
-
-  gap: 8px;
-}
-
-
-/* =========================================================
-   BUTTONS
-   ========================================================= */
 
 button,
 input {
-
   font: inherit;
 }
 
 button {
+  border: 0;
+}
 
-  -webkit-tap-highlight-color: transparent;
+button:focus-visible,
+input:focus-visible {
+  outline: 2px solid var(--green);
+  outline-offset: 2px;
+}
+
+/* TOPBAR */
+
+.topbar {
+  position: sticky;
+  top: 0;
+  z-index: 100;
+  min-height: 74px;
+  padding: 12px 24px;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 20px;
+
+  background: rgba(5,8,17,.88);
+  backdrop-filter: blur(18px);
+  border-bottom: 1px solid var(--border);
+}
+
+.brand {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+}
+
+.brand-mark {
+  width: 44px;
+  height: 44px;
+  display: grid;
+  place-items: center;
+  border-radius: 13px;
+  background: linear-gradient(135deg,var(--green),var(--blue));
+  color: #02120b;
+  font-weight: 1000;
+}
+
+.brand-name {
+  font-size: 18px;
+  font-weight: 1000;
+  letter-spacing: 1px;
+}
+
+.brand-version {
+  margin-top: 2px;
+  color: var(--muted);
+  font-size: 10px;
+  font-weight: 800;
+  letter-spacing: .8px;
+}
+
+.top-actions {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+}
+
+.connection-pill {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 9px 12px;
+  border: 1px solid var(--border);
+  border-radius: 999px;
+  background: var(--panel);
+  color: var(--muted);
+  font-size: 11px;
+  font-weight: 800;
+}
+
+.connection-pill strong {
+  color: var(--green);
+}
+
+.status-dot,
+.auth-status-dot {
+  width: 9px;
+  height: 9px;
+  border-radius: 50%;
+  background: var(--yellow);
+  box-shadow: 0 0 12px rgba(255,212,71,.6);
+}
+
+.icon-button {
+  width: 42px;
+  height: 42px;
+  border: 1px solid var(--border);
+  border-radius: 12px;
+  background: var(--panel);
+  color: var(--text);
+  cursor: pointer;
+}
+
+/* LAYOUT */
+
+.app-shell {
+  width: min(1400px, calc(100% - 32px));
+  margin: auto;
+  padding: 28px 0 50px;
+}
+
+.section-block {
+  margin-bottom: 24px;
+}
+
+.section-heading {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  gap: 15px;
+  margin-bottom: 14px;
+}
+
+.eyebrow {
+  display: block;
+  margin-bottom: 5px;
+  color: var(--green);
+  font-size: 10px;
+  font-weight: 1000;
+  letter-spacing: 1.4px;
+}
+
+h1,
+h2,
+h3 {
+  line-height: 1.1;
+}
+
+h2 {
+  font-size: clamp(20px, 3vw, 28px);
+}
+
+h3 {
+  font-size: 16px;
+}
+
+.section-badge,
+.quality-badge {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  padding: 7px 11px;
+  border: 1px solid var(--border);
+  border-radius: 999px;
+  background: var(--panel2);
+  color: var(--muted);
+  font-size: 10px;
+  font-weight: 1000;
+  letter-spacing: .8px;
+}
+
+.heading-actions {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+/* ACCOUNT */
+
+.account-grid {
+  display: grid;
+  grid-template-columns: repeat(2,1fr);
+  gap: 14px;
+  margin-bottom: 14px;
+}
+
+.account-card {
+  min-height: 115px;
+  padding: 20px;
+  text-align: left;
+  cursor: pointer;
+  border: 1px solid var(--border);
+  border-radius: var(--radius);
+  background: linear-gradient(145deg,var(--panel2),var(--panel));
+  color: var(--text);
+  transition: .2s ease;
+}
+
+.account-card:hover,
+.account-card.active {
+  border-color: var(--green);
+  transform: translateY(-1px);
+  box-shadow: 0 0 25px rgba(32,245,154,.08);
+}
+
+.account-card-label {
+  display: block;
+  margin-bottom: 7px;
+  color: var(--green);
+  font-size: 11px;
+  font-weight: 1000;
+}
+
+.account-card strong {
+  display: block;
+  font-size: 18px;
+}
+
+.account-card small {
+  display: block;
+  margin-top: 6px;
+  color: var(--muted);
+}
+
+.account-info-grid {
+  display: grid;
+  grid-template-columns: repeat(6,1fr);
+  gap: 10px;
+}
+
+.info-card,
+.stream-card,
+.selected-card,
+.control-card,
+.ai-result-card,
+.ai-reason-card,
+.status-grid > div {
+  border: 1px solid var(--border);
+  border-radius: 16px;
+  background: linear-gradient(145deg,var(--panel2),var(--panel));
+}
+
+.info-card {
+  min-height: 90px;
+  padding: 15px;
+}
+
+.info-card span,
+.stream-card span,
+.selected-card span,
+.ai-result-card span,
+.status-grid span,
+.control-card label {
+  display: block;
+  color: var(--muted);
+  font-size: 9px;
+  font-weight: 1000;
+  letter-spacing: .9px;
+}
+
+.info-card strong {
+  display: block;
+  margin-top: 10px;
+  font-size: 14px;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.balance-card strong {
+  color: var(--green);
+}
+
+.danger-text {
+  color: var(--red) !important;
+}
+
+.button-row {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 10px;
+  margin-top: 14px;
 }
 
 .primary-button,
 .secondary-button,
+.success-button,
 .danger-button {
-
-  min-height: 46px;
-
-  padding: 11px 18px;
-
+  min-height: 45px;
+  padding: 0 18px;
   border-radius: 12px;
-
-  font-size: 11px;
-
-  font-weight: 1000;
-
-  letter-spacing: .8px;
-
   cursor: pointer;
-
-  transition:
-    transform .15s ease,
-    box-shadow .15s ease,
-    background .15s ease;
+  font-size: 11px;
+  font-weight: 1000;
+  letter-spacing: .5px;
+  transition: .2s ease;
 }
 
 .primary-button {
-
-  border: 1px solid var(--green);
-
-  color: #03120d;
-
-  background:
-    linear-gradient(
-      135deg,
-      var(--green),
-      var(--cyan)
-    );
-
-  box-shadow:
-    0 0 20px rgba(32,245,154,.12);
+  background: linear-gradient(135deg,var(--green),var(--cyan));
+  color: #02120b;
 }
 
 .secondary-button {
-
   border: 1px solid var(--border);
-
-  color: var(--text);
-
   background: var(--panel2);
+  color: var(--text);
+}
+
+.success-button {
+  background: rgba(32,245,154,.12);
+  border: 1px solid rgba(32,245,154,.4);
+  color: var(--green);
 }
 
 .danger-button {
-
-  border: 1px solid rgba(255,77,103,.5);
-
-  color: #fff;
-
-  background:
-    rgba(255,77,103,.12);
+  background: rgba(255,77,103,.12);
+  border: 1px solid rgba(255,77,103,.4);
+  color: var(--red);
 }
 
 .primary-button:hover,
 .secondary-button:hover,
+.success-button:hover,
 .danger-button:hover {
-
   transform: translateY(-1px);
 }
 
-.primary-button.small,
-.secondary-button.small {
-
-  min-height: 36px;
-
-  padding: 8px 12px;
-
-  font-size: 10px;
+.small {
+  min-height: 35px;
+  padding: 0 12px;
 }
 
-.button-row {
-
+.auth-status {
   display: flex;
-
-  gap: 10px;
-
-  margin-top: 15px;
-
-  flex-wrap: wrap;
-}
-
-
-/* =========================================================
-   ACCOUNT
-   ========================================================= */
-
-.account-grid {
-
-  display: grid;
-
-  grid-template-columns:
-    repeat(2, minmax(0, 1fr));
-
+  align-items: center;
   gap: 12px;
-
-  margin-bottom: 12px;
-}
-
-.account-card {
-
-  min-height: 105px;
-
-  padding: 18px;
-
-  text-align: left;
-
+  margin-top: 14px;
+  padding: 14px;
   border: 1px solid var(--border);
-
-  border-radius: var(--radius);
-
-  color: var(--text);
-
-  background:
-    linear-gradient(
-      145deg,
-      var(--panel2),
-      var(--panel)
-    );
-
-  cursor: pointer;
+  border-radius: 16px;
+  background: var(--panel2);
 }
 
-.account-card.active {
-
-  border-color: var(--green);
-
-  box-shadow:
-    0 0 22px rgba(32,245,154,.1);
+.auth-status.connected {
+  border-color: rgba(32,245,154,.4);
 }
 
-.account-card-label {
+.auth-status.connected .auth-status-dot {
+  background: var(--green);
+  box-shadow: 0 0 14px rgba(32,245,154,.6);
+}
 
-  display: block;
+.auth-status.error {
+  border-color: rgba(255,77,103,.4);
+}
 
-  margin-bottom: 5px;
+.auth-status.error .auth-status-dot {
+  background: var(--red);
+}
 
-  color: var(--green);
-
+.auth-status strong {
   font-size: 10px;
-
-  font-weight: 1000;
-
-  letter-spacing: 1.4px;
 }
 
-.account-card strong {
-
-  display: block;
-
-  font-size: 17px;
-}
-
-.account-card small {
-
-  display: block;
-
-  margin-top: 3px;
-
+.auth-status p {
+  margin-top: 4px;
   color: var(--muted);
+  font-size: 12px;
+}
 
+.security-note,
+.warning-box {
+  margin-top: 12px;
+  padding: 12px 14px;
+  border-radius: 13px;
+  color: var(--muted);
+  background: rgba(66,165,255,.06);
+  border: 1px solid rgba(66,165,255,.15);
   font-size: 11px;
 }
 
-.account-info-grid {
+/* RISK */
 
+.risk-grid {
   display: grid;
-
-  grid-template-columns:
-    repeat(6, minmax(0, 1fr));
-
+  grid-template-columns: repeat(6,1fr);
   gap: 10px;
 }
 
-.account-info-card,
-.stream-card,
-.status-card {
-
+.control-card {
   padding: 15px;
+  min-height: 105px;
+}
 
+.control-card input {
+  width: 100%;
+  height: 38px;
+  margin-top: 8px;
+  padding: 0 10px;
   border: 1px solid var(--border);
+  border-radius: 10px;
+  background: #070c16;
+  color: var(--text);
+}
 
-  border-radius: 16px;
+.control-card strong {
+  display: block;
+  margin-top: 10px;
+  font-size: 20px;
+}
 
+.control-card small {
+  display: block;
+  margin-top: 5px;
+  color: var(--muted);
+  font-size: 9px;
+}
+
+.highlight-control strong {
+  color: var(--green);
+}
+
+.risk-stats {
+  display: grid;
+  grid-template-columns: repeat(4,1fr);
+  gap: 10px;
+  margin-top: 10px;
+}
+
+.risk-stats div {
+  padding: 14px;
+  border: 1px solid var(--border);
+  border-radius: 14px;
   background: var(--panel);
 }
 
-.account-info-card span,
-.stream-card span,
-.status-card span {
-
+.risk-stats span {
   display: block;
-
   color: var(--muted);
-
   font-size: 9px;
-
   font-weight: 900;
-
-  letter-spacing: 1px;
 }
 
-.account-info-card strong {
-
+.risk-stats strong {
   display: block;
-
   margin-top: 6px;
-
-  font-size: 13px;
+  font-size: 18px;
 }
 
-
-/* =========================================================
-   HERO
-   ========================================================= */
+/* HERO */
 
 .hero-card {
-
-  position: relative;
-
-  overflow: hidden;
-
-  padding: 42px;
-
+  padding: 34px;
   border: 1px solid var(--border);
-
-  border-radius: 28px;
-
+  border-radius: 25px;
   background:
-    radial-gradient(
-      circle at 85% 30%,
-      rgba(32,245,154,.13),
-      transparent 25%
-    ),
-    radial-gradient(
-      circle at 70% 70%,
-      rgba(62,139,255,.14),
-      transparent 30%
-    ),
-    linear-gradient(
-      145deg,
-      #0d1729,
-      #070c17
-    );
-
+    radial-gradient(circle at 80% 20%,rgba(32,245,154,.11),transparent 30%),
+    linear-gradient(145deg,#101a2c,#080d18);
   box-shadow: var(--shadow);
 }
 
-.hero-content {
-
-  max-width: 760px;
-}
-
 .hero-card h1 {
-
+  max-width: 700px;
   margin-top: 10px;
-
-  font-size:
-    clamp(34px, 6vw, 68px);
-
-  line-height: .98;
-
+  font-size: clamp(34px,6vw,68px);
   letter-spacing: -2px;
 }
 
 .hero-card h1 span {
-
   display: block;
-
   color: var(--green);
 }
 
 .hero-card p {
-
-  max-width: 700px;
-
-  margin-top: 18px;
-
+  max-width: 720px;
+  margin-top: 15px;
   color: var(--muted);
-
-  font-size: 15px;
+  line-height: 1.7;
 }
 
 .hero-tags {
-
   display: flex;
-
   flex-wrap: wrap;
-
   gap: 8px;
-
-  margin-top: 22px;
-}
-
-.hero-tags span {
-
-  padding: 7px 10px;
-
-  border: 1px solid var(--border);
-
-  border-radius: 999px;
-
-  background: rgba(255,255,255,.025);
-
-  color: var(--text);
-
-  font-size: 9px;
-
-  font-weight: 900;
-}
-
-
-/* =========================================================
-   STREAM
-   ========================================================= */
-
-.stream-grid {
-
-  display: grid;
-
-  grid-template-columns:
-    repeat(3, minmax(0, 1fr));
-
-  gap: 12px;
-}
-
-.stream-card strong {
-
-  display: block;
-
-  margin-top: 5px;
-
-  font-size: 21px;
-}
-
-.stream-card small {
-
-  display: block;
-
-  margin-top: 4px;
-
-  color: var(--muted);
-
-  font-size: 10px;
-}
-
-
-/* =========================================================
-   SCANNER
-   ========================================================= */
-
-.scanner-grid {
-
-  display: grid;
-
-  grid-template-columns:
-    repeat(4, minmax(0, 1fr));
-
-  gap: 12px;
-}
-
-.market-card {
-
-  padding: 16px;
-
-  border: 1px solid var(--border);
-
-  border-radius: 18px;
-
-  background:
-    linear-gradient(
-      145deg,
-      var(--panel2),
-      var(--panel)
-    );
-
-  cursor: pointer;
-
-  transition:
-    transform .15s ease,
-    border-color .15s ease;
-}
-
-.market-card:hover {
-
-  transform: translateY(-2px);
-
-  border-color: rgba(32,245,154,.5);
-}
-
-.market-card-top {
-
-  display: flex;
-
-  justify-content: space-between;
-
-  gap: 8px;
-}
-
-.market-symbol {
-
-  color: var(--cyan);
-
-  font-size: 10px;
-
-  font-weight: 1000;
-}
-
-.signal-badge {
-
-  padding: 4px 7px;
-
-  border-radius: 999px;
-
-  background: rgba(32,245,154,.08);
-
-  color: var(--green);
-
-  font-size: 8px;
-
-  font-weight: 1000;
-}
-
-.market-card h3 {
-
-  margin-top: 10px;
-
-  font-size: 14px;
-}
-
-.market-card-stats {
-
-  display: grid;
-
-  grid-template-columns:
-    repeat(3, minmax(0, 1fr));
-
-  gap: 6px;
-
-  margin-top: 14px;
-}
-
-.market-card-stats span {
-
-  padding: 8px;
-
-  border-radius: 9px;
-
-  background: rgba(255,255,255,.025);
-
-  color: var(--muted);
-
-  font-size: 8px;
-
-  font-weight: 800;
-}
-
-
-/* =========================================================
-   SELECTED MARKET
-   ========================================================= */
-
-.selected-market-card {
-
-  padding: 22px;
-
-  border: 1px solid var(--border);
-
-  border-radius: var(--radius);
-
-  background:
-    linear-gradient(
-      145deg,
-      var(--panel2),
-      var(--panel)
-    );
-}
-
-.selected-market-header {
-
-  display: flex;
-
-  justify-content: space-between;
-
-  gap: 15px;
-}
-
-.selected-market-header > div:first-child > span {
-
-  color: var(--cyan);
-
-  font-size: 11px;
-
-  font-weight: 1000;
-}
-
-.selected-market-header h3 {
-
-  margin-top: 5px;
-
-  font-size: 21px;
-}
-
-.selected-market-quote {
-
-  text-align: right;
-}
-
-.selected-market-quote span {
-
-  display: block;
-
-  color: var(--muted);
-
-  font-size: 9px;
-
-  font-weight: 900;
-}
-
-.selected-market-quote strong {
-
-  display: block;
-
-  margin-top: 4px;
-
-  font-size: 24px;
-
-  color: var(--green);
-}
-
-.selected-market-grid {
-
-  display: grid;
-
-  grid-template-columns:
-    repeat(4, minmax(0, 1fr));
-
-  gap: 10px;
-
   margin-top: 20px;
 }
 
-.selected-market-grid > div {
-
-  padding: 12px;
-
-  border-radius: 13px;
-
-  background: rgba(255,255,255,.025);
-}
-
-.selected-market-grid span {
-
-  display: block;
-
-  color: var(--muted);
-
-  font-size: 8px;
-
-  font-weight: 900;
-}
-
-.selected-market-grid strong {
-
-  display: block;
-
-  margin-top: 5px;
-
-  font-size: 16px;
-}
-
-
-/* =========================================================
-   DIGITS
-   ========================================================= */
-
-.digit-grid.horizontal-digits {
-
-  display: grid;
-
-  grid-template-columns:
-    repeat(10, minmax(62px, 1fr));
-
-  gap: 8px;
-
-  width: 100%;
-
-  overflow-x: auto;
-
-  padding-bottom: 8px;
-}
-
-.digit-item {
-
-  min-width: 62px;
-
-  padding: 13px 9px;
-
-  text-align: center;
-
+.hero-tags span {
+  padding: 8px 11px;
   border: 1px solid var(--border);
-
-  border-radius: 15px;
-
-  background: var(--panel);
-}
-
-.digit-number {
-
+  border-radius: 999px;
   color: var(--muted);
-
-  font-size: 10px;
-
+  font-size: 9px;
   font-weight: 1000;
 }
 
-.digit-item strong {
+/* STREAM */
 
+.stream-grid {
+  display: grid;
+  grid-template-columns: repeat(3,1fr);
+  gap: 12px;
+}
+
+.stream-card {
+  min-height: 125px;
+  padding: 18px;
+}
+
+.stream-card strong {
   display: block;
+  margin-top: 10px;
+  font-size: 24px;
+}
 
-  margin: 4px 0;
+.stream-card small {
+  display: block;
+  margin-top: 6px;
+  color: var(--muted);
+}
 
+/* SCANNER */
+
+.scanner-grid {
+  display: grid;
+  grid-template-columns: repeat(4,1fr);
+  gap: 10px;
+}
+
+.market-card {
+  padding: 15px;
+  cursor: pointer;
+  border: 1px solid var(--border);
+  border-radius: 16px;
+  background: linear-gradient(145deg,var(--panel2),var(--panel));
+  transition: .2s ease;
+}
+
+.market-card:hover,
+.market-card.active {
+  border-color: var(--green);
+  transform: translateY(-1px);
+}
+
+.market-card-top {
+  display: flex;
+  justify-content: space-between;
+  gap: 8px;
+}
+
+.market-card-name {
+  font-weight: 900;
+  font-size: 12px;
+}
+
+.market-card-symbol {
+  margin-top: 3px;
+  color: var(--muted);
+  font-size: 9px;
+}
+
+.market-signal {
+  margin-top: 13px;
   font-size: 17px;
+  font-weight: 1000;
+}
+
+.market-quality {
+  margin-top: 4px;
+  color: var(--muted);
+  font-size: 9px;
+  font-weight: 900;
+}
+
+.market-card-stats {
+  display: grid;
+  grid-template-columns: repeat(3,1fr);
+  gap: 5px;
+  margin-top: 14px;
+}
+
+.market-card-stats div {
+  padding: 7px;
+  border-radius: 9px;
+  background: rgba(255,255,255,.025);
+}
+
+.market-card-stats span {
+  display: block;
+  color: var(--muted);
+  font-size: 8px;
+}
+
+.market-card-stats strong {
+  display: block;
+  margin-top: 3px;
+  font-size: 11px;
+}
+
+.market-rank {
+  color: var(--yellow);
+  font-size: 10px;
+  font-weight: 1000;
+}
+
+/* SELECTED */
+
+.selected-market-grid {
+  display: grid;
+  grid-template-columns: repeat(5,1fr);
+  gap: 10px;
+}
+
+.selected-card {
+  min-height: 105px;
+  padding: 15px;
+}
+
+.selected-card strong {
+  display: block;
+  margin-top: 9px;
+  font-size: 20px;
+}
+
+.selected-card small {
+  display: block;
+  margin-top: 5px;
+  color: var(--muted);
+  font-size: 9px;
+}
+
+.sub-heading {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin: 18px 0 10px;
+}
+
+.sub-heading span {
+  color: var(--muted);
+  font-size: 10px;
+}
+
+/* DIGITS */
+
+.digit-grid {
+  display: grid;
+  grid-template-columns: repeat(10,minmax(62px,1fr));
+  gap: 8px;
+}
+
+.horizontal-digits {
+  overflow-x: auto;
+  padding-bottom: 5px;
+}
+
+.digit-item {
+  min-width: 62px;
+  padding: 12px 8px;
+  border: 1px solid var(--border);
+  border-radius: 13px;
+  background: var(--panel);
+  text-align: center;
+}
+
+.digit-number {
+  font-size: 18px;
+  font-weight: 1000;
+}
+
+.digit-rate {
+  margin-top: 4px;
+  color: var(--muted);
+  font-size: 9px;
 }
 
 .digit-bar {
-
   height: 5px;
-
+  margin-top: 8px;
   overflow: hidden;
-
   border-radius: 999px;
-
-  background: #1b2639;
+  background: #050912;
 }
 
 .digit-bar span {
-
   display: block;
-
-  width: 0%;
-
   height: 100%;
-
+  width: 0;
   border-radius: inherit;
-
-  background:
-    linear-gradient(
-      90deg,
-      var(--blue),
-      var(--green)
-    );
-
-  transition: width .35s ease;
+  background: linear-gradient(90deg,var(--blue),var(--green));
 }
 
-
-/* =========================================================
-   PROBABILITY
-   ========================================================= */
+/* PROBABILITY */
 
 .probability-grid {
-
   display: grid;
-
-  grid-template-columns:
-    repeat(5, minmax(0, 1fr));
-
+  grid-template-columns: repeat(5,1fr);
   gap: 10px;
 }
 
 .probability-card {
-
-  min-height: 95px;
-
-  padding: 15px;
-
-  display: flex;
-
-  flex-direction: column;
-
-  justify-content: center;
-
+  padding: 14px;
   border: 1px solid var(--border);
-
-  border-radius: 16px;
-
+  border-radius: 15px;
   background: var(--panel);
 }
 
 .probability-card span {
-
+  display: block;
   color: var(--muted);
-
   font-size: 9px;
-
   font-weight: 900;
 }
 
 .probability-card strong {
-
-  margin-top: 5px;
-
-  font-size: 23px;
-
-  color: var(--green);
-}
-
-
-/* =========================================================
-   RISK ENGINE
-   ========================================================= */
-
-.risk-control-card {
-
-  padding: 20px;
-
-  border: 1px solid var(--border);
-
-  border-radius: var(--radius);
-
-  background:
-    radial-gradient(
-      circle at 90% 10%,
-      rgba(32,245,154,.07),
-      transparent 25%
-    ),
-    linear-gradient(
-      145deg,
-      var(--panel2),
-      var(--panel)
-    );
-}
-
-.risk-grid {
-
-  display: grid;
-
-  grid-template-columns:
-    repeat(4, minmax(0, 1fr));
-
-  gap: 12px;
-}
-
-.risk-field label {
-
   display: block;
-
-  margin-bottom: 7px;
-
-  color: var(--muted);
-
-  font-size: 9px;
-
-  font-weight: 1000;
-
-  letter-spacing: 1px;
-}
-
-.input-wrap {
-
-  display: flex;
-
-  align-items: center;
-
-  border: 1px solid var(--border);
-
-  border-radius: 12px;
-
-  background: #070d18;
-
-  overflow: hidden;
-}
-
-.input-wrap span {
-
-  width: 38px;
-
-  display: grid;
-
-  place-items: center;
-
-  color: var(--green);
-
-  font-weight: 1000;
-}
-
-.input-wrap input {
-
-  width: 100%;
-
-  min-width: 0;
-
-  height: 46px;
-
-  border: 0;
-
-  outline: 0;
-
-  padding: 0 10px;
-
-  background: transparent;
-
-  color: var(--text);
-
-  font-size: 16px;
-
-  font-weight: 900;
-}
-
-.risk-field small {
-
-  display: block;
-
-  margin-top: 5px;
-
-  color: var(--muted);
-
-  font-size: 9px;
-}
-
-.stake-display-grid {
-
-  display: grid;
-
-  grid-template-columns:
-    repeat(4, minmax(0, 1fr));
-
-  gap: 10px;
-
-  margin-top: 18px;
-}
-
-.risk-stat {
-
-  padding: 14px;
-
-  border: 1px solid var(--border);
-
-  border-radius: 14px;
-
-  background: rgba(255,255,255,.025);
-}
-
-.risk-stat span {
-
-  display: block;
-
-  color: var(--muted);
-
-  font-size: 8px;
-
-  font-weight: 1000;
-}
-
-.risk-stat strong {
-
-  display: block;
-
-  margin-top: 5px;
-
-  font-size: 18px;
-}
-
-.risk-stat.highlight {
-
-  border-color: rgba(32,245,154,.4);
-}
-
-.risk-stat.highlight strong {
-
-  color: var(--green);
-}
-
-.risk-actions {
-
-  display: flex;
-
-  flex-wrap: wrap;
-
-  gap: 10px;
-
-  margin-top: 15px;
-}
-
-.risk-message {
-
-  margin-top: 14px;
-
-  padding: 11px 13px;
-
-  border-radius: 11px;
-
-  color: var(--muted);
-
-  background: rgba(255,255,255,.025);
-
-  font-size: 10px;
-
-  font-weight: 700;
-}
-
-
-/* =========================================================
-   AI PREDICTION
-   ========================================================= */
-
-.ai-layout {
-
-  display: grid;
-
-  grid-template-columns: 1fr;
-}
-
-.ai-prediction-card {
-
-  display: grid;
-
-  grid-template-columns:
-    1.5fr repeat(4, 1fr);
-
-  gap: 10px;
-
-  padding: 18px;
-
-  border: 1px solid var(--border);
-
-  border-radius: var(--radius);
-
-  background: var(--panel);
-}
-
-.ai-prediction-main {
-
-  padding: 14px;
-
-  border-radius: 15px;
-
-  background:
-    linear-gradient(
-      145deg,
-      rgba(32,245,154,.08),
-      rgba(62,139,255,.05)
-    );
-}
-
-.ai-prediction-main span,
-.ai-metric span,
-.ai-reason span {
-
-  color: var(--muted);
-
-  font-size: 9px;
-
-  font-weight: 900;
-}
-
-.ai-prediction-main strong {
-
-  display: block;
-
   margin-top: 7px;
-
-  color: var(--green);
-
   font-size: 22px;
 }
 
-.ai-metric {
-
-  padding: 14px;
-
-  border-radius: 15px;
-
-  background: rgba(255,255,255,.025);
-}
-
-.ai-metric strong {
-
+.probability-card small {
   display: block;
-
-  margin-top: 7px;
-
-  font-size: 18px;
-}
-
-.ai-reason {
-
-  grid-column: 1 / -1;
-
-  padding: 14px;
-
-  border-top: 1px solid var(--border);
-}
-
-.ai-reason p {
-
-  margin-top: 7px;
-
+  margin-top: 4px;
   color: var(--muted);
-
-  font-size: 12px;
 }
 
-
-/* =========================================================
-   STRATEGY
-   ========================================================= */
+/* STRATEGY */
 
 .strategy-control-card {
-
-  position: relative;
-
-  width: 100%;
-
   border: 1px solid var(--border);
-
   border-radius: 18px;
-
-  background:
-    linear-gradient(
-      145deg,
-      var(--panel2),
-      var(--panel)
-    );
-
-  box-shadow: var(--shadow);
+  background: linear-gradient(145deg,var(--panel2),var(--panel));
 }
 
 .strategy-current {
-
   width: 100%;
-
   min-height: 72px;
-
   padding: 14px 18px;
-
   display: flex;
-
   align-items: center;
-
-  gap: 14px;
-
-  border: 0;
-
-  border-radius: 18px;
-
+  gap: 13px;
   background: transparent;
-
   color: var(--text);
-
-  text-align: left;
-
   cursor: pointer;
+  text-align: left;
 }
 
-.strategy-current-icon {
-
+.strategy-icon {
   width: 42px;
   height: 42px;
-
-  min-width: 42px;
-
   display: grid;
-
   place-items: center;
-
   border-radius: 12px;
-
-  color: #03120d;
-
-  background:
-    linear-gradient(
-      135deg,
-      var(--green),
-      var(--blue)
-    );
-
-  font-size: 17px;
-
+  background: linear-gradient(135deg,var(--green),var(--blue));
+  color: #02120b;
+  font-size: 11px;
   font-weight: 1000;
 }
 
-.strategy-current-name {
+.strategy-current small {
+  display: block;
+  color: var(--muted);
+  font-size: 8px;
+  font-weight: 900;
+}
 
-  font-size: 17px;
-
-  font-weight: 1000;
+.strategy-current strong {
+  display: block;
+  margin-top: 3px;
+  font-size: 16px;
 }
 
 .strategy-arrow {
-
   margin-left: auto;
-
   color: var(--green);
-
-  font-size: 27px;
-
-  font-weight: 1000;
-
-  transition: transform .2s ease;
-}
-
-.strategy-control-card.open .strategy-arrow {
-
-  transform: rotate(180deg);
+  font-size: 25px;
 }
 
 .strategy-menu {
-
   display: none;
-
-  grid-template-columns:
-    repeat(4, minmax(0, 1fr));
-
-  gap: 9px;
-
+  grid-template-columns: repeat(4,1fr);
+  gap: 8px;
   padding: 0 12px 12px;
 }
 
 .strategy-control-card.open .strategy-menu {
-
   display: grid;
 }
 
 .strategy-button {
-
-  min-height: 48px;
-
+  min-height: 43px;
   border: 1px solid var(--border);
-
-  border-radius: 11px;
-
+  border-radius: 10px;
   background: var(--panel);
-
-  color: var(--text);
-
-  font-size: 10px;
-
-  font-weight: 1000;
-
+  color: var(--muted);
   cursor: pointer;
+  font-size: 10px;
+  font-weight: 1000;
 }
 
 .strategy-button.active {
-
   border-color: var(--green);
-
   color: var(--green);
-
-  box-shadow:
-    0 0 15px rgba(32,245,154,.1);
 }
 
+/* AI */
 
-/* =========================================================
-   CIRCULAR AI
-   ========================================================= */
-
-.ai-engine-card {
-
+.ai-layout {
   display: grid;
+  grid-template-columns: repeat(3,1fr);
+  gap: 10px;
+}
 
-  grid-template-columns:
-    280px 1fr;
+.ai-result-card {
+  min-height: 125px;
+  padding: 17px;
+}
 
+.ai-result-card strong {
+  display: block;
+  margin-top: 10px;
+  font-size: 27px;
+}
+
+.ai-result-card small {
+  display: block;
+  margin-top: 6px;
+  color: var(--muted);
+}
+
+.ai-reason-card {
+  grid-column: 1/-1;
+  padding: 17px;
+}
+
+.ai-reason-card p {
+  margin-top: 9px;
+  color: var(--muted);
+  line-height: 1.6;
+}
+
+/* ENGINE */
+
+.engine-panel {
+  display: grid;
+  grid-template-columns: 260px 1fr;
   align-items: center;
-
-  gap: 35px;
-
-  padding: 30px;
-
+  gap: 30px;
+  padding: 28px;
   border: 1px solid var(--border);
-
-  border-radius: 28px;
-
-  background:
-    radial-gradient(
-      circle at 15% 50%,
-      rgba(32,245,154,.08),
-      transparent 28%
-    ),
-    var(--panel);
+  border-radius: 24px;
+  background: linear-gradient(145deg,var(--panel2),var(--panel));
 }
 
-.ai-circle {
-
+.engine-ring {
+  width: 210px;
+  height: 210px;
+  margin: auto;
+  padding: 8px;
   display: grid;
-
   place-items: center;
-}
-
-.ai-circle-ring {
-
-  width: 245px;
-  height: 245px;
-
-  padding: 12px;
-
-  display: grid;
-
-  place-items: center;
-
   border-radius: 50%;
-
   background:
     conic-gradient(
       var(--green),
@@ -1583,543 +911,267 @@ button {
       var(--purple),
       var(--green)
     );
-
-  animation:
-    spin 6s linear infinite;
+  animation: spin 7s linear infinite;
 }
 
-.ai-circle-inner {
-
+.engine-inner {
   width: 100%;
   height: 100%;
-
-  display: flex;
-
-  flex-direction: column;
-
-  justify-content: center;
-
-  align-items: center;
-
+  display: grid;
+  place-items: center;
+  align-content: center;
   border-radius: 50%;
-
-  background: #070c16;
-
-  animation:
-    counter-spin 6s linear infinite;
+  background: var(--bg);
+  animation: counterSpin 7s linear infinite;
 }
 
-.ai-circle-inner span {
-
+.engine-inner span {
   color: var(--green);
-
   font-size: 10px;
-
   font-weight: 1000;
-
-  letter-spacing: 1px;
 }
 
-.ai-circle-inner strong {
-
-  font-size: 58px;
-
-  line-height: 1;
-
-  margin: 5px 0;
+.engine-inner strong {
+  margin-top: 5px;
+  font-size: 48px;
 }
 
-.ai-circle-inner small {
-
+.engine-inner small {
   color: var(--muted);
-
   font-size: 9px;
+}
 
-  font-weight: 900;
+.engine-info p {
+  max-width: 650px;
+  margin-top: 10px;
+  color: var(--muted);
+  line-height: 1.6;
 }
 
 @keyframes spin {
-
-  to {
-    transform: rotate(360deg);
-  }
+  to { transform: rotate(360deg); }
 }
 
-@keyframes counter-spin {
-
-  to {
-    transform: rotate(-360deg);
-  }
+@keyframes counterSpin {
+  to { transform: rotate(-360deg); }
 }
 
-.ai-engine-content h3 {
+/* STATUS */
 
-  margin-top: 5px;
-
-  font-size: 28px;
-}
-
-.ai-engine-content p {
-
-  margin-top: 8px;
-
-  color: var(--muted);
-
-  max-width: 650px;
-}
-
-.ai-result-grid {
-
+.status-grid {
   display: grid;
-
-  grid-template-columns:
-    repeat(3, minmax(0, 1fr));
-
+  grid-template-columns: repeat(5,1fr);
   gap: 10px;
-
-  margin-top: 18px;
 }
 
-.ai-result-grid > div {
-
+.status-grid > div {
+  min-height: 85px;
   padding: 14px;
-
-  border: 1px solid var(--border);
-
-  border-radius: 13px;
-
-  background: rgba(255,255,255,.025);
 }
 
-.ai-result-grid span {
-
+.status-grid strong {
   display: block;
-
-  color: var(--muted);
-
-  font-size: 8px;
-
-  font-weight: 900;
-}
-
-.ai-result-grid strong {
-
-  display: block;
-
-  margin-top: 5px;
-
-  color: var(--green);
-
-  font-size: 18px;
-}
-
-
-/* =========================================================
-   STATUS
-   ========================================================= */
-
-.status-dashboard {
-
-  display: grid;
-
-  grid-template-columns:
-    repeat(5, minmax(0, 1fr));
-
-  gap: 10px;
-}
-
-.status-card strong {
-
-  display: block;
-
-  margin-top: 6px;
-
+  margin-top: 9px;
   font-size: 15px;
 }
 
+/* NOTICE */
 
-/* =========================================================
-   NOTICE
-   ========================================================= */
-
-.notice-card {
-
-  display: flex;
-
-  gap: 13px;
-
-  padding: 18px;
-
-  border: 1px solid rgba(250,204,21,.2);
-
-  border-radius: 18px;
-
-  background:
-    rgba(250,204,21,.04);
+.notice {
+  margin-top: 10px;
+  padding: 17px;
+  border: 1px solid rgba(255,212,71,.2);
+  border-radius: 16px;
+  background: rgba(255,212,71,.05);
 }
 
-.notice-icon {
-
-  width: 34px;
-  height: 34px;
-
-  min-width: 34px;
-
-  display: grid;
-
-  place-items: center;
-
-  border-radius: 10px;
-
-  background: rgba(250,204,21,.12);
-
+.notice strong {
   color: var(--yellow);
-
-  font-weight: 1000;
-}
-
-.notice-card strong {
-
-  font-size: 13px;
-}
-
-.notice-card p {
-
-  margin-top: 5px;
-
-  color: var(--muted);
-
   font-size: 11px;
 }
 
-
-/* =========================================================
-   FOOTER
-   ========================================================= */
-
-.footer {
-
-  width: min(1400px, calc(100% - 30px));
-
-  margin: 0 auto;
-
-  padding: 20px 0 35px;
-
-  display: flex;
-
-  justify-content: space-between;
-
-  gap: 15px;
-
+.notice p {
+  margin-top: 7px;
   color: var(--muted);
+  line-height: 1.6;
+  font-size: 11px;
+}
 
+footer {
+  display: flex;
+  justify-content: space-between;
+  gap: 15px;
+  padding: 25px 0 5px;
+  color: var(--muted);
   font-size: 10px;
 }
 
-.footer strong {
-
-  color: var(--text);
-
-  margin-right: 8px;
-}
-
-
-/* =========================================================
-   LIGHT MODE
-   ========================================================= */
+/* LIGHT MODE */
 
 body.light-mode {
-
-  --bg: #eef3f8;
-  --bg2: #f7f9fc;
-
+  --bg: #f4f7fb;
+  --bg2: #e9eef5;
   --panel: #ffffff;
-  --panel2: #f4f7fb;
-  --panel3: #eaf0f7;
-
-  --border: #d7e0ea;
-
-  --text: #142033;
-  --muted: #66758a;
-}
-
-body.light-mode::before {
-
-  opacity: .06;
+  --panel2: #ffffff;
+  --panel3: #eef3f9;
+  --border: #d5deea;
+  --text: #152033;
+  --muted: #66758b;
 }
 
 body.light-mode .topbar {
-
-  background:
-    rgba(247,249,252,.9);
+  background: rgba(255,255,255,.9);
 }
 
-body.light-mode .hero-card {
-
-  background:
-    linear-gradient(
-      145deg,
-      #ffffff,
-      #edf4fb
-    );
+body.light-mode .control-card input {
+  background: #f6f8fb;
+  color: var(--text);
 }
 
-body.light-mode .input-wrap {
-
+body.light-mode .engine-inner {
   background: #ffffff;
 }
 
-body.light-mode .ai-circle-inner {
+/* RESPONSIVE */
 
-  background: #f5f8fc;
-}
-
-
-/* =========================================================
-   RESPONSIVE
-   ========================================================= */
-
-@media (max-width: 1100px) {
-
-  .scanner-grid {
-
-    grid-template-columns:
-      repeat(3, minmax(0, 1fr));
-  }
-
+@media (max-width: 1150px) {
   .account-info-grid {
-
-    grid-template-columns:
-      repeat(3, minmax(0, 1fr));
-  }
-
-  .probability-grid {
-
-    grid-template-columns:
-      repeat(4, minmax(0, 1fr));
-  }
-
-  .risk-grid,
-  .stake-display-grid {
-
-    grid-template-columns:
-      repeat(2, minmax(0, 1fr));
-  }
-
-  .status-dashboard {
-
-    grid-template-columns:
-      repeat(3, minmax(0, 1fr));
-  }
-
-  .strategy-menu {
-
-    grid-template-columns:
-      repeat(3, minmax(0, 1fr));
-  }
-}
-
-
-@media (max-width: 800px) {
-
-  .topbar {
-
-    padding: 10px 14px;
-  }
-
-  .connection-pill > span:not(.status-dot) {
-
-    display: none;
-  }
-
-  .app-shell {
-
-    width: min(100% - 20px, 700px);
-
-    padding-top: 15px;
-  }
-
-  .hero-card {
-
-    padding: 28px 20px;
-  }
-
-  .hero-card h1 {
-
-    font-size: 38px;
-  }
-
-  .stream-grid {
-
-    grid-template-columns:
-      repeat(2, minmax(0, 1fr));
-  }
-
-  .scanner-grid {
-
-    grid-template-columns:
-      repeat(2, minmax(0, 1fr));
-  }
-
-  .probability-grid {
-
-    grid-template-columns:
-      repeat(2, minmax(0, 1fr));
-  }
-
-  .selected-market-grid {
-
-    grid-template-columns:
-      repeat(2, minmax(0, 1fr));
-  }
-
-  .ai-prediction-card {
-
-    grid-template-columns:
-      repeat(2, minmax(0, 1fr));
-  }
-
-  .ai-prediction-main {
-
-    grid-column: 1 / -1;
-  }
-
-  .ai-engine-card {
-
-    grid-template-columns: 1fr;
-
-    text-align: center;
-  }
-
-  .ai-circle {
-
-    margin: 0 auto;
-  }
-
-  .ai-result-grid {
-
-    grid-template-columns:
-      repeat(3, minmax(0, 1fr));
+    grid-template-columns: repeat(3,1fr);
   }
 
   .risk-grid {
-
-    grid-template-columns:
-      repeat(2, minmax(0, 1fr));
+    grid-template-columns: repeat(3,1fr);
   }
 
-  .strategy-menu {
+  .scanner-grid {
+    grid-template-columns: repeat(3,1fr);
+  }
 
-    grid-template-columns:
-      repeat(2, minmax(0, 1fr));
+  .selected-market-grid {
+    grid-template-columns: repeat(3,1fr);
+  }
+
+  .status-grid {
+    grid-template-columns: repeat(3,1fr);
   }
 }
 
-
-@media (max-width: 520px) {
-
-  .brand-version {
-
-    display: none;
-  }
-
-  .brand-name {
-
-    font-size: 15px;
-  }
-
-  .brand-mark {
-
-    width: 40px;
-    height: 40px;
+@media (max-width: 800px) {
+  .app-shell {
+    width: min(100% - 20px,700px);
   }
 
   .topbar {
-
-    min-height: 65px;
+    padding: 10px;
   }
 
-  .section-heading {
-
-    align-items: flex-start;
-
-    flex-direction: column;
+  .brand-version {
+    display: none;
   }
 
-  .heading-actions {
+  .account-info-grid,
+  .risk-grid,
+  .scanner-grid,
+  .selected-market-grid,
+  .probability-grid,
+  .status-grid {
+    grid-template-columns: repeat(2,1fr);
+  }
 
-    width: 100%;
+  .stream-grid {
+    grid-template-columns: 1fr;
+  }
 
-    justify-content: space-between;
+  .ai-layout {
+    grid-template-columns: 1fr 1fr;
+  }
+
+  .ai-reason-card {
+    grid-column: 1/-1;
+  }
+
+  .engine-panel {
+    grid-template-columns: 1fr;
+  }
+
+  .engine-ring {
+    width: 180px;
+    height: 180px;
+  }
+
+  .strategy-menu {
+    grid-template-columns: repeat(2,1fr);
+  }
+}
+
+@media (max-width: 520px) {
+  .app-shell {
+    width: calc(100% - 12px);
+    padding-top: 15px;
+  }
+
+  .topbar {
+    min-height: 62px;
+  }
+
+  .brand-mark {
+    width: 38px;
+    height: 38px;
+  }
+
+  .brand-name {
+    font-size: 15px;
+  }
+
+  .connection-pill {
+    padding: 7px 9px;
   }
 
   .account-grid,
   .account-info-grid,
-  .stream-grid,
+  .risk-grid,
+  .risk-stats,
   .scanner-grid,
   .selected-market-grid,
   .probability-grid,
-  .risk-grid,
-  .stake-display-grid,
-  .status-dashboard {
-
+  .ai-layout,
+  .status-grid {
     grid-template-columns: 1fr;
+  }
+
+  .hero-card {
+    padding: 24px 18px;
   }
 
   .hero-card h1 {
-
-    font-size: 33px;
-
-    letter-spacing: -1px;
+    font-size: 38px;
   }
 
-  .selected-market-header {
+  .section-heading {
+    align-items: flex-start;
+  }
 
+  .heading-actions {
+    flex-direction: column;
+    align-items: flex-end;
+  }
+
+  .button-row {
     flex-direction: column;
   }
 
-  .selected-market-quote {
-
-    text-align: left;
-  }
-
-  .ai-prediction-card {
-
-    grid-template-columns: 1fr;
-  }
-
-  .ai-prediction-main {
-
-    grid-column: auto;
-  }
-
-  .ai-result-grid {
-
-    grid-template-columns: 1fr;
-  }
-
-  .ai-circle-ring {
-
-    width: 210px;
-    height: 210px;
-  }
-
-  .risk-actions .primary-button,
-  .risk-actions .secondary-button,
-  .risk-actions .danger-button,
-  .button-row .primary-button,
-  .button-row .secondary-button {
-
+  .primary-button,
+  .secondary-button,
+  .success-button,
+  .danger-button {
     width: 100%;
   }
 
-  .footer {
-
-    flex-direction: column;
+  .engine-panel {
+    padding: 20px;
   }
 
-  .notice-card {
-
-    align-items: flex-start;
+  footer {
+    flex-direction: column;
   }
 }
