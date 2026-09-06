@@ -1,4773 +1,3211 @@
-/* =========================================================
-   KRISHWAVE V4.0
-   LIVE DERIV MARKET INTELLIGENCE + TRADING CONTROL ENGINE
+:root {
+  --bg: #050811;
+  --bg2: #080d18;
+  --panel: #0b1220;
+  --panel2: #101a2c;
+  --panel3: #142039;
+  --border: #20304a;
 
-   FEATURES
-   ---------------------------------------------------------
-   - Live Deriv market data
-   - 13 Volatility Indices
-   - Digit analysis
-   - Even / Odd
-   - High / Low
-   - Over / Under
-   - Match / Differ
-   - Rise / Fall
-   - AUTO strategy
-   - AI analysis
-   - 10 second AI analysis
-   - 7 second entry countdown
-   - TRADE NOW
-   - AI TRADE NOW
-   - Minimum stake 0.25
-   - Take Profit
-   - Stop Loss
-   - Martingale multiplier
-   - Maximum martingale steps
-   - Maximum stake protection
-   - Current stake
-   - Session P/L
-   - Reset martingale
-   - Demo / Real account mode
-   - Authenticated Deriv trading socket support
-   - Proposal -> Buy -> Contract monitoring
-   - Real-account confirmation
-   - No API token stored in source
-   - Existing CSS preserved
+  --text: #f5f8ff;
+  --muted: #8795aa;
+
+  --green: #20f59a;
+  --green2: #0bcf7d;
+
+  --blue: #35a7ff;
+  --cyan: #00e5ff;
+
+  --purple: #9b6cff;
+  --pink: #ff4fd8;
+
+  --yellow: #ffd84d;
+  --orange: #ff9d3d;
+
+  --red: #ff526d;
+
+  --shadow:
+    0 18px 50px rgba(0, 0, 0, .38);
+
+  --glow-green:
+    0 0 25px rgba(32, 245, 154, .18);
+
+  --glow-blue:
+    0 0 25px rgba(53, 167, 255, .18);
+
+  --radius: 20px;
+}
+
+
+/* =========================
+   RESET
+========================= */
+
+* {
+  box-sizing: border-box;
+  margin: 0;
+  padding: 0;
+}
+
+html {
+  scroll-behavior: smooth;
+}
+
+button,
+input,
+select,
+textarea {
+  font: inherit;
+}
+
+button {
+  -webkit-tap-highlight-color: transparent;
+}
+
+
+/* =========================
+   BODY
+========================= */
+
+body {
+  min-height: 100vh;
+
+  background:
+    radial-gradient(
+      circle at 10% 0%,
+      rgba(53,167,255,.10),
+      transparent 28%
+    ),
+    radial-gradient(
+      circle at 90% 10%,
+      rgba(155,108,255,.10),
+      transparent 28%
+    ),
+    linear-gradient(
+      145deg,
+      var(--bg),
+      var(--bg2)
+    );
+
+  color: var(--text);
+
+  font-family:
+    Inter,
+    system-ui,
+    -apple-system,
+    BlinkMacSystemFont,
+    "Segoe UI",
+    sans-serif;
+
+  line-height: 1.45;
+
+  overflow-x: hidden;
+}
+
+
+/* subtle grid */
+
+body::before {
+  content: "";
+
+  position: fixed;
+  inset: 0;
+
+  pointer-events: none;
+
+  opacity: .18;
+
+  background-image:
+    linear-gradient(
+      rgba(255,255,255,.025) 1px,
+      transparent 1px
+    ),
+    linear-gradient(
+      90deg,
+      rgba(255,255,255,.025) 1px,
+      transparent 1px
+    );
+
+  background-size: 40px 40px;
+
+  mask-image:
+    linear-gradient(
+      to bottom,
+      black,
+      transparent 85%
+    );
+
+  -webkit-mask-image:
+    linear-gradient(
+      to bottom,
+      black,
+      transparent 85%
+    );
+}
+
+
+/* =========================
+   HEADER
+========================= */
+
+.topbar {
+  position: sticky;
+  top: 0;
+  z-index: 1000;
+
+  width: 100%;
+  min-height: 76px;
+
+  display: flex;
+  align-items: center;
+  gap: 16px;
+
+  padding: 12px clamp(16px, 4vw, 42px);
+
+  background: rgba(5, 8, 17, .88);
+
+  border-bottom:
+    1px solid rgba(53,167,255,.18);
+
+  backdrop-filter: blur(18px);
+  -webkit-backdrop-filter: blur(18px);
+
+  box-shadow:
+    0 10px 35px rgba(0,0,0,.25);
+}
+
+
+/* =========================
+   BRAND
+========================= */
+
+.brand {
+  display: flex;
+  align-items: center;
+  gap: 11px;
+
+  flex-shrink: 0;
+}
+
+.brand-mark {
+  width: 44px;
+  height: 44px;
+
+  display: grid;
+  place-items: center;
+
+  border-radius: 14px;
+
+  color: #06110c;
+
+  font-weight: 950;
+  font-size: 21px;
+
+  background:
+    linear-gradient(
+      135deg,
+      var(--green),
+      var(--cyan)
+    );
+
+  box-shadow:
+    0 0 25px rgba(32,245,154,.25);
+}
+
+.brand-name {
+  font-weight: 950;
+  font-size: 18px;
+
+  letter-spacing: 1.5px;
+}
+
+.brand-version {
+  color: var(--green);
+
+  font-size: 10px;
+  font-weight: 900;
+
+  letter-spacing: 2px;
+}
+
+
+/* =========================
+   CONNECTION
+========================= */
+
+.connection-pill {
+  margin-left: auto;
+
+  display: flex;
+  align-items: center;
+  gap: 7px;
+
+  padding: 9px 13px;
+
+  border:
+    1px solid rgba(32,245,154,.28);
+
+  border-radius: 999px;
+
+  background:
+    rgba(32,245,154,.07);
+
+  color: #baf9db;
+
+  font-size: 10px;
+  font-weight: 800;
+
+  letter-spacing: .7px;
+}
+
+.connection-pill strong {
+  color: var(--green);
+}
+
+.status-dot {
+  width: 8px;
+  height: 8px;
+
+  display: inline-block;
+
+  border-radius: 50%;
+
+  background: var(--green);
+
+  box-shadow:
+    0 0 12px var(--green);
+
+  animation:
+    livePulse 1.7s infinite;
+}
+
+@keyframes livePulse {
+
+  50% {
+    opacity: .45;
+    transform: scale(.75);
+  }
+
+}
+
+
+/* =========================
+   ICON BUTTON
+========================= */
+
+.icon-button {
+  width: 43px;
+  height: 43px;
+
+  flex-shrink: 0;
+
+  border:
+    1px solid var(--border);
+
+  border-radius: 13px;
+
+  background:
+    linear-gradient(
+      145deg,
+      var(--panel2),
+      var(--panel)
+    );
+
+  color: var(--yellow);
+
+  cursor: pointer;
+
+  font-size: 19px;
+
+  box-shadow: var(--shadow);
+
+  transition: .2s ease;
+}
+
+.icon-button:hover {
+  transform: translateY(-2px);
+
+  border-color: var(--yellow);
+
+  box-shadow:
+    0 0 20px rgba(255,216,77,.15);
+}
+
+
+/* =========================
+   MAIN
+========================= */
+
+.app-shell {
+  width: min(
+    1400px,
+    calc(100% - 28px)
+  );
+
+  margin: 0 auto;
+
+  padding: 30px 0 60px;
+}
+
+.section-block {
+  margin-top: 28px;
+}
+
+.section-heading {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+
+  gap: 16px;
+
+  margin-bottom: 15px;
+}
+
+.section-heading > div:first-child {
+  display: flex;
+  align-items: center;
+
+  gap: 11px;
+}
+
+.eyebrow {
+  width: 30px;
+  height: 30px;
+
+  display: grid;
+  place-items: center;
+
+  border-radius: 9px;
+
+  background:
+    linear-gradient(
+      135deg,
+      var(--blue),
+      var(--purple)
+    );
+
+  color: white;
+
+  font-size: 10px;
+  font-weight: 950;
+
+  box-shadow:
+    0 0 18px rgba(53,167,255,.18);
+}
+
+.section-heading h2 {
+  font-size:
+    clamp(14px, 2vw, 18px);
+
+  letter-spacing: 1.2px;
+
+  font-weight: 900;
+}
+
+.section-badge,
+.ai-live-badge,
+.market-live-badge {
+  padding: 7px 10px;
+
+  border-radius: 999px;
+
+  border:
+    1px solid var(--border);
+
+  background:
+    rgba(255,255,255,.035);
+
+  color: var(--muted);
+
+  font-size: 9px;
+  font-weight: 900;
+
+  letter-spacing: 1px;
+}
+
+
+/* =========================
+   ACCOUNT CARDS
+========================= */
+
+.account-grid {
+  display: grid;
+
+  grid-template-columns:
+    repeat(2, 1fr);
+
+  gap: 16px;
+}
+
+.account-card {
+  position: relative;
+
+  min-height: 125px;
+
+  display: flex;
+  align-items: center;
+
+  gap: 15px;
+
+  padding: 20px;
+
+  border:
+    1px solid var(--border);
+
+  border-radius: var(--radius);
+
+  background:
+    linear-gradient(
+      145deg,
+      rgba(20,32,57,.96),
+      rgba(10,17,30,.96)
+    );
+
+  color: var(--text);
+
+  text-align: left;
+
+  cursor: pointer;
+
+  box-shadow: var(--shadow);
+
+  overflow: hidden;
+
+  transition: .25s ease;
+}
+
+.account-card::before {
+  content: "";
+
+  position: absolute;
+  inset: 0;
+
+  background:
+    linear-gradient(
+      120deg,
+      transparent,
+      rgba(53,167,255,.08),
+      transparent
+    );
+
+  transform:
+    translateX(-100%);
+
+  transition: .5s ease;
+}
+
+.account-card:hover::before {
+  transform:
+    translateX(100%);
+}
+
+.account-card:hover {
+  transform:
+    translateY(-3px);
+
+  border-color:
+    rgba(53,167,255,.45);
+}
+
+.account-card.active {
+  border-color:
+    rgba(32,245,154,.7);
+
+  box-shadow:
+    var(--shadow),
+    0 0 30px rgba(32,245,154,.10);
+
+  background:
+    linear-gradient(
+      145deg,
+      rgba(20,63,52,.9),
+      rgba(10,25,30,.96)
+    );
+}
+
+.card-icon {
+  width: 55px;
+  height: 55px;
+
+  flex-shrink: 0;
+
+  display: grid;
+  place-items: center;
+
+  border-radius: 17px;
+
+  font-size: 20px;
+  font-weight: 950;
+}
+
+.demo-icon {
+  color: #03120b;
+
+  background:
+    linear-gradient(
+      135deg,
+      var(--green),
+      #8affc9
+    );
+
+  box-shadow:
+    0 0 25px rgba(32,245,154,.22);
+}
+
+.real-icon {
+  color: white;
+
+  background:
+    linear-gradient(
+      135deg,
+      var(--purple),
+      var(--pink)
+    );
+
+  box-shadow:
+    0 0 25px rgba(155,108,255,.22);
+}
+
+.card-content {
+  display: flex;
+  flex-direction: column;
+
+  gap: 3px;
+}
+
+.card-label {
+  color: var(--green);
+
+  font-size: 10px;
+  font-weight: 950;
+
+  letter-spacing: 1.2px;
+}
+
+.account-card:nth-child(2)
+.card-label {
+  color: #c2aaff;
+}
+
+.card-content strong {
+  font-size: 15px;
+}
+
+.card-content small {
+  color: var(--muted);
+
+  font-size: 11px;
+}
+
+.card-check,
+.card-lock {
+  margin-left: auto;
+
+  align-self: flex-start;
+
+  font-size: 18px;
+}
+
+.card-check {
+  color: var(--green);
+}
+
+.card-lock {
+  opacity: .7;
+}
+
+
+/* =========================
+   ACCOUNT INFO
+========================= */
+
+.account-info-grid {
+  display: grid;
+
+  grid-template-columns:
+    repeat(4, 1fr);
+
+  gap: 12px;
+
+  margin-top: 12px;
+}
+
+.info-card,
+.metric-card,
+.reason-item,
+.status-card {
+  border:
+    1px solid var(--border);
+
+  border-radius: 16px;
+
+  background:
+    linear-gradient(
+      145deg,
+      rgba(17,27,46,.95),
+      rgba(9,15,27,.95)
+    );
+
+  box-shadow: var(--shadow);
+}
+
+.info-card {
+  padding: 15px;
+}
+
+.info-card span,
+.metric-card span,
+.status-card small,
+.reason-item span {
+  display: block;
+
+  color: var(--muted);
+
+  font-size: 9px;
+  font-weight: 900;
+
+  letter-spacing: 1px;
+}
+
+.info-card strong {
+  display: block;
+
+  margin-top: 6px;
+
+  color: var(--cyan);
+
+  font-size: 16px;
+}
+
+.account-actions {
+  display: flex;
+
+  gap: 10px;
+
+  margin-top: 12px;
+}
+
+.primary-button,
+.secondary-button,
+.scan-button,
+.start-ai-button,
+.stop-ai-button {
+  border: 0;
+
+  border-radius: 13px;
+
+  padding: 12px 18px;
+
+  font-weight: 950;
+  font-size: 11px;
+
+  letter-spacing: .5px;
+
+  cursor: pointer;
+
+  transition: .2s ease;
+}
+
+.primary-button {
+  color: #03120b;
+
+  background:
+    linear-gradient(
+      135deg,
+      var(--green),
+      #73ffc0
+    );
+
+  box-shadow:
+    0 0 22px rgba(32,245,154,.15);
+}
+
+.secondary-button {
+  color: #ffb4c0;
+
+  border:
+    1px solid rgba(255,82,109,.25);
+
+  background:
+    rgba(255,82,109,.07);
+}
+
+.primary-button:hover,
+.secondary-button:hover,
+.scan-button:hover {
+  transform:
+    translateY(-2px);
+}
+
+
+/* =========================
+   HERO
+========================= */
+
+.hero-card {
+  position: relative;
+
+  min-height: 270px;
+
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+
+  gap: 30px;
+
+  padding:
+    clamp(28px, 5vw, 55px);
+
+  margin-top: 25px;
+
+  border:
+    1px solid rgba(53,167,255,.2);
+
+  border-radius: 28px;
+
+  background:
+    radial-gradient(
+      circle at 80% 50%,
+      rgba(155,108,255,.14),
+      transparent 30%
+    ),
+    radial-gradient(
+      circle at 25% 20%,
+      rgba(0,229,255,.09),
+      transparent 30%
+    ),
+    linear-gradient(
+      145deg,
+      #101b30,
+      #080e19
+    );
+
+  overflow: hidden;
+
+  box-shadow:
+    var(--shadow),
+    0 0 60px rgba(53,167,255,.06);
+}
+
+.hero-content {
+  position: relative;
+  z-index: 2;
+
+  max-width: 700px;
+}
+
+.hero-label {
+  color: var(--cyan);
+
+  font-size: 10px;
+  font-weight: 950;
+
+  letter-spacing: 2px;
+}
+
+.hero-content h1 {
+  margin-top: 12px;
+
+  font-size:
+    clamp(34px, 6vw, 68px);
+
+  line-height: .95;
+
+  letter-spacing: -2px;
+
+  font-weight: 950;
+}
+
+.hero-content h1 span {
+  background:
+    linear-gradient(
+      90deg,
+      var(--green),
+      var(--cyan),
+      var(--purple)
+    );
+
+  -webkit-background-clip: text;
+  background-clip: text;
+
+  color: transparent;
+}
+
+.hero-content p {
+  max-width: 650px;
+
+  margin-top: 18px;
+
+  color: var(--muted);
+
+  font-size: 13px;
+}
+
+.hero-engine {
+  position: relative;
+  z-index: 2;
+
+  min-width: 170px;
+
+  display: flex;
+  flex-direction: column;
+
+  align-items: center;
+
+  gap: 10px;
+}
+
+.engine-ring {
+  width: 125px;
+  height: 125px;
+
+  display: grid;
+  place-items: center;
+
+  border-radius: 50%;
+
+  border:
+    2px solid rgba(32,245,154,.5);
+
+  background:
+    radial-gradient(
+      circle,
+      rgba(32,245,154,.16),
+      transparent 60%
+    );
+
+  box-shadow:
+    0 0 35px rgba(32,245,154,.15),
+    inset 0 0 30px rgba(53,167,255,.08);
+
+  animation:
+    engineFloat 4s ease-in-out infinite;
+}
+
+.engine-ring span {
+  color: var(--green);
+
+  font-size: 28px;
+  font-weight: 950;
+
+  text-shadow:
+    0 0 20px rgba(32,245,154,.45);
+}
+
+.hero-engine small {
+  color: var(--muted);
+
+  text-align: center;
+
+  font-size: 8px;
+  font-weight: 900;
+
+  letter-spacing: 2px;
+}
+
+@keyframes engineFloat {
+
+  50% {
+    transform:
+      translateY(-8px);
+  }
+
+}
+
+
+/* =========================
+   STREAM
+========================= */
+
+.stream-grid {
+  display: grid;
+
+  grid-template-columns:
+    2fr repeat(3, 1fr);
+
+  gap: 12px;
+
+  margin-top: 16px;
+}
+
+.stream-card {
+  min-height: 86px;
+
+  display: flex;
+  flex-direction: column;
+
+  justify-content: center;
+
+  padding: 16px;
+
+  border:
+    1px solid var(--border);
+
+  border-radius: 17px;
+
+  background:
+    linear-gradient(
+      145deg,
+      var(--panel2),
+      var(--panel)
+    );
+
+  box-shadow: var(--shadow);
+}
+
+.stream-card span {
+  color: var(--muted);
+
+  font-size: 9px;
+  font-weight: 900;
+
+  letter-spacing: 1px;
+}
+
+.stream-card strong {
+  margin-top: 5px;
+
+  color: var(--cyan);
+
+  font-size: 19px;
+  font-weight: 950;
+}
+
+.stream-main {
+  flex-direction: row;
+
+  align-items: center;
+
+  gap: 14px;
+
+  border-color:
+    rgba(32,245,154,.22);
+}
+
+.stream-main strong {
+  color: var(--green);
+}
+
+.stream-icon {
+  width: 45px;
+  height: 45px;
+
+  display: grid;
+  place-items: center;
+
+  border-radius: 14px;
+
+  background:
+    rgba(32,245,154,.09);
+
+  color: var(--green);
+
+  font-size: 22px;
+}
+
+
+/* =========================
+   SCANNER
+========================= */
+
+.scanner-header {
+  display: flex;
+
+  justify-content: space-between;
+  align-items: center;
+
+  padding: 15px 17px;
+
+  margin-bottom: 12px;
+
+  border:
+    1px solid var(--border);
+
+  border-radius: 17px;
+
+  background:
+    rgba(255,255,255,.025);
+}
+
+.scanner-header span {
+  display: block;
+
+  color: var(--muted);
+
+  font-size: 9px;
+  font-weight: 900;
+
+  letter-spacing: 1px;
+}
+
+.scanner-header strong {
+  display: block;
+
+  margin-top: 3px;
+
+  font-size: 14px;
+}
+
+.scanner-live {
+  display: flex !important;
+
+  align-items: center;
+
+  gap: 7px;
+
+  color: var(--green) !important;
+}
+
+.scan-button {
+  color: #06110d;
+
+  background:
+    linear-gradient(
+      135deg,
+      var(--green),
+      var(--cyan)
+    );
+}
+
+.scanner-grid,
+.market-list {
+  display: grid;
+
+  grid-template-columns:
+    repeat(4, 1fr);
+
+  gap: 13px;
+}
+
+
+/* =========================
+   MARKET CARDS
+========================= */
+
+.market-card {
+  position: relative;
+
+  min-height: 210px;
+
+  padding: 17px;
+
+  border:
+    1px solid var(--border);
+
+  border-radius: 19px;
+
+  background:
+    linear-gradient(
+      145deg,
+      rgba(18,29,49,.98),
+      rgba(8,14,25,.98)
+    );
+
+  box-shadow: var(--shadow);
+
+  overflow: hidden;
+
+  cursor: pointer;
+
+  transition: .25s ease;
+}
+
+.market-card::after {
+  content: "";
+
+  position: absolute;
+
+  left: 0;
+  right: 0;
+  bottom: 0;
+
+  height: 3px;
+
+  background:
+    linear-gradient(
+      90deg,
+      var(--green),
+      var(--cyan),
+      var(--purple)
+    );
+
+  opacity: .65;
+}
+
+.market-card:hover {
+  transform:
+    translateY(-4px);
+
+  border-color:
+    rgba(53,167,255,.5);
+
+  box-shadow:
+    var(--shadow),
+    0 0 25px rgba(53,167,255,.10);
+}
+
+.market-card-top {
+  display: flex;
+
+  justify-content: space-between;
+
+  gap: 10px;
+}
+
+.market-card-top strong {
+  font-size: 14px;
+}
+
+.market-card-top small {
+  display: block;
+
+  margin-top: 3px;
+
+  color: var(--muted);
+
+  font-size: 9px;
+}
+
+.market-live {
+  color: var(--green);
+
+  font-size: 8px;
+  font-weight: 950;
+}
+
+.market-card-signal {
+  margin-top: 18px;
+
+  padding: 12px;
+
+  border-radius: 13px;
+
+  background:
+    rgba(32,245,154,.055);
+
+  border:
+    1px solid rgba(32,245,154,.12);
+}
+
+.market-card-signal span {
+  color: var(--muted);
+
+  font-size: 8px;
+  font-weight: 900;
+}
+
+.market-card-signal strong {
+  display: block;
+
+  margin-top: 3px;
+
+  color: var(--green);
+
+  font-size: 17px;
+}
+
+.signal-quality {
+  display: inline-flex;
+
+  margin-top: 9px;
+
+  padding: 5px 8px;
+
+  border-radius: 999px;
+
+  background:
+    rgba(32,245,154,.1);
+
+  color: var(--green);
+
+  font-size: 8px;
+  font-weight: 950;
+}
+
+.market-card-stats {
+  display: grid;
+
+  grid-template-columns:
+    1fr 1fr;
+
+  gap: 8px;
+
+  margin-top: 12px;
+}
+
+.market-card-stats div {
+  padding: 9px;
+
+  border-radius: 11px;
+
+  background:
+    rgba(255,255,255,.035);
+}
+
+.market-card-stats span {
+  display: block;
+
+  color: var(--muted);
+
+  font-size: 7px;
+  font-weight: 900;
+}
+
+.market-card-stats strong {
+  display: block;
+
+  margin-top: 2px;
+
+  font-size: 12px;
+}
+
+.market-card-rank {
+  position: absolute;
+
+  right: 15px;
+  bottom: 14px;
+
+  color: var(--yellow);
+
+  font-size: 9px;
+  font-weight: 950;
+}
+
+
+/* =========================
+   SELECTED MARKET
+========================= */
+
+.selected-market-card {
+  padding: 20px;
+
+  border:
+    1px solid rgba(0,229,255,.17);
+
+  border-radius: 22px;
+
+  background:
+    radial-gradient(
+      circle at 90% 0%,
+      rgba(0,229,255,.08),
+      transparent 30%
+    ),
+    linear-gradient(
+      145deg,
+      var(--panel2),
+      var(--panel)
+    );
+
+  box-shadow: var(--shadow);
+}
+
+.selected-market-top {
+  display: flex;
+
+  justify-content: space-between;
+
+  gap: 20px;
+}
+
+.market-caption,
+.quote-display span {
+  color: var(--muted);
+
+  font-size: 8px;
+  font-weight: 950;
+
+  letter-spacing: 1.2px;
+}
+
+.selected-market-top h3 {
+  margin-top: 5px;
+
+  color: var(--cyan);
+
+  font-size: 30px;
+  font-weight: 950;
+}
+
+.selected-market-top p {
+  color: var(--muted);
+
+  font-size: 11px;
+}
+
+.quote-display {
+  text-align: right;
+}
+
+.quote-display strong {
+  display: block;
+
+  margin-top: 3px;
+
+  color: white;
+
+  font-size:
+    clamp(26px, 5vw, 42px);
+
+  font-weight: 950;
+
+  text-shadow:
+    0 0 20px rgba(53,167,255,.25);
+}
+
+.market-metrics {
+  display: grid;
+
+  grid-template-columns:
+    repeat(3, 1fr);
+
+  gap: 12px;
+
+  margin-top: 18px;
+}
+
+.metric-card {
+  padding: 17px;
+}
+
+.metric-card strong {
+  display: block;
+
+  margin-top: 5px;
+
+  color: var(--green);
+
+  font-size: 25px;
+}
+
+
+/* =========================
+   DIGITS
+========================= */
+
+.digit-grid {
+  display: grid;
+
+  grid-template-columns:
+    repeat(10, 1fr);
+
+  gap: 8px;
+}
+
+.digit-item {
+  min-height: 92px;
+
+  display: flex;
+  flex-direction: column;
+
+  align-items: center;
+  justify-content: center;
+
+  padding: 8px;
+
+  border:
+    1px solid var(--border);
+
+  border-radius: 14px;
+
+  background:
+    linear-gradient(
+      145deg,
+      var(--panel2),
+      var(--panel)
+    );
+
+  transition: .2s ease;
+}
+
+.digit-item:hover {
+  transform:
+    translateY(-3px);
+
+  border-color:
+    rgba(53,167,255,.5);
+}
+
+.digit-number {
+  width: 29px;
+  height: 29px;
+
+  display: grid;
+  place-items: center;
+
+  border-radius: 9px;
+
+  background:
+    linear-gradient(
+      135deg,
+      var(--blue),
+      var(--purple)
+    );
+
+  color: white;
+
+  font-size: 12px;
+  font-weight: 950;
+}
+
+.digit-item strong {
+  margin-top: 6px;
+
+  font-size: 10px;
+}
+
+.digit-bar,
+.probability-bar {
+  width: 100%;
+  height: 4px;
+
+  margin-top: 8px;
+
+  overflow: hidden;
+
+  border-radius: 99px;
+
+  background:
+    rgba(255,255,255,.06);
+}
+
+.digit-bar span,
+.probability-bar span {
+  display: block;
+
+  width: 35%;
+  height: 100%;
+
+  border-radius: inherit;
+
+  background:
+    linear-gradient(
+      90deg,
+      var(--cyan),
+      var(--green)
+    );
+}
+
+
+/* =========================
+   PROBABILITIES
+========================= */
+
+.probability-grid {
+  display: grid;
+
+  grid-template-columns:
+    repeat(5, 1fr);
+
+  gap: 12px;
+}
+
+.probability-card {
+  min-height: 135px;
+
+  padding: 15px;
+
+  border:
+    1px solid var(--border);
+
+  border-radius: 17px;
+
+  background:
+    linear-gradient(
+      145deg,
+      var(--panel2),
+      var(--panel)
+    );
+
+  box-shadow: var(--shadow);
+
+  transition: .2s ease;
+}
+
+.probability-card:hover {
+  transform:
+    translateY(-3px);
+
+  border-color:
+    rgba(155,108,255,.45);
+}
+
+.probability-icon {
+  width: 34px;
+  height: 34px;
+
+  display: grid;
+  place-items: center;
+
+  border-radius: 10px;
+
+  color: white;
+
+  background:
+    linear-gradient(
+      135deg,
+      var(--purple),
+      var(--pink)
+    );
+
+  font-size: 12px;
+  font-weight: 950;
+}
+
+.probability-card > span {
+  display: block;
+
+  margin-top: 11px;
+
+  color: var(--muted);
+
+  font-size: 9px;
+  font-weight: 900;
+}
+
+.probability-card > strong {
+  display: block;
+
+  margin-top: 2px;
+
+  color: var(--cyan);
+
+  font-size: 23px;
+}
+
+
+/* =========================================================
+   STRATEGY CONTROL
+   Compact card -> expand -> choose -> automatically close
 ========================================================= */
 
-(() => {
-  "use strict";
-
-  /* =======================================================
-     CONFIG
-  ======================================================= */
-
-  const USER_CONFIG = window.KRISHWAVE_CONFIG || {};
-
-  const CONFIG = {
-    WS_URL:
-      USER_CONFIG.publicWsUrl ||
-      "wss://api.derivws.com/trading/v1/options/ws/public",
-
-    APP_ID:
-      USER_CONFIG.derivAppId ||
-      "34jzkIFHayWQzG6sXikax",
-
-    MAX_HISTORY: 200,
-    RECENT_WINDOW: 80,
-    MIN_SAMPLE: 30,
-
-    RECONNECT_DELAY: 3000,
-    WATCHDOG_MS: 15000,
-
-    ANALYSIS_SECONDS: 10,
-    COUNTDOWN_SECONDS: 7,
-
-    MAX_MARKETS: 13,
-
-    STRONG_EDGE: 6,
-    MAX_CONFIDENCE: 92,
-
-    MIN_STAKE: 0.25,
-
-    STORAGE_KEY: "KRISHWAVE_RISK_V4",
-
-    TRADING_ENABLED:
-      USER_CONFIG.tradingEnabled === true
-  };
-
-
-  /* =======================================================
-     MARKETS
-  ======================================================= */
-
-  const MARKETS = [
-    {
-      symbol: "R_10",
-      name: "Volatility 10 Index"
-    },
-    {
-      symbol: "R_10_1S",
-      name: "Volatility 10 (1s) Index"
-    },
-    {
-      symbol: "R_15_1S",
-      name: "Volatility 15 (1s) Index"
-    },
-    {
-      symbol: "R_25",
-      name: "Volatility 25 Index"
-    },
-    {
-      symbol: "R_25_1S",
-      name: "Volatility 25 (1s) Index"
-    },
-    {
-      symbol: "R_30_1S",
-      name: "Volatility 30 (1s) Index"
-    },
-    {
-      symbol: "R_50",
-      name: "Volatility 50 Index"
-    },
-    {
-      symbol: "R_50_1S",
-      name: "Volatility 50 (1s) Index"
-    },
-    {
-      symbol: "R_75",
-      name: "Volatility 75 Index"
-    },
-    {
-      symbol: "R_75_1S",
-      name: "Volatility 75 (1s) Index"
-    },
-    {
-      symbol: "R_90_1S",
-      name: "Volatility 90 (1s) Index"
-    },
-    {
-      symbol: "R_100",
-      name: "Volatility 100 Index"
-    },
-    {
-      symbol: "R_100_1S",
-      name: "Volatility 100 (1s) Index"
-    }
-  ];
-
+.strategy-control {
+  position: relative;
 
-  /* =======================================================
-     STRATEGIES
-  ======================================================= */
-
-  const STRATEGIES = {
-    AUTO: {
-      name: "AUTO",
-      icon: "⚡"
-    },
-
-    EVEN: {
-      name: "EVEN",
-      icon: "2️⃣"
-    },
-
-    ODD: {
-      name: "ODD",
-      icon: "1️⃣"
-    },
-
-    HIGH: {
-      name: "HIGH",
-      icon: "🔺"
-    },
-
-    LOW: {
-      name: "LOW",
-      icon: "🔻"
-    },
-
-    OVER: {
-      name: "OVER",
-      icon: "📈"
-    },
-
-    UNDER: {
-      name: "UNDER",
-      icon: "📉"
-    },
-
-    MATCH: {
-      name: "MATCH",
-      icon: "🎯"
-    },
-
-    DIFFER: {
-      name: "DIFFER",
-      icon: "≠"
-    },
-
-    RISE: {
-      name: "RISE",
-      icon: "🚀"
-    },
-
-    FALL: {
-      name: "FALL",
-      icon: "⬇️"
-    }
-  };
-
-
-  /* =======================================================
-     STATE
-  ======================================================= */
-
-  const state = {
-
-    /* Public market socket */
-    publicWs: null,
-    publicConnected: false,
-
-    /* Trading socket */
-    tradeWs: null,
-    tradeConnected: false,
-    tradeAuthenticated: false,
-
-    /* Account */
-    accountMode: "demo",
-    accountConnected: false,
-    accountId: "",
-    balance: null,
-    currency: "USD",
-
-    /* Market */
-    selectedSymbol: "R_100",
-    selectedStrategy: "AUTO",
-    targetDigit: 5,
-
-    /* Data */
-    markets: {},
-    liveTicks: {},
-    history: {},
-
-    /* Scanner */
-    scanResults: [],
-    scanning: false,
-
-    /* AI */
-    aiRunning: false,
-    aiTimer: null,
-    countdownTimer: null,
-    analysisStartedAt: null,
-
-    /* Trading */
-    tradeCount: 0,
-    activeContracts: new Map(),
-    lastTrade: null,
-
-    /* Risk */
-    risk: {
-      baseStake: CONFIG.MIN_STAKE,
-      currentStake: CONFIG.MIN_STAKE,
-
-      takeProfit: 0,
-      stopLoss: 0,
-
-      martingaleMultiplier: 2,
-      maxMartingaleSteps: 3,
-      martingaleStep: 0,
-
-      maxStake: 100,
-
-      sessionPL: 0,
-      sessionStartBalance: null,
-
-      sessionStopped: false
-    },
-
-    lastAction: "WAITING",
-    engineState: "IDLE",
-
-    requestId: 1000,
-
-    initialized: false
-  };
-
-
-  /* =======================================================
-     DOM HELPERS
-  ======================================================= */
-
-  function $(id) {
-    return document.getElementById(id);
-  }
-
-  function q(selector) {
-    return document.querySelector(selector);
-  }
-
-  function qa(selector) {
-    return Array.from(document.querySelectorAll(selector));
-  }
-
-  function setText(id, value) {
-    const el = $(id);
-
-    if (el) {
-      el.textContent = value;
-    }
-  }
-
-  function setHTML(id, value) {
-    const el = $(id);
-
-    if (el) {
-      el.innerHTML = value;
-    }
-  }
-
-  function clamp(value, min, max) {
-    return Math.max(min, Math.min(max, value));
-  }
-
-  function number(value, fallback = 0) {
-    const n = Number(value);
-
-    return Number.isFinite(n) ? n : fallback;
-  }
-
-  function money(value) {
-    const n = number(value);
-
-    return `${n >= 0 ? "+" : ""}${n.toFixed(2)}`;
-  }
-
-  function escapeHTML(value) {
-    return String(value ?? "")
-      .replaceAll("&", "&amp;")
-      .replaceAll("<", "&lt;")
-      .replaceAll(">", "&gt;")
-      .replaceAll('"', "&quot;")
-      .replaceAll("'", "&#039;");
-  }
-
-
-  /* =======================================================
-     STORAGE
-  ======================================================= */
-
-  function saveRiskSettings() {
-    try {
-      localStorage.setItem(
-        CONFIG.STORAGE_KEY,
-        JSON.stringify({
-          baseStake: state.risk.baseStake,
-          takeProfit: state.risk.takeProfit,
-          stopLoss: state.risk.stopLoss,
-          martingaleMultiplier:
-            state.risk.martingaleMultiplier,
-          maxMartingaleSteps:
-            state.risk.maxMartingaleSteps,
-          maxStake: state.risk.maxStake
-        })
-      );
-    } catch (_) {}
-  }
-
-
-  function loadRiskSettings() {
-    try {
-      const raw =
-        localStorage.getItem(CONFIG.STORAGE_KEY);
-
-      if (!raw) {
-        return;
-      }
-
-      const saved = JSON.parse(raw);
-
-      state.risk.baseStake =
-        Math.max(
-          CONFIG.MIN_STAKE,
-          number(saved.baseStake, CONFIG.MIN_STAKE)
-        );
-
-      state.risk.takeProfit =
-        Math.max(
-          0,
-          number(saved.takeProfit, 0)
-        );
-
-      state.risk.stopLoss =
-        Math.max(
-          0,
-          number(saved.stopLoss, 0)
-        );
-
-      state.risk.martingaleMultiplier =
-        Math.max(
-          1,
-          number(saved.martingaleMultiplier, 2)
-        );
-
-      state.risk.maxMartingaleSteps =
-        Math.max(
-          0,
-          Math.floor(
-            number(saved.maxMartingaleSteps, 3)
-          )
-        );
-
-      state.risk.maxStake =
-        Math.max(
-          CONFIG.MIN_STAKE,
-          number(saved.maxStake, 100)
-        );
-
-      state.risk.currentStake =
-        state.risk.baseStake;
-
-    } catch (_) {}
-  }
-
-
-  /* =======================================================
-     DYNAMIC TRADING UI
-  ======================================================= */
-
-  function createTradingUI() {
-
-    if ($("krishwaveTradingCenter")) {
-      return;
-    }
-
-    const notice =
-      q(".notice-card") ||
-      q("footer") ||
-      document.body.lastElementChild;
-
-    const wrapper =
-      document.createElement("section");
-
-    wrapper.id =
-      "krishwaveTradingCenter";
-
-    wrapper.innerHTML = `
-      <div class="kw-trading-shell">
-
-        <div class="kw-trading-header">
-          <div>
-            <div class="kw-trading-title">
-              TRADING CONTROL CENTER
-            </div>
-
-            <div class="kw-trading-subtitle">
-              Risk manager • Demo / Real • AI execution
-            </div>
-          </div>
-
-          <div id="kwTradeConnection"
-               class="kw-trade-status">
-            ANALYSIS ONLY
-          </div>
-        </div>
-
-
-        <div class="kw-account-row">
-
-          <button
-            id="kwDemoMode"
-            class="kw-mode active">
-            DEMO
-          </button>
-
-          <button
-            id="kwRealMode"
-            class="kw-mode">
-            REAL
-          </button>
-
-          <button
-            id="kwResetMartingale"
-            class="kw-action">
-            RESET MARTINGALE
-          </button>
-
-        </div>
-
-
-        <div class="kw-risk-grid">
-
-          <label>
-            <span>Base Stake</span>
-            <input
-              id="kwBaseStake"
-              type="number"
-              min="0.25"
-              step="0.01"
-              value="0.25">
-          </label>
-
-          <label>
-            <span>Take Profit</span>
-            <input
-              id="kwTakeProfit"
-              type="number"
-              min="0"
-              step="0.01"
-              value="0">
-          </label>
-
-          <label>
-            <span>Stop Loss</span>
-            <input
-              id="kwStopLoss"
-              type="number"
-              min="0"
-              step="0.01"
-              value="0">
-          </label>
-
-          <label>
-            <span>Martingale ×</span>
-            <input
-              id="kwMultiplier"
-              type="number"
-              min="1"
-              step="0.1"
-              value="2">
-          </label>
-
-          <label>
-            <span>Max Steps</span>
-            <input
-              id="kwMaxSteps"
-              type="number"
-              min="0"
-              step="1"
-              value="3">
-          </label>
-
-          <label>
-            <span>Max Stake</span>
-            <input
-              id="kwMaxStake"
-              type="number"
-              min="0.25"
-              step="0.01"
-              value="100">
-          </label>
-
-        </div>
-
-
-        <div class="kw-metrics">
-
-          <div class="kw-metric">
-            <small>CURRENT STAKE</small>
-            <strong id="kwCurrentStake">
-              0.25
-            </strong>
-          </div>
-
-          <div class="kw-metric">
-            <small>MARTINGALE STEP</small>
-            <strong id="kwMartingaleStep">
-              0 / 3
-            </strong>
-          </div>
-
-          <div class="kw-metric">
-            <small>SESSION P/L</small>
-            <strong id="kwSessionPL">
-              +0.00
-            </strong>
-          </div>
-
-          <div class="kw-metric">
-            <small>TRADES</small>
-            <strong id="kwTradeCount">
-              0
-            </strong>
-          </div>
-
-        </div>
-
-
-        <div class="kw-execution-grid">
-
-          <button
-            id="kwTradeNow"
-            class="kw-trade-now">
-            ⚡ TRADE NOW
-          </button>
-
-          <button
-            id="kwAITradeNow"
-            class="kw-ai-trade">
-            🤖 AI TRADE NOW
-          </button>
-
-        </div>
-
-
-        <div class="kw-session-bar">
-
-          <span>
-            Engine:
-            <b id="kwEngineState">IDLE</b>
-          </span>
-
-          <span>
-            Account:
-            <b id="kwAccountMode">DEMO</b>
-          </span>
-
-          <span>
-            Balance:
-            <b id="kwBalance">—</b>
-          </span>
-
-        </div>
-
-
-        <div class="kw-auth-box">
-
-          <div class="kw-auth-title">
-            SECURE DERIV TRADING SESSION
-          </div>
-
-          <div class="kw-auth-description">
-            Paste a secure authenticated WebSocket URL generated
-            through Deriv authentication. Never put your API token
-            inside this GitHub file.
-          </div>
-
-          <div class="kw-auth-row">
-
-            <input
-              id="kwTradeWsUrl"
-              type="password"
-              autocomplete="off"
-              placeholder="wss://api.derivws.com/trading/v1/options/ws/demo?otp=...">
-
-            <button
-              id="kwConnectTrade"
-              class="kw-connect">
-              CONNECT
-            </button>
-
-            <button
-              id="kwDisconnectTrade"
-              class="kw-disconnect">
-              DISCONNECT
-            </button>
-
-          </div>
-
-        </div>
-
-
-        <div class="kw-active-box">
-
-          <div class="kw-active-title">
-            ACTIVE CONTRACTS
-          </div>
-
-          <div id="kwActiveContracts">
-            No active contracts.
-          </div>
-
-        </div>
-
-
-        <div
-          id="kwTradingMessage"
-          class="kw-message">
-          Analysis mode is active. Trading is locked until a
-          secure authenticated Deriv trading session is connected.
-        </div>
-
-      </div>
-    `;
-
-
-    if (notice && notice.parentNode) {
-      notice.parentNode.insertBefore(
-        wrapper,
-        notice
-      );
-    } else {
-      document.body.appendChild(wrapper);
-    }
-
-
-    injectTradingStyles();
-
-    bindTradingUI();
-
-    loadRiskSettings();
-
-    syncRiskInputs();
-
-    renderRiskUI();
-  }
-
-
-  /* =======================================================
-     DYNAMIC CSS
-     Existing style.css remains untouched.
-  ======================================================= */
-
-  function injectTradingStyles() {
-
-    if ($("kwTradingStyles")) {
-      return;
-    }
-
-    const style =
-      document.createElement("style");
-
-    style.id = "kwTradingStyles";
-
-    style.textContent = `
-      #krishwaveTradingCenter {
-        width: 100%;
-        margin: 24px 0;
-      }
-
-      .kw-trading-shell {
-        border-radius: 20px;
-        padding: 20px;
-        background:
-          linear-gradient(
-            145deg,
-            rgba(15,23,42,.98),
-            rgba(8,15,30,.98)
-          );
-        border: 1px solid rgba(56,189,248,.20);
-        box-shadow: 0 18px 45px rgba(0,0,0,.25);
-      }
-
-      .kw-trading-header {
-        display:flex;
-        align-items:center;
-        justify-content:space-between;
-        gap:16px;
-        margin-bottom:18px;
-      }
-
-      .kw-trading-title {
-        font-size:18px;
-        font-weight:900;
-        letter-spacing:.8px;
-      }
-
-      .kw-trading-subtitle {
-        margin-top:5px;
-        opacity:.65;
-        font-size:12px;
-      }
-
-      .kw-trade-status {
-        padding:8px 12px;
-        border-radius:999px;
-        font-size:11px;
-        font-weight:900;
-        background:rgba(245,158,11,.12);
-        border:1px solid rgba(245,158,11,.30);
-      }
-
-      .kw-account-row,
-      .kw-execution-grid,
-      .kw-auth-row {
-        display:grid;
-        grid-template-columns:repeat(3,1fr);
-        gap:10px;
-        margin-bottom:16px;
-      }
-
-      .kw-execution-grid {
-        grid-template-columns:1fr 1fr;
-      }
-
-      .kw-auth-row {
-        grid-template-columns:1fr auto auto;
-      }
-
-      .kw-mode,
-      .kw-action,
-      .kw-connect,
-      .kw-disconnect {
-        border:0;
-        border-radius:12px;
-        padding:12px;
-        font-weight:900;
-        cursor:pointer;
-      }
-
-      .kw-mode {
-        background:rgba(148,163,184,.10);
-        color:inherit;
-        border:1px solid rgba(148,163,184,.18);
-      }
-
-      .kw-mode.active {
-        background:rgba(34,197,94,.15);
-        border-color:rgba(34,197,94,.45);
-      }
-
-      .kw-action {
-        background:rgba(148,163,184,.08);
-        color:inherit;
-      }
-
-      .kw-risk-grid {
-        display:grid;
-        grid-template-columns:repeat(6,1fr);
-        gap:10px;
-        margin-bottom:16px;
-      }
-
-      .kw-risk-grid label {
-        display:flex;
-        flex-direction:column;
-        gap:7px;
-      }
-
-      .kw-risk-grid span {
-        font-size:10px;
-        font-weight:800;
-        opacity:.65;
-      }
-
-      .kw-risk-grid input,
-      .kw-auth-row input {
-        width:100%;
-        box-sizing:border-box;
-        padding:11px;
-        border-radius:10px;
-        border:1px solid rgba(148,163,184,.20);
-        background:rgba(2,6,23,.55);
-        color:inherit;
-        outline:none;
-      }
-
-      .kw-metrics {
-        display:grid;
-        grid-template-columns:repeat(4,1fr);
-        gap:10px;
-        margin-bottom:16px;
-      }
-
-      .kw-metric {
-        padding:14px;
-        border-radius:14px;
-        background:rgba(148,163,184,.06);
-        border:1px solid rgba(148,163,184,.12);
-      }
-
-      .kw-metric small {
-        display:block;
-        font-size:9px;
-        opacity:.6;
-        font-weight:900;
-      }
-
-      .kw-metric strong {
-        display:block;
-        margin-top:5px;
-        font-size:18px;
-      }
-
-      .kw-trade-now,
-      .kw-ai-trade {
-        border:0;
-        border-radius:14px;
-        padding:15px;
-        color:white;
-        font-size:14px;
-        font-weight:1000;
-        cursor:pointer;
-      }
-
-      .kw-trade-now {
-        background:linear-gradient(
-          135deg,
-          #16a34a,
-          #22c55e
-        );
-      }
-
-      .kw-ai-trade {
-        background:linear-gradient(
-          135deg,
-          #2563eb,
-          #7c3aed
-        );
-      }
-
-      .kw-trade-now:disabled,
-      .kw-ai-trade:disabled {
-        opacity:.45;
-        cursor:not-allowed;
-      }
-
-      .kw-session-bar {
-        display:flex;
-        flex-wrap:wrap;
-        gap:18px;
-        padding:12px 0;
-        font-size:11px;
-        opacity:.8;
-      }
-
-      .kw-auth-box,
-      .kw-active-box {
-        margin-top:14px;
-        padding:14px;
-        border-radius:14px;
-        background:rgba(2,6,23,.30);
-        border:1px solid rgba(148,163,184,.12);
-      }
-
-      .kw-auth-title,
-      .kw-active-title {
-        font-size:11px;
-        font-weight:900;
-        margin-bottom:7px;
-      }
-
-      .kw-auth-description {
-        font-size:11px;
-        line-height:1.5;
-        opacity:.6;
-        margin-bottom:10px;
-      }
-
-      .kw-connect {
-        background:#2563eb;
-        color:white;
-      }
-
-      .kw-disconnect {
-        background:#7f1d1d;
-        color:white;
-      }
-
-      .kw-message {
-        margin-top:14px;
-        padding:12px;
-        border-radius:12px;
-        font-size:11px;
-        line-height:1.5;
-        background:rgba(245,158,11,.08);
-        border:1px solid rgba(245,158,11,.20);
-      }
-
-      .kw-contract {
-        display:flex;
-        justify-content:space-between;
-        gap:10px;
-        padding:10px 0;
-        border-bottom:1px solid rgba(148,163,184,.10);
-        font-size:11px;
-      }
-
-      @media(max-width:900px) {
-        .kw-risk-grid {
-          grid-template-columns:repeat(3,1fr);
-        }
-      }
-
-      @media(max-width:600px) {
-        .kw-trading-shell {
-          padding:14px;
-        }
-
-        .kw-trading-header {
-          align-items:flex-start;
-          flex-direction:column;
-        }
-
-        .kw-account-row,
-        .kw-execution-grid,
-        .kw-auth-row {
-          grid-template-columns:1fr;
-        }
-
-        .kw-risk-grid {
-          grid-template-columns:repeat(2,1fr);
-        }
-
-        .kw-metrics {
-          grid-template-columns:repeat(2,1fr);
-        }
-      }
-    `;
-
-    document.head.appendChild(style);
-  }
-
-
-  /* =======================================================
-     TRADING UI EVENTS
-  ======================================================= */
-
-  function bindTradingUI() {
-
-    $("kwDemoMode")?.addEventListener(
-      "click",
-      () => setAccountMode("demo")
-    );
-
-    $("kwRealMode")?.addEventListener(
-      "click",
-      () => setAccountMode("real")
-    );
-
-    $("kwResetMartingale")?.addEventListener(
-      "click",
-      resetMartingale
-    );
-
-    $("kwTradeNow")?.addEventListener(
-      "click",
-      () => executeCurrentSignal(false)
-    );
-
-    $("kwAITradeNow")?.addEventListener(
-      "click",
-      () => executeCurrentSignal(true)
-    );
-
-    $("kwConnectTrade")?.addEventListener(
-      "click",
-      connectTradingSocket
-    );
-
-    $("kwDisconnectTrade")?.addEventListener(
-      "click",
-      disconnectTradingSocket
-    );
-
-
-    const inputMap = {
-      kwBaseStake: "baseStake",
-      kwTakeProfit: "takeProfit",
-      kwStopLoss: "stopLoss",
-      kwMultiplier: "martingaleMultiplier",
-      kwMaxSteps: "maxMartingaleSteps",
-      kwMaxStake: "maxStake"
-    };
-
-
-    Object.entries(inputMap).forEach(
-      ([id, key]) => {
-
-        const input = $(id);
-
-        if (!input) {
-          return;
-        }
-
-        input.addEventListener(
-          "change",
-          () => {
-
-            let value =
-              number(
-                input.value,
-                state.risk[key]
-              );
-
-            if (
-              key === "baseStake" ||
-              key === "maxStake"
-            ) {
-              value =
-                Math.max(
-                  CONFIG.MIN_STAKE,
-                  value
-                );
-            }
-
-            if (
-              key === "takeProfit" ||
-              key === "stopLoss"
-            ) {
-              value =
-                Math.max(0, value);
-            }
-
-            if (
-              key === "martingaleMultiplier"
-            ) {
-              value =
-                Math.max(1, value);
-            }
-
-            if (
-              key === "maxMartingaleSteps"
-            ) {
-              value =
-                Math.max(
-                  0,
-                  Math.floor(value)
-                );
-            }
-
-            state.risk[key] = value;
-
-            if (key === "baseStake") {
-              state.risk.currentStake =
-                value;
-            }
-
-            saveRiskSettings();
-
-            renderRiskUI();
-          }
-        );
-      }
-    );
-  }
-
-
-  /* =======================================================
-     ACCOUNT MODE
-  ======================================================= */
-
-  function setAccountMode(mode) {
-
-    if (
-      mode !== "demo" &&
-      mode !== "real"
-    ) {
-      return;
-    }
-
-    if (mode === "real") {
-
-      const confirmed =
-        window.confirm(
-          "REAL ACCOUNT MODE\n\n" +
-          "Real trades can lose real money.\n\n" +
-          "Switch KRISHWAVE to REAL mode?"
-        );
-
-      if (!confirmed) {
-        return;
-      }
-    }
-
-    state.accountMode = mode;
-
-    updateAccountModeUI();
-
-    setMessage(
-      mode === "real"
-        ? "REAL mode selected. Every real TRADE NOW action requires confirmation."
-        : "DEMO mode selected."
-    );
-  }
-
-
-  function updateAccountModeUI() {
-
-    $("kwDemoMode")?.classList.toggle(
-      "active",
-      state.accountMode === "demo"
-    );
-
-    $("kwRealMode")?.classList.toggle(
-      "active",
-      state.accountMode === "real"
-    );
-
-    setText(
-      "kwAccountMode",
-      state.accountMode.toUpperCase()
-    );
-
-    setText(
-      "accountModeStatus",
-      state.accountMode.toUpperCase()
-    );
-
-    setText(
-      "accountMode",
-      state.accountMode.toUpperCase()
-    );
-  }
-
-
-  /* =======================================================
-     RISK ENGINE
-  ======================================================= */
-
-  function syncRiskInputs() {
-
-    const values = {
-      kwBaseStake: state.risk.baseStake,
-      kwTakeProfit: state.risk.takeProfit,
-      kwStopLoss: state.risk.stopLoss,
-      kwMultiplier:
-        state.risk.martingaleMultiplier,
-      kwMaxSteps:
-        state.risk.maxMartingaleSteps,
-      kwMaxStake: state.risk.maxStake
-    };
-
-    Object.entries(values).forEach(
-      ([id, value]) => {
-
-        const input = $(id);
-
-        if (input) {
-          input.value = value;
-        }
-      }
-    );
-  }
-
-
-  function renderRiskUI() {
-
-    setText(
-      "kwCurrentStake",
-      state.risk.currentStake.toFixed(2)
-    );
-
-    setText(
-      "kwMartingaleStep",
-      `${state.risk.martingaleStep} / ${state.risk.maxMartingaleSteps}`
-    );
-
-    setText(
-      "kwSessionPL",
-      money(state.risk.sessionPL)
-    );
-
-    setText(
-      "kwTradeCount",
-      String(state.tradeCount)
-    );
-
-    setText(
-      "kwEngineState",
-      state.engineState
-    );
-
-    setText(
-      "kwBalance",
-      state.balance === null
-        ? "—"
-        : `${state.balance.toFixed(2)} ${state.currency}`
-    );
-
-    const pl =
-      $("kwSessionPL");
-
-    if (pl) {
-      pl.style.opacity =
-        state.risk.sessionPL < 0
-          ? "0.9"
-          : "1";
-    }
-
-    updateTradingButtons();
-
-    renderActiveContracts();
-  }
-
-
-  function resetMartingale() {
-
-    state.risk.martingaleStep = 0;
-
-    state.risk.currentStake =
-      Math.max(
-        CONFIG.MIN_STAKE,
-        state.risk.baseStake
-      );
-
-    state.risk.sessionStopped = false;
-
-    state.engineState = "READY";
-
-    renderRiskUI();
-
-    setMessage(
-      "Martingale reset. Current stake returned to base stake."
-    );
-  }
-
-
-  function calculateNextStakeAfterLoss() {
-
-    if (
-      state.risk.martingaleStep >=
-      state.risk.maxMartingaleSteps
-    ) {
-
-      state.risk.currentStake =
-        state.risk.baseStake;
-
-      return;
-    }
-
-    const next =
-      state.risk.currentStake *
-      state.risk.martingaleMultiplier;
-
-    if (
-      next >
-      state.risk.maxStake
-    ) {
-
-      state.risk.sessionStopped = true;
-
-      state.engineState =
-        "MAX STAKE PROTECTION";
-
-      setMessage(
-        "Trading stopped: next martingale stake would exceed maximum stake."
-      );
-
-      return;
-    }
-
-    state.risk.martingaleStep++;
-
-    state.risk.currentStake =
-      Math.min(
-        next,
-        state.risk.maxStake
-      );
-  }
-
-
-  function processTradeResult(profit) {
-
-    const p = number(profit);
-
-    state.risk.sessionPL += p;
-
-    if (p > 0) {
-
-      state.risk.martingaleStep = 0;
-
-      state.risk.currentStake =
-        state.risk.baseStake;
-
-    } else if (p < 0) {
-
-      calculateNextStakeAfterLoss();
-    }
-
-
-    checkSessionProtection();
-
-    renderRiskUI();
-
-    saveRiskSettings();
-  }
-
-
-  function checkSessionProtection() {
-
-    const pl =
-      state.risk.sessionPL;
-
-
-    if (
-      state.risk.takeProfit > 0 &&
-      pl >= state.risk.takeProfit
-    ) {
-
-      state.risk.sessionStopped = true;
-
-      state.engineState =
-        "TAKE PROFIT HIT";
-
-      setMessage(
-        `Take Profit reached: ${pl.toFixed(2)}`
-      );
-
-      return;
-    }
-
-
-    if (
-      state.risk.stopLoss > 0 &&
-      pl <= -Math.abs(
-        state.risk.stopLoss
-      )
-    ) {
-
-      state.risk.sessionStopped = true;
-
-      state.engineState =
-        "STOP LOSS HIT";
-
-      setMessage(
-        `Stop Loss reached: ${pl.toFixed(2)}`
-      );
-    }
-  }
-
-
-  /* =======================================================
-     TRADING VALIDATION
-  ======================================================= */
-
-  function canTrade() {
-
-    if (!CONFIG.TRADING_ENABLED) {
-
-      setMessage(
-        "Trading is disabled in KRISHWAVE_CONFIG. " +
-        "Market analysis remains active."
-      );
-
-      return false;
-    }
-
-
-    if (!state.tradeConnected) {
-
-      setMessage(
-        "Trading session is not connected. " +
-        "Connect a secure authenticated Deriv trading WebSocket first."
-      );
-
-      return false;
-    }
-
-
-    if (!state.tradeAuthenticated) {
-
-      setMessage(
-        "Trading socket is not authenticated."
-      );
-
-      return false;
-    }
-
-
-    if (state.risk.sessionStopped) {
-
-      setMessage(
-        "Trading is stopped by the risk manager. Reset the session/martingale after reviewing the result."
-      );
-
-      return false;
-    }
-
-
-    if (
-      state.risk.currentStake <
-      CONFIG.MIN_STAKE
-    ) {
-
-      state.risk.currentStake =
-        CONFIG.MIN_STAKE;
-    }
-
-
-    if (
-      state.risk.currentStake >
-      state.risk.maxStake
-    ) {
-
-      setMessage(
-        "Trade blocked: current stake exceeds maximum stake."
-      );
-
-      return false;
-    }
-
-
-    if (
-      state.balance !== null &&
-      state.risk.currentStake >
-      state.balance
-    ) {
-
-      setMessage(
-        "Trade blocked: current stake is greater than available balance."
-      );
-
-      return false;
-    }
-
-
-    return true;
-  }
-
-
-  /* =======================================================
-     PUBLIC MARKET DATA
-  ======================================================= */
-
-  function connectPublicSocket() {
-
-    if (
-      state.publicWs &&
-      (
-        state.publicWs.readyState ===
-        WebSocket.OPEN ||
-        state.publicWs.readyState ===
-        WebSocket.CONNECTING
-      )
-    ) {
-      return;
-    }
-
-
-    try {
-
-      state.publicWs =
-        new WebSocket(
-          CONFIG.WS_URL
-        );
-
-    } catch (error) {
-
-      console.error(
-        "Public WebSocket error:",
-        error
-      );
-
-      return;
-    }
-
-
-    state.publicWs.onopen = () => {
-
-      state.publicConnected = true;
-
-      updateConnectionUI();
-
-      subscribeSelectedMarket();
-
-      subscribeScannerMarkets();
-    };
-
-
-    state.publicWs.onmessage =
-      event => {
-
-        try {
-
-          const data =
-            JSON.parse(event.data);
-
-          handlePublicMessage(data);
-
-        } catch (error) {
-
-          console.error(
-            "Public message error:",
-            error
-          );
-        }
-      };
-
-
-    state.publicWs.onclose = () => {
-
-      state.publicConnected = false;
-
-      updateConnectionUI();
-
-      setTimeout(
-        connectPublicSocket,
-        CONFIG.RECONNECT_DELAY
-      );
-    };
-
-
-    state.publicWs.onerror = error => {
-
-      console.error(
-        "Public WebSocket error:",
-        error
-      );
-    };
-  }
-
-
-  function sendPublic(data) {
-
-    if (
-      !state.publicWs ||
-      state.publicWs.readyState !==
-      WebSocket.OPEN
-    ) {
-      return false;
-    }
-
-    state.publicWs.send(
-      JSON.stringify(data)
-    );
-
-    return true;
-  }
-
-
-  function subscribeSelectedMarket() {
-
-    sendPublic({
-      ticks: state.selectedSymbol,
-      subscribe: 1,
-      req_id: nextRequestId()
-    });
-  }
-
-
-  function subscribeScannerMarkets() {
-
-    MARKETS.forEach(
-      market => {
-
-        sendPublic({
-          ticks: market.symbol,
-          subscribe: 1,
-          req_id: nextRequestId()
-        });
-
-      }
-    );
-  }
-
-
-  function handlePublicMessage(data) {
-
-    if (data.error) {
-
-      console.warn(
-        "Deriv public error:",
-        data.error
-      );
-
-      return;
-    }
-
-
-    if (
-      data.msg_type === "tick" &&
-      data.tick
-    ) {
-
-      handleTick(
-        data.tick
-      );
-    }
-  }
-
-
-  /* =======================================================
-     TICK ENGINE
-  ======================================================= */
-
-  function handleTick(tick) {
-
-    const symbol =
-      tick.symbol;
-
-    if (!symbol) {
-      return;
-    }
-
-
-    const quote =
-      number(
-        tick.quote,
-        NaN
-      );
-
-    if (!Number.isFinite(quote)) {
-      return;
-    }
-
-
-    const digit =
-      extractLastDigit(
-        quote,
-        tick.pip_size
-      );
-
-
-    state.liveTicks[symbol] = {
-      quote,
-      digit,
-      epoch:
-        number(
-          tick.epoch,
-          Date.now() / 1000
-        )
-    };
-
-
-    if (!state.history[symbol]) {
-      state.history[symbol] = [];
-    }
-
-
-    state.history[symbol].push({
-      quote,
-      digit,
-      epoch:
-        number(
-          tick.epoch,
-          Date.now() / 1000
-        )
-    });
-
-
-    if (
-      state.history[symbol].length >
-      CONFIG.MAX_HISTORY
-    ) {
-
-      state.history[symbol].splice(
-        0,
-        state.history[symbol].length -
-          CONFIG.MAX_HISTORY
-      );
-    }
-
-
-    if (
-      symbol === state.selectedSymbol
-    ) {
-
-      renderSelectedMarket();
-
-      renderDigitDistribution();
-
-      renderProbabilities();
-
-      updateStreamUI();
-    }
-
-
-    updateScannerMarket(
-      symbol
-    );
-  }
-
-
-  function extractLastDigit(
-    quote,
-    pipSize
-  ) {
-
-    const decimals =
-      Number.isFinite(
-        Number(pipSize)
-      )
-        ? Math.max(
-            0,
-            Math.floor(
-              Number(pipSize)
-            )
-          )
-        : 2;
-
-
-    const text =
-      Number(quote).toFixed(
-        decimals
-      );
-
-
-    const digits =
-      text.replace(
-        /\D/g,
-        ""
-      );
-
-
-    if (!digits) {
-      return 0;
-    }
-
-
-    return Number(
-      digits.charAt(
-        digits.length - 1
-      )
-    );
-  }
-
-
-  /* =======================================================
-     ANALYSIS
-  ======================================================= */
-
-  function getRecent(symbol) {
-
-    return (
-      state.history[symbol] ||
-      []
-    ).slice(
-      -CONFIG.RECENT_WINDOW
-    );
-  }
-
-
-  function analyzeSymbol(symbol) {
-
-    const samples =
-      getRecent(symbol);
-
-
-    if (
-      samples.length <
-      CONFIG.MIN_SAMPLE
-    ) {
-
-      return {
-        symbol,
-        sample: samples.length,
-        ready: false,
-        confidence: 0,
-        strategy: "AUTO",
-        targetDigit: 5,
-        edge: 0,
-        reason:
-          "Collecting more tick data."
-      };
-    }
-
-
-    const counts =
-      Array(10).fill(0);
-
-
-    samples.forEach(
-      item => {
-
-        counts[
-          clamp(
-            Math.floor(
-              number(
-                item.digit
-              )
-            ),
-            0,
-            9
-          )
-        ]++;
-
-      }
-    );
-
-
-    const total =
-      samples.length;
-
-
-    const even =
-      counts.reduce(
-        (sum, count, digit) =>
-          sum +
-          (
-            digit % 2 === 0
-              ? count
-              : 0
-          ),
-        0
-      );
+  width: 100%;
 
+  max-width: 1100px;
+}
 
-    const odd =
-      total - even;
 
-
-    const high =
-      counts
-        .slice(5)
-        .reduce(
-          (a, b) => a + b,
-          0
-        );
-
-
-    const low =
-      total - high;
-
-
-    let bestDigit = 0;
-    let bestCount = counts[0];
-
-
-    counts.forEach(
-      (count, digit) => {
-
-        if (count > bestCount) {
-
-          bestCount = count;
-
-          bestDigit = digit;
-        }
-      }
-    );
-
-
-    const evenPct =
-      even / total * 100;
-
-    const oddPct =
-      odd / total * 100;
-
-    const highPct =
-      high / total * 100;
-
-    const lowPct =
-      low / total * 100;
-
-    const digitPct =
-      bestCount /
-      total *
-      100;
-
-
-    const candidates = [
-      {
-        strategy: "EVEN",
-        edge:
-          Math.abs(
-            evenPct - 50
-          ),
-        confidence:
-          Math.max(
-            evenPct,
-            oddPct
-          ),
-        targetDigit: bestDigit,
-        reason:
-          `Even ${evenPct.toFixed(1)}% / Odd ${oddPct.toFixed(1)}%`
-      },
-
-      {
-        strategy: "HIGH",
-        edge:
-          Math.abs(
-            highPct - 50
-          ),
-        confidence:
-          Math.max(
-            highPct,
-            lowPct
-          ),
-        targetDigit: bestDigit,
-        reason:
-          `High ${highPct.toFixed(1)}% / Low ${lowPct.toFixed(1)}%`
-      },
-
-      {
-        strategy:
-          bestDigit >= 5
-            ? "OVER"
-            : "UNDER",
-
-        edge:
-          Math.abs(
-            digitPct - 10
-          ),
-
-        confidence:
-          clamp(
-            50 +
-              Math.abs(
-                digitPct - 10
-              ),
-            50,
-            CONFIG.MAX_CONFIDENCE
-          ),
-
-        targetDigit:
-          bestDigit,
-
-        reason:
-          `Digit ${bestDigit} frequency ${digitPct.toFixed(1)}%`
-      },
-
-      {
-        strategy:
-          digitPct >= 12
-            ? "MATCH"
-            : "DIFFER",
-
-        edge:
-          Math.max(
-            0,
-            digitPct - 10
-          ),
-
-        confidence:
-          clamp(
-            digitPct >= 12
-              ? 50 + digitPct
-              : 90 - digitPct,
-            50,
-            CONFIG.MAX_CONFIDENCE
-          ),
-
-        targetDigit:
-          bestDigit,
-
-        reason:
-          `Most frequent digit: ${bestDigit}`
-      }
-    ];
-
-
-    candidates.sort(
-      (a, b) =>
-        b.confidence - a.confidence
-    );
-
-
-    const best =
-      candidates[0];
-
-
-    return {
-
-      symbol,
-
-      sample: total,
-
-      ready: true,
-
-      confidence:
-        clamp(
-          best.confidence,
-          50,
-          CONFIG.MAX_CONFIDENCE
-        ),
-
-      strategy:
-        best.strategy,
-
-      targetDigit:
-        best.targetDigit,
-
-      edge:
-        best.edge,
-
-      reason:
-        best.reason,
-
-      counts,
-
-      evenPct,
-
-      oddPct,
-
-      highPct,
-
-      lowPct,
-
-      overPct:
-        100 -
-        (
-          counts
-            .slice(
-              0,
-              bestDigit + 1
-            )
-            .reduce(
-              (a, b) => a + b,
-              0
-            ) /
-          total *
-          100
-        ),
-
-      underPct:
-        100 -
-        (
-          counts
-            .slice(
-              bestDigit
-            )
-            .reduce(
-              (a, b) => a + b,
-              0
-            ) /
-          total *
-          100
-        ),
-
-      digitPct
-    };
-  }
-
-
-  /* =======================================================
-     AI SIGNAL
-  ======================================================= */
-
-  function getCurrentAIResult() {
-
-    const result =
-      analyzeSymbol(
-        state.selectedSymbol
-      );
-
-
-    if (
-      state.selectedStrategy !==
-      "AUTO"
-    ) {
-
-      result.strategy =
-        state.selectedStrategy;
-
-      result.targetDigit =
-        state.targetDigit;
-
-      result.confidence =
-        calculateStrategyConfidence(
-          state.selectedStrategy,
-          result
-        );
-    }
-
-
-    return result;
-  }
-
-
-  function calculateStrategyConfidence(
-    strategy,
-    result
-  ) {
-
-    if (!result.ready) {
-      return 0;
-    }
-
-
-    switch (strategy) {
-
-      case "EVEN":
-        return clamp(
-          result.evenPct,
-          50,
-          CONFIG.MAX_CONFIDENCE
-        );
-
-      case "ODD":
-        return clamp(
-          result.oddPct,
-          50,
-          CONFIG.MAX_CONFIDENCE
-        );
-
-      case "HIGH":
-        return clamp(
-          result.highPct,
-          50,
-          CONFIG.MAX_CONFIDENCE
-        );
-
-      case "LOW":
-        return clamp(
-          result.lowPct,
-          50,
-          CONFIG.MAX_CONFIDENCE
-        );
-
-      default:
-        return result.confidence;
-    }
-  }
-
-
-  /* =======================================================
-     AI ENGINE
-  ======================================================= */
-
-  function startAIEngine() {
-
-    if (state.aiRunning) {
-      return;
-    }
-
-
-    state.aiRunning = true;
-
-    state.engineState =
-      "ANALYZING";
-
-
-    clearTimeout(
-      state.aiTimer
-    );
-
-    clearInterval(
-      state.countdownTimer
-    );
-
-
-    runAIAnalysisCycle();
-
-    updateAIButtons();
-  }
-
-
-  function stopAIEngine() {
-
-    state.aiRunning = false;
-
-    clearTimeout(
-      state.aiTimer
-    );
-
-    clearInterval(
-      state.countdownTimer
-    );
-
-
-    state.engineState =
-      "STOPPED";
-
-
-    setText(
-      "aiCountdown",
-      "OFF"
-    );
-
-    setText(
-      "aiCircleStatus",
-      "STOPPED"
-    );
-
-    setText(
-      "engineState",
-      "STOPPED"
-    );
-
-    updateAIButtons();
-  }
-
-
-  function runAIAnalysisCycle() {
-
-    if (!state.aiRunning) {
-      return;
-    }
-
-
-    state.engineState =
-      "ANALYZING";
-
-
-    state.analysisStartedAt =
-      Date.now();
-
-
-    let seconds =
-      CONFIG.ANALYSIS_SECONDS;
-
-
-    setText(
-      "aiCountdown",
-      seconds
-    );
-
-    setText(
-      "aiCircleStatus",
-      "ANALYZING"
-    );
-
-
-    const result =
-      getCurrentAIResult();
-
-
-    renderAIResult(
-      result
-    );
-
-
-    clearInterval(
-      state.countdownTimer
-    );
-
-
-    state.countdownTimer =
-      setInterval(
-        () => {
-
-          if (!state.aiRunning) {
-            return;
-          }
-
-
-          seconds--;
-
-
-          setText(
-            "aiCountdown",
-            seconds
-          );
-
-
-          if (
-            seconds <= 0
-          ) {
-
-            clearInterval(
-              state.countdownTimer
-            );
-
-
-            startEntryCountdown(
-              result
-            );
-          }
-
-        },
-        1000
-      );
-  }
-
-
-  function startEntryCountdown(
-    result
-  ) {
-
-    if (!state.aiRunning) {
-      return;
-    }
-
-
-    let seconds =
-      CONFIG.COUNTDOWN_SECONDS;
-
-
-    state.engineState =
-      "ENTRY COUNTDOWN";
-
-
-    setText(
-      "aiCircleStatus",
-      "ENTRY"
-    );
-
-
-    setText(
-      "aiCountdown",
-      seconds
-    );
-
-
-    clearInterval(
-      state.countdownTimer
-    );
-
-
-    state.countdownTimer =
-      setInterval(
-        () => {
-
-          if (!state.aiRunning) {
-            return;
-          }
-
-
-          seconds--;
-
-
-          setText(
-            "aiCountdown",
-            seconds
-          );
-
-
-          if (
-            seconds <= 0
-          ) {
-
-            clearInterval(
-              state.countdownTimer
-            );
-
-
-            fireTradeSignal(
-              result
-            );
-          }
-
-        },
-        1000
-      );
-  }
-
-
-  function fireTradeSignal(
-    result
-  ) {
-
-    if (!result || !result.ready) {
-
-      setMessage(
-        "AI signal not ready."
-      );
-
-      scheduleNextAI();
-
-      return;
-    }
-
-
-    state.lastTrade = {
-      ...result,
-      createdAt: Date.now()
-    };
-
-
-    state.lastAction =
-      `TRADE NOW: ${result.strategy}`;
-
-
-    state.engineState =
-      "TRADE SIGNAL";
-
-
-    renderAIResult(
-      result,
-      true
-    );
-
-
-    setText(
-      "lastAction",
-      state.lastAction
-    );
-
-
-    scheduleNextAI();
-  }
-
-
-  function scheduleNextAI() {
-
-    if (!state.aiRunning) {
-      return;
-    }
-
-
-    state.aiTimer =
-      setTimeout(
-        runAIAnalysisCycle,
-        1200
-      );
-  }
-
-
-  /* =======================================================
-     AI RENDER
-  ======================================================= */
-
-  function renderAIResult(
-    result,
-    tradeSignal = false
-  ) {
-
-    const strategy =
-      result.strategy ||
-      "AUTO";
-
-
-    setText(
-      "aiPrediction",
-      strategy
-    );
-
-    setText(
-      "aiConfidence",
-      `${number(
-        result.confidence
-      ).toFixed(1)}%`
-    );
-
-    setText(
-      "aiTarget",
-      String(
-        result.targetDigit ?? "-"
-      )
-    );
-
-    setText(
-      "aiSample",
-      String(
-        result.sample || 0
-      )
-    );
-
-    setText(
-      "aiEdge",
-      `${number(
-        result.edge
-      ).toFixed(1)}`
-    );
-
-    setText(
-      "aiReason",
-      result.reason ||
-      "Waiting for more market data."
-    );
-
-
-    setText(
-      "aiPredictionResult",
-      strategy
-    );
-
-    setText(
-      "aiResultMain",
-      strategy
-    );
-
-    setText(
-      "aiResultConfidence",
-      `${number(
-        result.confidence
-      ).toFixed(1)}%`
-    );
-
-    setText(
-      "aiResultStatus",
-      tradeSignal
-        ? "TRADE NOW"
-        : "ANALYSIS"
-    );
-
-
-    setText(
-      "selectedSymbol",
-      result.symbol ||
-      state.selectedSymbol
-    );
-
-    setText(
-      "selectedMarketName",
-      marketName(
-        result.symbol ||
-        state.selectedSymbol
-      )
-    );
-
-    setText(
-      "selectedSample",
-      String(
-        result.sample || 0
-      )
-    );
-
-    setText(
-      "selectedEdge",
-      `${number(
-        result.edge
-      ).toFixed(1)}`
-    );
-
-    setText(
-      "selectedQuality",
-      result.confidence >= 70
-        ? "STRONG"
-        : "WATCH"
-    );
-
-    setText(
-      "selectedStrategy",
-      strategy
-    );
-  }
-
-
-  /* =======================================================
-     TRADE NOW
-  ======================================================= */
-
-  function executeCurrentSignal(
-    fromAI
-  ) {
-
-    const result =
-      fromAI
-        ? (
-            state.lastTrade ||
-            getCurrentAIResult()
-          )
-        : getCurrentAIResult();
-
-
-    if (!result || !result.ready) {
-
-      setMessage(
-        "Not enough market data for a trade signal."
-      );
-
-      return;
-    }
-
-
-    executeTrade(
-      result,
-      fromAI
-    );
-  }
-
-
-  function executeTrade(
-    result,
-    fromAI = false
-  ) {
-
-    if (!canTrade()) {
-      return;
-    }
-
-
-    if (
-      state.accountMode ===
-      "real"
-    ) {
-
-      const confirmed =
-        window.confirm(
-          "⚠️ REAL ACCOUNT TRADE\n\n" +
-          `Market: ${result.symbol}\n` +
-          `Strategy: ${result.strategy}\n` +
-          `Stake: ${state.risk.currentStake.toFixed(2)} ${state.currency}\n` +
-          `AI confidence: ${number(result.confidence).toFixed(1)}%\n\n` +
-          "This can use REAL MONEY.\n\n" +
-          "Continue with this trade?"
-        );
-
-
-      if (!confirmed) {
-
-        setMessage(
-          "Real trade cancelled."
-        );
-
-        return;
-      }
-    }
-
-
-    state.engineState =
-      "REQUESTING PROPOSAL";
-
-
-    setText(
-      "lastAction",
-      fromAI
-        ? "AI TRADE NOW"
-        : "TRADE NOW"
-    );
-
-
-    requestProposal(
-      result
-    );
-  }
-
-
-  /* =======================================================
-     CONTRACT MAPPING
-  ======================================================= */
-
-  function strategyToContract(
-    result
-  ) {
-
-    const strategy =
-      result.strategy;
-
-
-    switch (strategy) {
-
-      case "EVEN":
-        return {
-          contract_type:
-            "DIGITEVEN"
-        };
-
-
-      case "ODD":
-        return {
-          contract_type:
-            "DIGITODD"
-        };
-
-
-      case "HIGH":
-        return {
-          contract_type:
-            "DIGITOVER",
-          barrier: 4
-        };
-
-
-      case "LOW":
-        return {
-          contract_type:
-            "DIGITUNDER",
-          barrier: 5
-        };
-
-
-      case "OVER":
-        return {
-          contract_type:
-            "DIGITOVER",
-          barrier:
-            clamp(
-              number(
-                result.targetDigit,
-                4
-              ),
-              0,
-              8
-            )
-        };
-
-
-      case "UNDER":
-        return {
-          contract_type:
-            "DIGITUNDER",
-          barrier:
-            clamp(
-              number(
-                result.targetDigit,
-                5
-              ),
-              1,
-              9
-            )
-        };
-
-
-      case "MATCH":
-        return {
-          contract_type:
-            "DIGITMATCH",
-          barrier:
-            clamp(
-              number(
-                result.targetDigit,
-                5
-              ),
-              0,
-              9
-            )
-        };
-
-
-      case "DIFFER":
-        return {
-          contract_type:
-            "DIGITDIFF",
-          barrier:
-            clamp(
-              number(
-                result.targetDigit,
-                5
-              ),
-              0,
-              9
-            )
-        };
-
-
-      case "RISE":
-        return {
-          contract_type:
-            "CALL"
-        };
-
-
-      case "FALL":
-        return {
-          contract_type:
-            "PUT"
-        };
-
-
-      default:
-        return null;
-    }
-  }
+/* =========================
+   SELECTED STRATEGY CARD
+========================= */
 
+.strategy-selected {
+  width: 100%;
+  min-height: 88px;
 
-  /* =======================================================
-     TRADING SOCKET
-  ======================================================= */
+  display: flex;
 
-  function connectTradingSocket() {
+  align-items: center;
 
-    const url =
-      $("kwTradeWsUrl")?.value.trim();
+  gap: 14px;
 
+  padding: 14px 17px;
 
-    if (!url) {
+  border:
+    1px solid var(--green);
 
-      setMessage(
-        "Enter a secure authenticated Deriv WebSocket URL first."
-      );
+  border-radius: 18px;
 
-      return;
-    }
+  background:
+    linear-gradient(
+      145deg,
+      rgba(32,245,154,.13),
+      rgba(53,167,255,.05)
+    );
 
+  color: var(--text);
 
-    if (
-      !url.startsWith(
-        "wss://"
-      )
-    ) {
+  text-align: left;
 
-      setMessage(
-        "Invalid trading WebSocket URL."
-      );
+  cursor: pointer;
 
-      return;
-    }
+  box-shadow:
+    var(--shadow),
+    0 0 25px rgba(32,245,154,.07);
 
+  transition: .22s ease;
+}
 
-    disconnectTradingSocket();
+.strategy-selected:hover {
+  transform:
+    translateY(-2px);
 
+  border-color:
+    var(--cyan);
 
-    try {
+  box-shadow:
+    var(--shadow),
+    0 0 30px rgba(32,245,154,.12);
+}
 
-      state.tradeWs =
-        new WebSocket(url);
+.strategy-selected:active {
+  transform:
+    scale(.99);
+}
 
-    } catch (error) {
 
-      console.error(error);
+/* =========================
+   SELECTED ICON
+========================= */
 
-      setMessage(
-        "Could not create trading WebSocket."
-      );
+.strategy-selected-icon {
+  width: 48px;
+  height: 48px;
 
-      return;
-    }
+  flex-shrink: 0;
 
+  display: grid;
+  place-items: center;
 
-    state.engineState =
-      "CONNECTING";
+  border-radius: 14px;
 
+  color: #03120b;
 
-    setText(
-      "kwTradeConnection",
-      "CONNECTING"
+  background:
+    linear-gradient(
+      135deg,
+      var(--green),
+      var(--cyan)
     );
 
+  font-size: 12px;
+  font-weight: 950;
 
-    state.tradeWs.onopen =
-      () => {
+  box-shadow:
+    0 0 22px rgba(32,245,154,.18);
+}
 
-        state.tradeConnected = true;
 
-        state.tradeAuthenticated =
-          true;
+/* =========================
+   SELECTED CONTENT
+========================= */
 
-        state.accountConnected =
-          true;
+.strategy-selected-content {
+  min-width: 0;
 
-        state.engineState =
-          "READY";
+  display: flex;
 
-        updateTradingConnectionUI();
+  flex-direction: column;
 
-        requestBalance();
+  gap: 2px;
+}
 
-        setMessage(
-          "Authenticated Deriv trading session connected."
-        );
-      };
+.strategy-selected-content > span {
+  color: var(--green);
 
+  font-size: 8px;
+  font-weight: 950;
 
-    state.tradeWs.onmessage =
-      event => {
+  letter-spacing: 1.3px;
+}
 
-        try {
+.strategy-selected-content strong {
+  color: var(--text);
 
-          const data =
-            JSON.parse(
-              event.data
-            );
+  font-size: 15px;
+  font-weight: 950;
 
-          handleTradingMessage(
-            data
-          );
+  letter-spacing: .7px;
+}
 
-        } catch (error) {
+.strategy-selected-content small {
+  color: var(--muted);
 
-          console.error(
-            "Trading message error:",
-            error
-          );
-        }
-      };
+  font-size: 9px;
 
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
 
-    state.tradeWs.onerror =
-      error => {
 
-        console.error(
-          "Trading socket error:",
-          error
-        );
+/* =========================
+   ARROW
+========================= */
 
-        setMessage(
-          "Trading WebSocket error."
-        );
-      };
+.strategy-arrow {
+  width: 38px;
+  height: 38px;
 
+  margin-left: auto;
 
-    state.tradeWs.onclose =
-      () => {
+  flex-shrink: 0;
 
-        state.tradeConnected =
-          false;
+  display: grid;
+  place-items: center;
 
-        state.tradeAuthenticated =
-          false;
+  border:
+    1px solid var(--border);
 
-        state.accountConnected =
-          false;
+  border-radius: 11px;
 
-        state.engineState =
-          "TRADING DISCONNECTED";
+  background:
+    rgba(255,255,255,.035);
 
-        updateTradingConnectionUI();
-      };
-  }
-
+  color: var(--cyan);
 
-  function disconnectTradingSocket() {
+  font-size: 20px;
+  font-weight: 950;
 
-    if (state.tradeWs) {
+  transition: .25s ease;
+}
 
-      try {
-        state.tradeWs.close();
-      } catch (_) {}
-    }
+.strategy-selected[aria-expanded="true"]
+.strategy-arrow {
+  transform:
+    rotate(180deg);
 
+  color: var(--green);
 
-    state.tradeWs = null;
+  border-color:
+    rgba(32,245,154,.4);
 
-    state.tradeConnected =
-      false;
+  background:
+    rgba(32,245,154,.08);
+}
 
-    state.tradeAuthenticated =
-      false;
 
-    state.accountConnected =
-      false;
+/* =========================
+   STRATEGY MENU
+========================= */
 
-    state.engineState =
-      "ANALYSIS ONLY";
+.strategy-menu {
+  display: grid;
 
-    updateTradingConnectionUI();
-  }
+  grid-template-columns:
+    repeat(5, 1fr);
 
+  gap: 10px;
 
-  function sendTrade(data) {
+  margin-top: 10px;
 
-    if (
-      !state.tradeWs ||
-      state.tradeWs.readyState !==
-      WebSocket.OPEN
-    ) {
+  padding: 10px;
 
-      return false;
-    }
+  border:
+    1px solid var(--border);
 
+  border-radius: 19px;
 
-    state.tradeWs.send(
-      JSON.stringify(data)
+  background:
+    linear-gradient(
+      145deg,
+      rgba(16,26,44,.98),
+      rgba(8,14,25,.98)
     );
 
-    return true;
-  }
+  box-shadow:
+    var(--shadow),
+    0 0 30px rgba(53,167,255,.06);
 
+  animation:
+    strategyMenuOpen .18s ease;
+}
 
-  function requestBalance() {
+@keyframes strategyMenuOpen {
 
-    sendTrade({
-      balance: 1,
-      subscribe: 1,
-      req_id: nextRequestId()
-    });
+  from {
+    opacity: 0;
+    transform:
+      translateY(-6px);
   }
 
-
-  /* =======================================================
-     PROPOSAL
-  ======================================================= */
+  to {
+    opacity: 1;
+    transform:
+      translateY(0);
+  }
 
-  function requestProposal(
-    result
-  ) {
+}
 
-    const contract =
-      strategyToContract(
-        result
-      );
 
+/* =========================
+   STRATEGY OPTION
+========================= */
 
-    if (!contract) {
+.strategy-option {
+  position: relative;
 
-      setMessage(
-        `Strategy ${result.strategy} is not supported for execution.`
-      );
+  min-height: 105px;
 
-      return;
-    }
-
-
-    const stake =
-      clamp(
-        number(
-          state.risk.currentStake,
-          CONFIG.MIN_STAKE
-        ),
-        CONFIG.MIN_STAKE,
-        state.risk.maxStake
-      );
+  display: flex;
 
+  flex-direction: column;
 
-    const reqId =
-      nextRequestId();
+  align-items: flex-start;
 
+  justify-content: center;
 
-    const proposal = {
-      proposal: 1,
+  gap: 8px;
 
-      amount: stake,
+  padding: 13px;
 
-      basis: "stake",
+  border:
+    1px solid var(--border);
 
-      contract_type:
-        contract.contract_type,
+  border-radius: 15px;
 
-      currency:
-        state.currency ||
-        "USD",
+  background:
+    linear-gradient(
+      145deg,
+      var(--panel2),
+      var(--panel)
+    );
 
-      duration: 1,
+  color: var(--text);
 
-      duration_unit: "t",
+  text-align: left;
 
-      underlying_symbol:
-        result.symbol,
+  cursor: pointer;
 
-      subscribe: 0,
+  transition: .22s ease;
+}
 
-      req_id: reqId
-    };
+.strategy-option:hover {
+  transform:
+    translateY(-3px);
 
+  border-color:
+    rgba(53,167,255,.5);
 
-    if (
-      contract.barrier !==
-      undefined
-    ) {
+  box-shadow:
+    0 0 22px rgba(53,167,255,.08);
+}
 
-      proposal.barrier =
-        String(
-          contract.barrier
-        );
-    }
+.strategy-option:active {
+  transform:
+    scale(.98);
+}
 
 
-    state.engineState =
-      "PROPOSAL REQUESTED";
+/* active */
 
+.strategy-option.active {
+  border-color:
+    var(--green);
 
-    setMessage(
-      `Requesting ${result.strategy} proposal for ${result.symbol} at stake ${stake.toFixed(2)}.`
+  background:
+    linear-gradient(
+      145deg,
+      rgba(32,245,154,.13),
+      rgba(53,167,255,.05)
     );
 
-
-    sendTrade(
-      proposal
-    );
-  }
+  box-shadow:
+    0 0 24px rgba(32,245,154,.08);
+}
 
 
-  /* =======================================================
-     TRADING MESSAGE HANDLER
-  ======================================================= */
+/* =========================
+   OPTION ICON
+========================= */
 
-  function handleTradingMessage(
-    data
-  ) {
+.strategy-option-icon {
+  width: 37px;
+  height: 37px;
 
-    if (data.error) {
+  display: grid;
+  place-items: center;
 
-      state.engineState =
-        "TRADE ERROR";
+  border-radius: 11px;
 
-      setMessage(
-        data.error.message ||
-        "Deriv trading error."
-      );
+  color: white;
 
-      renderRiskUI();
+  background:
+    linear-gradient(
+      135deg,
+      var(--blue),
+      var(--purple)
+    );
 
-      return;
-    }
+  font-size: 10px;
+  font-weight: 950;
+}
 
+.strategy-option.active
+.strategy-option-icon {
+  color: #03120b;
 
-    switch (data.msg_type) {
+  background:
+    linear-gradient(
+      135deg,
+      var(--green),
+      var(--cyan)
+    );
+}
 
-      case "balance":
 
-        handleBalance(
-          data
-        );
+/* =========================
+   OPTION TEXT
+========================= */
 
-        break;
+.strategy-option-content {
+  min-width: 0;
+}
 
+.strategy-option-content strong {
+  display: block;
 
-      case "proposal":
+  font-size: 10px;
+  font-weight: 950;
 
-        handleProposal(
-          data
-        );
+  letter-spacing: .6px;
+}
 
-        break;
+.strategy-option-content small {
+  display: block;
 
+  margin-top: 2px;
 
-      case "buy":
+  color: var(--muted);
 
-        handleBuy(
-          data
-        );
+  font-size: 7px;
 
-        break;
+  line-height: 1.35;
+}
 
 
-      case "proposal_open_contract":
+/* =========================
+   OPTION CHECK
+========================= */
 
-        handleContractUpdate(
-          data
-        );
+.strategy-option-check {
+  position: absolute;
 
-        break;
+  top: 9px;
+  right: 9px;
 
+  width: 19px;
+  height: 19px;
 
-      default:
-        break;
-    }
-  }
+  display: grid;
+  place-items: center;
 
+  border-radius: 50%;
 
-  function handleBalance(
-    data
-  ) {
+  background:
+    rgba(255,255,255,.05);
 
-    const balance =
-      data.balance;
+  color: transparent;
 
+  font-size: 9px;
+  font-weight: 950;
+}
 
-    if (!balance) {
-      return;
-    }
+.strategy-option.active
+.strategy-option-check {
+  background:
+    rgba(32,245,154,.12);
 
+  color: var(--green);
+}
 
-    state.balance =
-      number(
-        balance.balance,
-        state.balance
-      );
 
+/* =========================================================
+   OLD STRATEGY CLASS COMPATIBILITY
+   Keeps old JS/CSS from breaking other parts of the app.
+========================================================= */
 
-    state.currency =
-      balance.currency ||
-      state.currency;
+.strategy-options {
+  display: grid;
 
+  grid-template-columns:
+    repeat(4, 1fr);
 
-    if (
-      state.risk.sessionStartBalance ===
-      null
-    ) {
+  gap: 11px;
+}
 
-      state.risk.sessionStartBalance =
-        state.balance;
-    }
+.strategy-button {
+  min-height: 82px;
 
+  display: flex;
 
-    renderRiskUI();
-  }
+  align-items: center;
 
+  gap: 12px;
 
-  function handleProposal(
-    data
-  ) {
+  padding: 13px;
 
-    const proposal =
-      data.proposal;
+  border:
+    1px solid var(--border);
 
+  border-radius: 17px;
 
-    if (!proposal) {
+  background:
+    linear-gradient(
+      145deg,
+      var(--panel2),
+      var(--panel)
+    );
 
-      setMessage(
-        "Proposal response did not contain a proposal."
-      );
+  color: var(--text);
 
-      return;
-    }
+  text-align: left;
 
+  cursor: pointer;
 
-    const proposalId =
-      proposal.id;
+  transition: .22s ease;
 
+  box-shadow: var(--shadow);
+}
 
-    const askPrice =
-      number(
-        proposal.ask_price,
-        state.risk.currentStake
-      );
+.strategy-button:hover {
+  transform:
+    translateY(-3px);
 
+  border-color:
+    rgba(53,167,255,.5);
+}
 
-    if (!proposalId) {
+.strategy-button.active {
+  border-color:
+    var(--green);
 
-      setMessage(
-        "No proposal ID returned."
-      );
+  background:
+    linear-gradient(
+      145deg,
+      rgba(32,245,154,.13),
+      rgba(53,167,255,.05)
+    );
 
-      return;
-    }
+  box-shadow:
+    0 0 25px rgba(32,245,154,.08);
+}
 
+.strategy-icon {
+  width: 40px;
+  height: 40px;
 
-    state.engineState =
-      "BUYING";
+  flex-shrink: 0;
 
+  display: grid;
+  place-items: center;
 
-    const sent =
-      sendTrade({
-        buy: proposalId,
-        price: askPrice,
-        req_id:
-          nextRequestId()
-      });
+  border-radius: 12px;
 
+  color: white;
 
-    if (!sent) {
+  background:
+    linear-gradient(
+      135deg,
+      var(--blue),
+      var(--purple)
+    );
 
-      setMessage(
-        "Trading socket disconnected before buy."
-      );
-    }
-  }
+  font-size: 13px;
+  font-weight: 950;
+}
 
+.strategy-button.active
+.strategy-icon {
+  color: #03120b;
 
-  /* =======================================================
-     BUY
-  ======================================================= */
+  background:
+    linear-gradient(
+      135deg,
+      var(--green),
+      var(--cyan)
+    );
+}
 
-  function handleBuy(
-    data
-  ) {
+.strategy-button strong {
+  display: block;
 
-    const buy =
-      data.buy;
+  font-size: 11px;
+}
 
+.strategy-button small {
+  display: block;
 
-    if (!buy) {
+  margin-top: 3px;
 
-      setMessage(
-        "Buy response was empty."
-      );
+  color: var(--muted);
 
-      return;
-    }
+  font-size: 8px;
+}
 
 
-    const contractId =
-      buy.contract_id;
+/* =========================
+   AI DASHBOARD
+========================= */
 
+.ai-layout {
+  display: grid;
 
-    state.tradeCount++;
+  grid-template-columns:
+    1fr 1fr;
 
+  gap: 15px;
+}
 
-    state.lastAction =
-      `BOUGHT ${contractId}`;
+.ai-result-card,
+.ai-reason-card {
+  min-height: 270px;
 
+  padding: 20px;
 
-    state.engineState =
-      "CONTRACT ACTIVE";
+  border:
+    1px solid rgba(155,108,255,.2);
 
+  border-radius: 22px;
 
-    state.activeContracts.set(
-      String(contractId),
-      {
-        contractId,
-        symbol:
-          buy.underlying_symbol ||
-          state.selectedSymbol,
-        stake:
-          number(
-            buy.buy_price,
-            state.risk.currentStake
-          ),
-        purchaseTime:
-          buy.purchase_time,
-        profit: 0,
-        status: "OPEN"
-      }
+  background:
+    radial-gradient(
+      circle at 50% 0%,
+      rgba(155,108,255,.10),
+      transparent 35%
+    ),
+    linear-gradient(
+      145deg,
+      var(--panel2),
+      var(--panel)
     );
-
-
-    renderRiskUI();
-
 
-    setMessage(
-      `Contract ${contractId} purchased. Monitoring result...`
-    );
+  box-shadow: var(--shadow);
+}
 
+.ai-card-header {
+  display: flex;
 
-    sendTrade({
-      proposal_open_contract: 1,
-      contract_id:
-        contractId,
-      subscribe: 1,
-      req_id:
-        nextRequestId()
-    });
-  }
+  justify-content: space-between;
 
+  color: var(--muted);
 
-  /* =======================================================
-     CONTRACT MONITOR
-  ======================================================= */
+  font-size: 9px;
+  font-weight: 950;
 
-  function handleContractUpdate(
-    data
-  ) {
+  letter-spacing: 1px;
+}
 
-    const contract =
-      data.proposal_open_contract;
+.ai-card-header span:last-child {
+  color: var(--green);
+}
 
+.ai-main-result {
+  padding: 28px 10px;
 
-    if (!contract) {
-      return;
-    }
+  text-align: center;
+}
 
+.ai-main-result small {
+  color: var(--cyan);
 
-    const id =
-      String(
-        contract.contract_id
-      );
+  font-size: 9px;
+  font-weight: 950;
 
+  letter-spacing: 1px;
+}
 
-    const local =
-      state.activeContracts.get(
-        id
-      );
+.ai-main-result h3 {
+  margin-top: 6px;
 
+  font-size: 14px;
 
-    if (!local) {
-
-      state.activeContracts.set(
-        id,
-        {
-          contractId:
-            contract.contract_id,
-          symbol:
-            state.selectedSymbol,
-          stake:
-            number(
-              contract.buy_price,
-              state.risk.currentStake
-            ),
-          profit: 0,
-          status:
-            contract.status ||
-            "OPEN"
-        }
-      );
-    }
+  color: var(--muted);
+}
 
+.ai-main-result strong {
+  display: block;
 
-    const record =
-      state.activeContracts.get(
-        id
-      );
+  margin-top: 2px;
 
+  font-size:
+    clamp(30px, 5vw, 48px);
 
-    record.profit =
-      number(
-        contract.profit,
-        record.profit
-      );
+  font-weight: 950;
 
+  background:
+    linear-gradient(
+      90deg,
+      var(--green),
+      var(--cyan)
+    );
 
-    record.status =
-      contract.status ||
-      (
-        contract.is_sold
-          ? "CLOSED"
-          : "OPEN"
-      );
+  -webkit-background-clip: text;
+  background-clip: text;
 
+  color: transparent;
+}
 
-    record.currentSpot =
-      contract.current_spot;
+.ai-main-result span {
+  color: var(--yellow);
 
+  font-size: 11px;
+  font-weight: 950;
+}
 
-    record.exitSpot =
-      contract.exit_spot;
+.ai-stat-row {
+  display: grid;
 
+  grid-template-columns:
+    repeat(4, 1fr);
 
-    renderActiveContracts();
+  gap: 8px;
+}
 
+.ai-stat-row > div {
+  padding: 10px;
 
-    if (
-      contract.is_sold === true ||
-      record.status === "won" ||
-      record.status === "lost" ||
-      record.status === "sold"
-    ) {
+  border:
+    1px solid var(--border);
 
-      finalizeContract(
-        id,
-        record,
-        contract
-      );
-    }
-  }
+  border-radius: 12px;
 
+  background:
+    rgba(255,255,255,.025);
+}
 
-  function finalizeContract(
-    id,
-    record,
-    contract
-  ) {
+.ai-stat-row span {
+  display: block;
 
-    if (
-      record.finalized
-    ) {
-      return;
-    }
+  color: var(--muted);
 
+  font-size: 7px;
+  font-weight: 900;
+}
 
-    record.finalized = true;
+.ai-stat-row strong {
+  display: block;
 
+  margin-top: 4px;
 
-    const profit =
-      number(
-        contract.profit,
-        record.profit
-      );
+  color: var(--text);
 
+  font-size: 11px;
+}
 
-    processTradeResult(
-      profit
-    );
+.ai-reason-card p {
+  margin-top: 22px;
 
+  color: #b8c5d8;
 
-    if (profit > 0) {
+  font-size: 12px;
+}
 
-      record.result =
-        "WIN";
+.reason-grid {
+  display: grid;
 
-    } else if (profit < 0) {
+  grid-template-columns:
+    repeat(3, 1fr);
 
-      record.result =
-        "LOSS";
+  gap: 8px;
 
-    } else {
+  margin-top: 18px;
+}
 
-      record.result =
-        "BREAK EVEN";
-    }
+.reason-item {
+  padding: 11px;
+}
 
+.reason-item strong {
+  display: block;
 
-    record.status =
-      "CLOSED";
+  margin-top: 4px;
 
+  color: var(--cyan);
 
-    state.lastAction =
-      `${record.result}: ${money(profit)}`;
+  font-size: 11px;
+}
 
 
-    state.engineState =
-      record.result;
+/* =========================
+   CIRCULAR AI
+========================= */
 
+.ai-engine-section {
+  position: relative;
 
-    setMessage(
-      `${record.result} — P/L ${money(profit)}`
-    );
+  margin: 35px 0;
 
+  padding: 45px 20px;
 
-    setTimeout(
-      () => {
+  text-align: center;
 
-        state.activeContracts.delete(
-          id
-        );
+  border:
+    1px solid rgba(32,245,154,.22);
 
-        renderActiveContracts();
+  border-radius: 30px;
 
-      },
-      5000
+  background:
+    radial-gradient(
+      circle at center,
+      rgba(32,245,154,.08),
+      transparent 35%
+    ),
+    radial-gradient(
+      circle at 50% 100%,
+      rgba(53,167,255,.08),
+      transparent 45%
+    ),
+    linear-gradient(
+      145deg,
+      #0b1625,
+      #060b14
     );
 
-
-    renderRiskUI();
-  }
+  overflow: hidden;
 
+  box-shadow:
+    var(--shadow),
+    0 0 70px rgba(32,245,154,.06);
+}
 
-  /* =======================================================
-     ACTIVE CONTRACT DISPLAY
-  ======================================================= */
-
-  function renderActiveContracts() {
-
-    const container =
-      $("kwActiveContracts");
-
-
-    if (!container) {
-      return;
-    }
-
-
-    if (
-      state.activeContracts.size ===
-      0
-    ) {
-
-      container.innerHTML =
-        "No active contracts.";
-
-      return;
-    }
-
-
-    container.innerHTML =
-      Array.from(
-        state.activeContracts.values()
-      )
-        .map(
-          contract => `
-            <div class="kw-contract">
-
-              <span>
-                #${escapeHTML(
-                  contract.contractId
-                )}
-                •
-                ${escapeHTML(
-                  contract.symbol
-                )}
-              </span>
-
-              <span>
-                ${escapeHTML(
-                  contract.status
-                )}
-                |
-                P/L:
-                ${number(
-                  contract.profit
-                ).toFixed(2)}
-              </span>
-
-            </div>
-          `
-        )
-        .join("");
-  }
+.ai-engine-label {
+  display: flex;
 
+  flex-direction: column;
 
-  /* =======================================================
-     SCANNER
-  ======================================================= */
+  gap: 2px;
+}
 
-  function updateScannerMarket(
-    symbol
-  ) {
+.ai-engine-label span {
+  color: var(--cyan);
 
-    const result =
-      analyzeSymbol(symbol);
+  font-size: 9px;
+  font-weight: 950;
 
+  letter-spacing: 3px;
+}
 
-    const existing =
-      state.scanResults.find(
-        item =>
-          item.symbol === symbol
-      );
+.ai-engine-label strong {
+  color: var(--text);
 
+  font-size: 22px;
 
-    if (existing) {
+  letter-spacing: 1px;
+}
 
-      Object.assign(
-        existing,
-        result
-      );
+.ai-circle-wrapper {
+  display: flex;
 
-    } else {
+  justify-content: center;
 
-      state.scanResults.push(
-        result
-      );
-    }
+  margin: 35px 0 25px;
+}
 
+.ai-circle {
+  position: relative;
 
-    state.scanResults.sort(
-      (a, b) =>
-        number(b.confidence) -
-        number(a.confidence)
-    );
+  width:
+    min(280px, 72vw);
 
+  aspect-ratio: 1;
 
-    renderScanner();
-  }
+  display: grid;
+  place-items: center;
 
+  border-radius: 50%;
 
-  function renderScanner() {
-
-    const container =
-      $("marketScannerList");
-
-
-    if (!container) {
-      return;
-    }
-
-
-    const results =
-      state.scanResults
-        .slice(
-          0,
-          CONFIG.MAX_MARKETS
-        );
-
-
-    if (!results.length) {
-
-      container.innerHTML =
-        `<div>No market data yet...</div>`;
-
-      return;
-    }
-
-
-    container.innerHTML =
-      results
-        .map(
-          result => {
-
-            const selected =
-              result.symbol ===
-              state.selectedSymbol;
-
-
-            return `
-              <button
-                type="button"
-                class="market-card ${
-                  selected
-                    ? "selected"
-                    : ""
-                }"
-                data-symbol="${escapeHTML(
-                  result.symbol
-                )}">
-
-                <div>
-                  <strong>
-                    ${escapeHTML(
-                      marketName(
-                        result.symbol
-                      )
-                    )}
-                  </strong>
-
-                  <small>
-                    ${escapeHTML(
-                      result.symbol
-                    )}
-                  </small>
-                </div>
-
-                <div>
-                  <b>
-                    ${
-                      result.ready
-                        ? escapeHTML(
-                            result.strategy
-                          )
-                        : "LOADING"
-                    }
-                  </b>
-
-                  <small>
-                    ${
-                      result.ready
-                        ? `${number(
-                            result.confidence
-                          ).toFixed(1)}%`
-                        : `${result.sample}/${CONFIG.MIN_SAMPLE}`
-                    }
-                  </small>
-                </div>
-
-              </button>
-            `;
-          }
-        )
-        .join("");
-
-
-    qa(
-      "#marketScannerList [data-symbol]"
-    ).forEach(
-      button => {
-
-        button.addEventListener(
-          "click",
-          () => {
-
-            selectMarket(
-              button.dataset.symbol
-            );
-
-          }
-        );
-      }
+  background:
+    conic-gradient(
+      var(--green),
+      var(--cyan),
+      var(--purple),
+      var(--pink),
+      var(--green)
     );
 
-
-    setText(
-      "marketCount",
-      String(
-        state.scanResults.length
-      )
-    );
+  box-shadow:
+    0 0 35px rgba(32,245,154,.22),
+    0 0 80px rgba(53,167,255,.08);
 
-    setText(
-      "connectedMarkets",
-      String(
-        state.scanResults.length
-      )
-    );
-  }
+  animation:
+    aiRotate 8s linear infinite;
+}
 
+.ai-circle::before {
+  content: "";
 
-  function selectMarket(
-    symbol
-  ) {
+  position: absolute;
 
-    if (
-      !MARKETS.some(
-        market =>
-          market.symbol === symbol
-      )
-    ) {
-      return;
-    }
+  inset: 7px;
 
+  border-radius: 50%;
 
-    state.selectedSymbol =
-      symbol;
+  background:
+    radial-gradient(
+      circle,
+      #14243a 0%,
+      #09111e 58%,
+      #050811 100%
+    );
 
+  box-shadow:
+    inset 0 0 40px rgba(0,0,0,.8);
+}
 
-    state.targetDigit =
-      getLatestDigit(
-        symbol
-      );
+.ai-circle::after {
+  content: "";
 
+  position: absolute;
 
-    subscribeSelectedMarket();
+  inset: 19px;
 
-    renderSelectedMarket();
+  border-radius: 50%;
 
-    renderDigitDistribution();
+  border:
+    1px dashed rgba(255,255,255,.16);
 
-    renderProbabilities();
+  animation:
+    aiReverse 12s linear infinite;
+}
 
-    updateStreamUI();
+@keyframes aiRotate {
 
-    renderScanner();
+  to {
+    transform:
+      rotate(360deg);
   }
 
+}
 
-  /* =======================================================
-     SELECTED MARKET
-  ======================================================= */
+@keyframes aiReverse {
 
-  function renderSelectedMarket() {
-
-    const symbol =
-      state.selectedSymbol;
-
-
-    const live =
-      state.liveTicks[symbol];
-
-
-    const analysis =
-      analyzeSymbol(
-        symbol
-      );
-
-
-    setText(
-      "selectedSymbol",
-      symbol
-    );
-
-    setText(
-      "selectedMarketName",
-      marketName(symbol)
-    );
-
-    setText(
-      "selectedQuote",
-      live
-        ? String(live.quote)
-        : "—"
-    );
-
-    setText(
-      "selectedDigit",
-      live
-        ? String(live.digit)
-        : "—"
-    );
-
-    setText(
-      "selectedSample",
-      String(
-        analysis.sample
-      )
-    );
-
-    setText(
-      "selectedEdge",
-      analysis.ready
-        ? analysis.edge.toFixed(1)
-        : "—"
-    );
-
-    setText(
-      "selectedQuality",
-      analysis.ready
-        ? (
-            analysis.confidence >= 70
-              ? "STRONG"
-              : "WATCH"
-          )
-        : "LOADING"
-    );
+  to {
+    transform:
+      rotate(-360deg);
   }
-
-
-  function updateStreamUI() {
-
-    const live =
-      state.liveTicks[
-        state.selectedSymbol
-      ];
 
+}
 
-    setText(
-      "liveSymbol",
-      state.selectedSymbol
-    );
+.ai-circle-inner {
+  position: relative;
 
-    setText(
-      "streamQuote",
-      live
-        ? String(live.quote)
-        : "—"
-    );
+  z-index: 3;
 
-    setText(
-      "streamDigit",
-      live
-        ? String(live.digit)
-        : "—"
-    );
-  }
+  display: flex;
 
+  flex-direction: column;
 
-  /* =======================================================
-     DIGIT DISTRIBUTION
-  ======================================================= */
+  align-items: center;
+  justify-content: center;
 
-  function renderDigitDistribution() {
+  gap: 3px;
 
-    const samples =
-      getRecent(
-        state.selectedSymbol
-      );
+  width: 75%;
+  height: 75%;
 
+  border-radius: 50%;
 
-    const counts =
-      Array(10).fill(0);
+  background: #07101c;
 
+  box-shadow:
+    inset 0 0 35px rgba(53,167,255,.10);
+}
 
-    samples.forEach(
-      item => {
+.ai-circle-inner span {
+  color: var(--green);
 
-        const digit =
-          clamp(
-            Math.floor(
-              number(
-                item.digit
-              )
-            ),
-            0,
-            9
-          );
+  font-size: 10px;
+  font-weight: 950;
 
-        counts[digit]++;
-      }
-    );
+  letter-spacing: 2px;
+}
 
+.ai-circle-inner strong {
+  color: white;
 
-    const max =
-      Math.max(
-        1,
-        ...counts
-      );
+  font-size:
+    clamp(48px, 10vw, 76px);
 
+  line-height: 1;
 
-    counts.forEach(
-      (count, digit) => {
+  font-weight: 950;
 
-        const el =
-          $(`digit${digit}`);
+  text-shadow:
+    0 0 25px rgba(53,167,255,.35);
+}
 
+.ai-circle-inner small {
+  color: var(--cyan);
 
-        if (!el) {
-          return;
-        }
+  font-size: 9px;
+  font-weight: 950;
 
+  letter-spacing: 1px;
+}
 
-        const percent =
-          samples.length
-            ? count /
-              samples.length *
-              100
-            : 0;
+.ai-live-result {
+  max-width: 700px;
 
+  display: grid;
 
-        const value =
-          el.querySelector(
-            ".digit-value"
-          );
+  grid-template-columns:
+    repeat(3, 1fr);
 
+  gap: 10px;
 
-        if (value) {
+  margin:
+    0 auto 18px;
+}
 
-          value.textContent =
-            `${percent.toFixed(1)}%`;
-        }
+.ai-live-result > div {
+  padding: 13px;
 
+  border:
+    1px solid var(--border);
 
-        const bar =
-          el.querySelector(
-            ".digit-bar"
-          );
+  border-radius: 14px;
 
+  background:
+    rgba(255,255,255,.025);
+}
 
-        if (bar) {
+.ai-live-result span {
+  display: block;
 
-          bar.style.width =
-            `${count / max * 100}%`;
-        }
+  color: var(--muted);
 
+  font-size: 8px;
+  font-weight: 900;
+}
 
-        if (
-          el.tagName ===
-          "INPUT"
-        ) {
-          el.value = count;
-        }
-      }
-    );
-  }
+.ai-live-result strong {
+  display: block;
 
+  margin-top: 4px;
 
-  /* =======================================================
-     PROBABILITIES
-  ======================================================= */
+  color: var(--green);
 
-  function renderProbabilities() {
+  font-size: 14px;
+}
 
-    const result =
-      analyzeSymbol(
-        state.selectedSymbol
-      );
+.engine-actions {
+  display: flex;
 
+  justify-content: center;
 
-    setText(
-      "evenPercent",
-      `${number(
-        result.evenPct
-      ).toFixed(1)}%`
-    );
+  gap: 10px;
+}
 
-    setText(
-      "oddPercent",
-      `${number(
-        result.oddPct
-      ).toFixed(1)}%`
-    );
+.start-ai-button {
+  padding:
+    15px 25px;
 
-    setText(
-      "highPercent",
-      `${number(
-        result.highPct
-      ).toFixed(1)}%`
-    );
+  color: #03120b;
 
-    setText(
-      "lowPercent",
-      `${number(
-        result.lowPct
-      ).toFixed(1)}%`
+  background:
+    linear-gradient(
+      135deg,
+      var(--green),
+      var(--cyan)
     );
 
-    setText(
-      "overPercent",
-      `${number(
-        result.overPct
-      ).toFixed(1)}%`
-    );
+  box-shadow:
+    0 0 30px rgba(32,245,154,.16);
+}
 
-    setText(
-      "underPercent",
-      `${number(
-        result.underPct
-      ).toFixed(1)}%`
-    );
+.stop-ai-button {
+  color: #ffb4c0;
 
+  border:
+    1px solid rgba(255,82,109,.3);
 
-    const match =
-      result.ready
-        ? result.digitPct
-        : 0;
+  background:
+    rgba(255,82,109,.08);
+}
 
+.start-ai-button:hover,
+.stop-ai-button:hover {
+  transform:
+    translateY(-3px);
+}
 
-    const differ =
-      result.ready
-        ? 100 - result.digitPct
-        : 0;
+.engine-note {
+  max-width: 650px;
 
+  margin:
+    14px auto 0;
 
-    setText(
-      "matchPercent",
-      `${match.toFixed(1)}%`
-    );
+  color: var(--muted);
 
-    setText(
-      "differPercent",
-      `${differ.toFixed(1)}%`
-    );
+  font-size: 10px;
+}
 
 
-    const samples =
-      getRecent(
-        state.selectedSymbol
-      );
+/* =========================
+   STATUS DASHBOARD
+========================= */
 
+.status-dashboard {
+  display: grid;
 
-    if (samples.length >= 2) {
+  grid-template-columns:
+    repeat(5, 1fr);
 
-      const last =
-        samples[
-          samples.length - 1
-        ];
+  gap: 11px;
+}
 
-      const previous =
-        samples[
-          samples.length - 2
-        ];
+.status-card {
+  position: relative;
 
+  min-height: 125px;
 
-      const rise =
-        last.quote >
-        previous.quote
-          ? 100
-          : 0;
+  padding: 16px;
 
+  overflow: hidden;
+}
 
-      const fall =
-        100 - rise;
+.status-card::after {
+  content: "";
 
+  position: absolute;
 
-      setText(
-        "risePercent",
-        `${rise.toFixed(1)}%`
-      );
+  left: 0;
+  right: 0;
+  bottom: 0;
 
-      setText(
-        "fallPercent",
-        `${fall.toFixed(1)}%`
-      );
+  height: 2px;
 
-    } else {
+  background:
+    linear-gradient(
+      90deg,
+      var(--blue),
+      var(--purple)
+    );
+}
 
-      setText(
-        "risePercent",
-        "—"
-      );
+.status-card-icon {
+  width: 34px;
+  height: 34px;
 
-      setText(
-        "fallPercent",
-        "—"
-      );
-    }
-  }
+  display: grid;
+  place-items: center;
 
+  border-radius: 10px;
 
-  /* =======================================================
-     STRATEGY UI
-  ======================================================= */
+  background:
+    rgba(53,167,255,.09);
 
-  function bindStrategyUI() {
+  color: var(--cyan);
 
-    qa(
-      ".strategy-button[data-strategy]"
-    ).forEach(
-      button => {
+  font-size: 10px;
+  font-weight: 950;
+}
 
-        button.addEventListener(
-          "click",
-          () => {
+.status-card strong {
+  display: block;
 
-            const strategy =
-              button.dataset.strategy;
+  margin-top: 7px;
 
-            if (!strategy) {
-              return;
-            }
+  font-size: 12px;
+}
 
 
-            state.selectedStrategy =
-              strategy;
+/* =========================
+   NOTICE
+========================= */
 
+.notice-card {
+  display: flex;
 
-            state.targetDigit =
-              getLatestDigit(
-                state.selectedSymbol
-              );
+  gap: 13px;
 
+  margin-top: 25px;
 
-            updateStrategyUI();
+  padding: 17px;
 
-            renderAIResult(
-              getCurrentAIResult()
-            );
-          }
-        );
-      }
-    );
+  border:
+    1px solid rgba(255,216,77,.17);
 
+  border-radius: 17px;
 
-    $("strategyCurrentButton")
-      ?.addEventListener(
-        "click",
-        () => {
+  background:
+    rgba(255,216,77,.035);
+}
 
-          $("strategyMenu")
-            ?.classList.toggle(
-              "open"
-            );
-        }
-      );
-  }
+.notice-icon {
+  width: 34px;
+  height: 34px;
 
+  flex-shrink: 0;
 
-  function updateStrategyUI() {
+  display: grid;
+  place-items: center;
 
-    const strategy =
-      STRATEGIES[
-        state.selectedStrategy
-      ] ||
-      STRATEGIES.AUTO;
+  border-radius: 10px;
 
+  background:
+    rgba(255,216,77,.10);
 
-    setText(
-      "strategyCurrentIcon",
-      strategy.icon
-    );
+  color: var(--yellow);
 
-    setText(
-      "strategyCurrentName",
-      strategy.name
-    );
+  font-weight: 950;
+}
 
-    qa(
-      ".strategy-button[data-strategy]"
-    ).forEach(
-      button => {
-
-        button.classList.toggle(
-          "active",
-          button.dataset.strategy ===
-          state.selectedStrategy
-        );
-      }
-    );
-  }
+.notice-card strong {
+  color: var(--yellow);
 
+  font-size: 10px;
 
-  /* =======================================================
-     ACCOUNT UI
-  ======================================================= */
+  letter-spacing: 1px;
+}
 
-  function bindAccountUI() {
+.notice-card p {
+  margin-top: 4px;
 
-    $("accountDemo")
-      ?.addEventListener(
-        "click",
-        () => setAccountMode("demo")
-      );
+  color: var(--muted);
 
+  font-size: 10px;
+}
 
-    $("accountReal")
-      ?.addEventListener(
-        "click",
-        () => setAccountMode("real")
-      );
 
+/* =========================
+   FOOTER
+========================= */
 
-    $("connectAccount")
-      ?.addEventListener(
-        "click",
-        () => {
+.footer {
+  width:
+    min(
+      1400px,
+      calc(100% - 28px)
+    );
 
-          setMessage(
-            "For trading, use the secure trading-session connector in the Trading Control Center."
-          );
-        }
-      );
+  display: flex;
 
+  justify-content: space-between;
+  align-items: center;
 
-    $("disconnectAccount")
-      ?.addEventListener(
-        "click",
-        disconnectTradingSocket
-      );
-  }
+  margin: 0 auto;
 
+  padding:
+    22px 0 35px;
 
-  /* =======================================================
-     UI CONNECTION
-  ======================================================= */
+  border-top:
+    1px solid var(--border);
+}
 
-  function updateConnectionUI() {
+.footer strong {
+  display: block;
 
-    const connected =
-      state.publicConnected;
+  color: var(--green);
 
+  font-size: 11px;
 
-    const pill =
-      q(".connection-pill");
+  letter-spacing: 1px;
+}
 
+.footer span {
+  color: var(--muted);
 
-    if (pill) {
+  font-size: 9px;
+}
 
-      pill.textContent =
-        connected
-          ? "LIVE DATA"
-          : "CONNECTING";
+.footer-status {
+  display: flex;
 
-      pill.classList.toggle(
-        "connected",
-        connected
-      );
-    }
+  align-items: center;
 
+  gap: 7px;
+}
 
-    setText(
-      "accountStatus",
-      state.accountConnected
-        ? "CONNECTED"
-        : "ANALYSIS"
-    );
 
+/* =========================================================
+   LIGHT MODE
+========================================================= */
 
-    setText(
-      "accountMode",
-      state.accountMode.toUpperCase()
-    );
+body.light-mode {
+  --bg: #eef3f8;
+  --bg2: #f7f9fc;
 
+  --panel: #ffffff;
+  --panel2: #ffffff;
+  --panel3: #f1f5fa;
 
-    setText(
-      "accountTypeLabel",
-      state.accountMode.toUpperCase()
-    );
+  --border: #dbe3ed;
 
+  --text: #101827;
+  --muted: #66758a;
 
-    setText(
-      "accountId",
-      state.accountId ||
-      "Not connected"
+  background:
+    radial-gradient(
+      circle at 10% 0%,
+      rgba(53,167,255,.10),
+      transparent 30%
+    ),
+    radial-gradient(
+      circle at 90% 10%,
+      rgba(155,108,255,.09),
+      transparent 30%
+    ),
+    linear-gradient(
+      145deg,
+      #eef3f8,
+      #ffffff
     );
-
+}
 
-    setText(
-      "accountBalance",
-      state.balance === null
-        ? "—"
-        : state.balance.toFixed(2)
-    );
+body.light-mode .topbar {
+  background:
+    rgba(255,255,255,.90);
 
+  border-bottom-color:
+    #dce5ef;
+}
 
-    setText(
-      "accountCurrency",
-      state.currency
-    );
-  }
+body.light-mode .account-card,
+body.light-mode .info-card,
+body.light-mode .stream-card,
+body.light-mode .market-card,
+body.light-mode .selected-market-card,
+body.light-mode .digit-item,
+body.light-mode .probability-card,
+body.light-mode .ai-result-card,
+body.light-mode .ai-reason-card,
+body.light-mode .strategy-button,
+body.light-mode .status-card {
+  background: #ffffff;
 
+  box-shadow:
+    0 10px 30px rgba(35,55,80,.08);
+}
 
-  function updateTradingConnectionUI() {
+body.light-mode .strategy-menu {
+  background: #ffffff;
 
-    const connected =
-      state.tradeConnected &&
-      state.tradeAuthenticated;
+  box-shadow:
+    0 15px 40px rgba(35,55,80,.10);
+}
 
+body.light-mode .strategy-option {
+  background: #ffffff;
+}
 
-    setText(
-      "kwTradeConnection",
-      connected
-        ? "TRADING CONNECTED"
-        : "ANALYSIS ONLY"
+body.light-mode .strategy-selected {
+  background:
+    linear-gradient(
+      145deg,
+      rgba(32,245,154,.10),
+      rgba(53,167,255,.04)
     );
-
+}
 
-    setText(
-      "accountStatus",
-      connected
-        ? "CONNECTED"
-        : "ANALYSIS"
+body.light-mode .hero-card {
+  background:
+    radial-gradient(
+      circle at 80% 50%,
+      rgba(155,108,255,.10),
+      transparent 30%
+    ),
+    linear-gradient(
+      145deg,
+      #ffffff,
+      #edf5ff
     );
+}
 
-
-    setText(
-      "accountId",
-      state.accountId ||
-      (
-        connected
-          ? "AUTHENTICATED"
-          : "Not connected"
-      )
+body.light-mode .ai-engine-section {
+  background:
+    radial-gradient(
+      circle at center,
+      rgba(32,245,154,.07),
+      transparent 35%
+    ),
+    linear-gradient(
+      145deg,
+      #ffffff,
+      #edf5ff
     );
-
+}
 
-    setText(
-      "accountBalance",
-      state.balance === null
-        ? "—"
-        : state.balance.toFixed(2)
-    );
+body.light-mode .ai-circle-inner {
+  background: #f7fbff;
+}
 
+body.light-mode .ai-circle-inner strong {
+  color: #111827;
+}
 
-    setText(
-      "accountCurrency",
-      state.currency
-    );
 
+/* =========================================================
+   RESPONSIVE
+========================================================= */
 
-    updateConnectionUI();
+@media (max-width: 1100px) {
 
-    renderRiskUI();
+  .scanner-grid,
+  .market-list {
+    grid-template-columns:
+      repeat(3, 1fr);
   }
-
-
-  /* =======================================================
-     BUTTON STATE
-  ======================================================= */
 
-  function updateTradingButtons() {
-
-    const allowed =
-      CONFIG.TRADING_ENABLED &&
-      state.tradeConnected &&
-      state.tradeAuthenticated &&
-      !state.risk.sessionStopped;
-
-
-    if ($("kwTradeNow")) {
-      $("kwTradeNow").disabled =
-        !allowed;
-    }
+  .probability-grid {
+    grid-template-columns:
+      repeat(4, 1fr);
+  }
 
+  .strategy-options {
+    grid-template-columns:
+      repeat(3, 1fr);
+  }
 
-    if ($("kwAITradeNow")) {
-      $("kwAITradeNow").disabled =
-        !allowed;
-    }
+  .strategy-menu {
+    grid-template-columns:
+      repeat(3, 1fr);
   }
 
+  .status-dashboard {
+    grid-template-columns:
+      repeat(3, 1fr);
+  }
 
-  function updateAIButtons() {
+  .digit-grid {
+    grid-template-columns:
+      repeat(5, 1fr);
+  }
 
-    const start =
-      $("startAiEngine");
+}
 
-    const stop =
-      $("stopAiEngine");
 
+/* =========================
+   TABLET
+========================= */
 
-    if (start) {
-      start.disabled =
-        state.aiRunning;
-    }
+@media (max-width: 800px) {
 
+  .topbar {
+    min-height: 68px;
 
-    if (stop) {
-      stop.disabled =
-        !state.aiRunning;
-    }
+    padding:
+      10px 13px;
   }
-
 
-  /* =======================================================
-     UTILITIES
-  ======================================================= */
-
-  function nextRequestId() {
-
-    state.requestId++;
-
-    return state.requestId;
+  .brand-name {
+    font-size: 15px;
   }
 
+  .connection-pill {
+    padding:
+      7px 9px;
+  }
 
-  function marketName(symbol) {
+  .connection-pill
+  span:not(.status-dot),
+  .connection-pill strong {
+    display: none;
+  }
 
-    const market =
-      MARKETS.find(
-        item =>
-          item.symbol === symbol
+  .app-shell {
+    width:
+      min(
+        calc(100% - 20px),
+        700px
       );
-
 
-    return market
-      ? market.name
-      : symbol;
+    padding-top: 18px;
   }
-
-
-  function getLatestDigit(symbol) {
 
-    return (
-      state.liveTicks[symbol]
-        ?.digit ??
-      5
-    );
+  .account-grid,
+  .account-info-grid,
+  .stream-grid,
+  .ai-layout {
+    grid-template-columns:
+      1fr 1fr;
   }
-
 
-  function setMessage(
-    message
-  ) {
-
-    setText(
-      "kwTradingMessage",
-      message
-    );
+  .stream-main {
+    grid-column:
+      span 2;
   }
 
-
-  /* =======================================================
-     SCAN BUTTON
-  ======================================================= */
-
-  function bindScannerUI() {
-
-    $("scanAll")
-      ?.addEventListener(
-        "click",
-        scanAllMarkets
-      );
+  .scanner-grid,
+  .market-list {
+    grid-template-columns:
+      repeat(2, 1fr);
   }
-
-
-  function scanAllMarkets() {
-
-    state.scanning = true;
-
-    state.scanResults = [];
-
-
-    MARKETS.forEach(
-      market => {
-
-        const result =
-          analyzeSymbol(
-            market.symbol
-          );
-
-        state.scanResults.push(
-          result
-        );
-      }
-    );
-
-
-    state.scanResults.sort(
-      (a, b) =>
-        number(b.confidence) -
-        number(a.confidence)
-    );
 
-
-    renderScanner();
-
-    state.scanning = false;
+  .probability-grid {
+    grid-template-columns:
+      repeat(2, 1fr);
   }
-
-
-  /* =======================================================
-     THEME
-  ======================================================= */
-
-  function bindTheme() {
-
-    const themeButton =
-      q(
-        "#themeToggle, #themeButton, [data-theme-toggle]"
-      );
-
-
-    if (!themeButton) {
-      return;
-    }
-
-
-    themeButton.addEventListener(
-      "click",
-      () => {
-
-        document.body.classList.toggle(
-          "light-mode"
-        );
-
-        const light =
-          document.body.classList.contains(
-            "light-mode"
-          );
-
-        localStorage.setItem(
-          "KRISHWAVE_THEME",
-          light
-            ? "light"
-            : "dark"
-        );
-      }
-    );
-
 
-    const saved =
-      localStorage.getItem(
-        "KRISHWAVE_THEME"
-      );
-
-
-    if (
-      saved === "light"
-    ) {
-
-      document.body.classList.add(
-        "light-mode"
-      );
-    }
+  .strategy-options {
+    grid-template-columns:
+      repeat(2, 1fr);
   }
-
-
-  /* =======================================================
-     INIT
-  ======================================================= */
-
-  function init() {
-
-    if (state.initialized) {
-      return;
-    }
-
-
-    state.initialized = true;
-
-
-    loadRiskSettings();
-
-    createTradingUI();
-
-    bindStrategyUI();
-
-    bindAccountUI();
 
-    bindScannerUI();
-
-    bindTheme();
-
-
-    updateAccountModeUI();
-
-    updateStrategyUI();
-
-    updateConnectionUI();
-
-    updateTradingConnectionUI();
-
-    updateAIButtons();
-
-    renderRiskUI();
-
+  .strategy-menu {
+    grid-template-columns:
+      repeat(2, 1fr);
+  }
 
-    /* AI buttons */
+  .status-dashboard {
+    grid-template-columns:
+      repeat(2, 1fr);
+  }
 
-    $("startAiEngine")
-      ?.addEventListener(
-        "click",
-        startAIEngine
-      );
+  .hero-engine {
+    display: none;
+  }
 
+  .hero-card {
+    min-height: 235px;
+  }
 
-    $("stopAiEngine")
-      ?.addEventListener(
-        "click",
-        stopAIEngine
-      );
+  .ai-stat-row {
+    grid-template-columns:
+      repeat(2, 1fr);
+  }
 
+  .reason-grid {
+    grid-template-columns:
+      repeat(2, 1fr);
+  }
 
-    /* Initial public market data */
+}
 
-    connectPublicSocket();
 
+/* =========================
+   MOBILE
+========================= */
 
-    /* Scanner refresh */
+@media (max-width: 520px) {
 
-    setInterval(
-      () => {
+  .brand-mark {
+    width: 39px;
+    height: 39px;
+  }
 
-        scanAllMarkets();
+  .brand-name {
+    font-size: 13px;
+  }
 
-        renderSelectedMarket();
+  .brand-version {
+    font-size: 8px;
+  }
 
-        renderDigitDistribution();
+  .icon-button {
+    width: 39px;
+    height: 39px;
+  }
 
-        renderProbabilities();
+  .section-heading h2 {
+    font-size: 12px;
+  }
 
-        if (state.aiRunning) {
+  .account-grid,
+  .account-info-grid,
+  .stream-grid,
+  .scanner-grid,
+  .market-list,
+  .ai-layout,
+  .strategy-options,
+  .status-dashboard {
+    grid-template-columns: 1fr;
+  }
 
-          renderAIResult(
-            getCurrentAIResult()
-          );
-        }
+  .stream-main {
+    grid-column: auto;
+  }
 
-      },
-      2000
-    );
+  .account-card {
+    min-height: 105px;
+  }
 
+  .hero-card {
+    padding:
+      27px 21px;
+  }
 
-    /* Watchdog */
+  .hero-content h1 {
+    font-size: 40px;
+  }
 
-    setInterval(
-      () => {
+  .selected-market-top {
+    flex-direction: column;
+  }
 
-        if (
-          !state.publicConnected
-        ) {
-          connectPublicSocket();
-        }
+  .quote-display {
+    text-align: left;
+  }
 
-      },
-      CONFIG.WATCHDOG_MS
-    );
+  .market-metrics {
+    grid-template-columns:
+      1fr 1fr 1fr;
+  }
 
+  .digit-grid {
+    grid-template-columns:
+      repeat(5, 1fr);
+  }
 
-    /* Initial scan */
+  .ai-live-result {
+    grid-template-columns:
+      1fr;
+  }
 
-    setTimeout(
-      scanAllMarkets,
-      1000
-    );
+  .engine-actions {
+    flex-direction: column;
+  }
 
+  .start-ai-button,
+  .stop-ai-button {
+    width: 100%;
+  }
 
-    console.log(
-      "%cKRISHWAVE V4.0 READY",
-      "font-size:18px;font-weight:bold;"
-    );
+  .footer {
+    flex-direction: column;
 
-    console.log(
-      "Public market analysis:",
-      CONFIG.WS_URL
-    );
+    align-items: flex-start;
 
-    console.log(
-      "Trading enabled:",
-      CONFIG.TRADING_ENABLED
-    );
+    gap: 12px;
   }
 
 
-  /* =======================================================
-     START
-  ======================================================= */
+  /* Strategy Control mobile */
 
-  if (
-    document.readyState ===
-    "loading"
-  ) {
+  .strategy-selected {
+    min-height: 82px;
 
-    document.addEventListener(
-      "DOMContentLoaded",
-      init
-    );
+    padding: 12px;
+  }
 
-  } else {
+  .strategy-selected-icon {
+    width: 43px;
+    height: 43px;
 
-    init();
+    border-radius: 12px;
   }
 
-
-  /* =======================================================
-     PUBLIC API
-     Useful for debugging from browser console.
-  ======================================================= */
+  .strategy-selected-content strong {
+    font-size: 13px;
+  }
 
-  window.KRISHWAVE = {
+  .strategy-selected-content small {
+    font-size: 8px;
+  }
 
-    state,
+  .strategy-menu {
+    grid-template-columns:
+      1fr 1fr;
 
-    startAI:
-      startAIEngine,
+    padding: 8px;
 
-    stopAI:
-      stopAIEngine,
+    gap: 8px;
+  }
 
-    scan:
-      scanAllMarkets,
+  .strategy-option {
+    min-height: 92px;
 
-    tradeNow:
-      () => executeCurrentSignal(false),
+    padding: 11px;
+  }
 
-    aiTradeNow:
-      () => executeCurrentSignal(true),
+}
 
-    resetMartingale,
 
-    connectTrading:
-      connectTradingSocket,
+/* =========================
+   VERY SMALL PHONES
+========================= */
 
-    disconnectTrading:
-      disconnectTradingSocket,
+@media (max-width: 380px) {
 
-    selectMarket,
+  .strategy-menu {
+    grid-template-columns:
+      1fr;
+  }
 
-    analyze:
-      () =>
-        analyzeSymbol(
-          state.selectedSymbol
-        )
-  };
+  .strategy-selected-content small {
+    max-width: 160px;
+  }
 
-})();
+}
