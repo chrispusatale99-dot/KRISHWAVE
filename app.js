@@ -2990,4 +2990,4 @@ window.KRISHWAVE = {
   scanAllMarkets,
 
   applyTheme
-};
+}; 
