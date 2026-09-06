@@ -2,10 +2,9 @@
 <html lang="en">
 <head>
   <meta charset="UTF-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
   <meta name="theme-color" content="#050811">
-  <meta name="description" content="KRISHWAVE V4 Deriv Market Intelligence">
-  <title>KRISHWAVE V4 — Deriv Intelligence</title>
+  <title>KRISHWAVE V4.0</title>
   <link rel="stylesheet" href="style.css">
 </head>
 
@@ -13,545 +12,508 @@
 
 <header class="topbar">
   <div class="brand">
-    <div class="brand-mark">KW</div>
+    <div class="brand-logo">K</div>
     <div>
       <div class="brand-name">KRISHWAVE</div>
-      <div class="brand-version">V4.0 • DERIV MARKET INTELLIGENCE</div>
+      <div class="brand-version">V4.0 • DERIV INTELLIGENCE</div>
     </div>
   </div>
 
   <div class="top-actions">
-    <div class="connection-pill">
-      <span id="connectionDot" class="status-dot"></span>
-      <span>DERIV</span>
-      <strong id="connectionStatus">READY</strong>
+    <div id="connectionPill" class="connection-pill offline">
+      <span class="connection-dot"></span>
+      <span id="connectionText">PUBLIC DATA</span>
     </div>
 
-    <button id="themeToggle" class="icon-button" type="button">🌙</button>
+    <button id="themeToggle" class="icon-button" type="button">☀</button>
   </div>
 </header>
 
 <main class="app-shell">
 
-<!-- ACCOUNT -->
-<section class="section-block">
-  <div class="section-heading">
-    <div>
-      <span class="eyebrow">ACCOUNT</span>
-      <h2>Deriv Connection Center</h2>
-    </div>
-    <span class="section-badge">SECURE AUTH</span>
-  </div>
-
-  <div class="account-grid">
-
-    <button id="accountDemo" class="account-card active" type="button">
-      <span class="account-card-label">DEMO</span>
-      <strong>Demo Account</strong>
-      <small>Safe testing environment</small>
-    </button>
-
-    <button id="accountReal" class="account-card" type="button">
-      <span class="account-card-label">REAL</span>
-      <strong>Real Account</strong>
-      <small>Live account connection</small>
-    </button>
-
-  </div>
-
-  <div class="account-info-grid">
-
-    <div class="info-card">
-      <span>ACCOUNT TYPE</span>
-      <strong id="accountTypeLabel">DEMO</strong>
+  <!-- ACCOUNT -->
+  <section class="section-block">
+    <div class="section-heading">
+      <div>
+        <span class="eyebrow">ACCOUNT CONTROL</span>
+        <h2>Deriv Connection</h2>
+      </div>
+      <span id="authBadge" class="badge badge-blue">NOT CONNECTED</span>
     </div>
 
-    <div class="info-card">
-      <span>ACCOUNT ID</span>
-      <strong id="accountId">—</strong>
-    </div>
+    <div class="account-grid">
 
-    <div class="info-card balance-card">
-      <span>LIVE BALANCE</span>
-      <strong id="accountBalance">—</strong>
-    </div>
+      <div class="account-card active">
+        <div class="account-card-top">
+          <span class="account-icon">◉</span>
+          <span class="live-tag">LIVE CONNECTION</span>
+        </div>
 
-    <div class="info-card">
-      <span>CURRENCY</span>
-      <strong id="accountCurrency">—</strong>
-    </div>
+        <h3>DEMO / REAL</h3>
+        <p>Connect your Deriv account to receive authenticated account information.</p>
 
-    <div class="info-card">
-      <span>STATUS</span>
-      <strong id="accountStatus">NOT CONNECTED</strong>
-    </div>
+        <button id="connectDerivBtn" class="primary-button full-button" type="button">
+          CONNECT DERIV
+        </button>
 
-    <div class="info-card">
-      <span>TRADING</span>
-      <strong class="danger-text">DISABLED</strong>
-    </div>
+        <button id="disconnectDerivBtn" class="secondary-button full-button hidden" type="button">
+          DISCONNECT
+        </button>
+      </div>
 
-  </div>
+      <div class="account-info-grid">
 
-  <div class="button-row">
-    <button id="connectAccount" class="primary-button" type="button">
-      CONNECT DERIV
-    </button>
+        <div class="info-card">
+          <span class="info-label">ACCOUNT TYPE</span>
+          <strong id="accountType">PUBLIC</strong>
+        </div>
 
-    <button id="disconnectAccount" class="secondary-button" type="button">
-      DISCONNECT
-    </button>
-  </div>
+        <div class="info-card">
+          <span class="info-label">ACCOUNT ID</span>
+          <strong id="accountId">—</strong>
+        </div>
 
-  <div id="derivAuthStatus" class="auth-status">
-    <span class="auth-status-dot"></span>
-    <div>
-      <strong>DERIV AUTHENTICATION</strong>
-      <p id="derivAuthMessage">
-        Select DEMO or REAL and press CONNECT DERIV.
-      </p>
-    </div>
-  </div>
+        <div class="info-card balance-card">
+          <span class="info-label">LIVE BALANCE</span>
+          <strong id="liveBalance">—</strong>
+          <small id="balanceCurrency">—</small>
+        </div>
 
-  <div class="security-note">
-    🔐 Your Deriv password is never entered into KRISHWAVE.
-    Authentication is handled through Deriv.
-  </div>
-</section>
+        <div class="info-card">
+          <span class="info-label">AUTH STATUS</span>
+          <strong id="authStatus">PUBLIC DATA</strong>
+        </div>
 
-<!-- RISK -->
-<section class="section-block">
-  <div class="section-heading">
-    <div>
-      <span class="eyebrow">RISK ENGINE</span>
-      <h2>Stake & Risk Control</h2>
-    </div>
-    <span id="riskStateBadge" class="section-badge">READY</span>
-  </div>
-
-  <div class="risk-grid">
-
-    <div class="control-card">
-      <label for="baseStake">BASE STAKE</label>
-      <input id="baseStake" type="number" min="0.25" step="0.01" value="0.25">
-      <small>Minimum allowed: 0.25</small>
-    </div>
-
-    <div class="control-card">
-      <label for="takeProfit">TAKE PROFIT</label>
-      <input id="takeProfit" type="number" min="0" step="0.01" value="5">
-      <small>Session profit target</small>
-    </div>
-
-    <div class="control-card">
-      <label for="stopLoss">STOP LOSS</label>
-      <input id="stopLoss" type="number" min="0" step="0.01" value="5">
-      <small>Maximum session loss</small>
-    </div>
-
-    <div class="control-card">
-      <label for="martingale">MARTINGALE</label>
-      <input id="martingale" type="number" min="1" step="0.1" value="2">
-      <small>Next stake multiplier</small>
-    </div>
-
-    <div class="control-card highlight-control">
-      <label>CURRENT STAKE</label>
-      <strong id="currentStake">0.25</strong>
-      <small>Paper/simulation stake</small>
-    </div>
-
-    <div class="control-card">
-      <label>SESSION P/L</label>
-      <strong id="sessionPL">0.00</strong>
-      <small id="sessionPLLabel">Session running</small>
-    </div>
-
-  </div>
-
-  <div class="risk-stats">
-
-    <div>
-      <span>WINS</span>
-      <strong id="winCount">0</strong>
-    </div>
-
-    <div>
-      <span>LOSSES</span>
-      <strong id="lossCount">0</strong>
-    </div>
-
-    <div>
-      <span>LOSS STREAK</span>
-      <strong id="lossStreak">0</strong>
-    </div>
-
-    <div>
-      <span>MAX STAKE</span>
-      <strong id="maxStakeDisplay">10.00</strong>
-    </div>
-
-  </div>
-
-  <div class="button-row">
-    <button id="simWin" class="success-button" type="button">
-      PAPER WIN
-    </button>
-
-    <button id="simLoss" class="danger-button" type="button">
-      PAPER LOSS
-    </button>
-
-    <button id="resetRisk" class="secondary-button" type="button">
-      RESET SESSION
-    </button>
-  </div>
-
-  <div class="warning-box">
-    ⚠️ Martingale can increase exposure very quickly after consecutive losses.
-    KRISHWAVE keeps this risk engine in simulation mode and does not place real
-    contracts.
-  </div>
-</section>
-
-<!-- HERO -->
-<section class="section-block">
-  <div class="hero-card">
-    <div>
-      <span class="eyebrow">KRISHWAVE AI</span>
-      <h1>
-        Scan the market.
-        <span>Find the strongest setup.</span>
-      </h1>
-      <p>
-        Real-time Deriv Volatility Index intelligence with statistical
-        digit analysis, market ranking and strategy selection.
-      </p>
-
-      <div class="hero-tags">
-        <span>LIVE TICKS</span>
-        <span>AI SCANNER</span>
-        <span>STATISTICS</span>
-        <span>RISK ENGINE</span>
       </div>
     </div>
-  </div>
-</section>
+  </section>
 
-<!-- LIVE STREAM -->
-<section class="section-block">
-  <div class="section-heading">
-    <div>
-      <span class="eyebrow">LIVE STREAM</span>
-      <h2>Market Feed</h2>
-    </div>
-    <span class="section-badge">REAL TIME</span>
-  </div>
-
-  <div class="stream-grid">
-
-    <div class="stream-card">
-      <span>ACTIVE MARKET</span>
-      <strong id="liveSymbol">R_10</strong>
-      <small id="liveMarketName">Volatility 10 Index</small>
+  <!-- HERO -->
+  <section class="hero-card">
+    <div class="hero-content">
+      <span class="eyebrow">LIVE MARKET INTELLIGENCE</span>
+      <h1>Scan the market.<br><span>Find the strongest setup.</span></h1>
+      <p>
+        KRISHWAVE analyzes live Deriv tick data, digit distribution,
+        probability, momentum and strategy conditions.
+      </p>
     </div>
 
-    <div class="stream-card">
-      <span>LIVE QUOTE</span>
-      <strong id="streamQuote">—</strong>
-      <small>Current market quote</small>
+    <div class="hero-engine">
+      <div class="hero-ring">
+        <div class="hero-ring-inner">
+          <strong>AI</strong>
+          <span>ENGINE</span>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- LIVE STREAM -->
+  <section class="section-block">
+    <div class="section-heading">
+      <div>
+        <span class="eyebrow">LIVE STREAM</span>
+        <h2>Market Feed</h2>
+      </div>
     </div>
 
-    <div class="stream-card">
-      <span>LAST DIGIT</span>
-      <strong id="streamDigit">—</strong>
-      <small>Latest tick digit</small>
+    <div class="stream-grid">
+
+      <div class="stream-card">
+        <span>ACTIVE MARKET</span>
+        <strong id="liveMarketName">Volatility 10 Index</strong>
+        <small id="liveMarketSymbol">R_10</small>
+      </div>
+
+      <div class="stream-card">
+        <span>LIVE QUOTE</span>
+        <strong id="liveQuote">—</strong>
+      </div>
+
+      <div class="stream-card">
+        <span>LAST DIGIT</span>
+        <strong id="liveLastDigit">—</strong>
+      </div>
+
+      <div class="stream-card">
+        <span>TICKS RECEIVED</span>
+        <strong id="liveTicks">0</strong>
+      </div>
+
     </div>
+  </section>
 
-  </div>
-</section>
+  <!-- MARKET SCANNER -->
+  <section class="section-block">
+    <div class="section-heading">
+      <div>
+        <span class="eyebrow">MARKET SCANNER</span>
+        <h2>Volatility Indices</h2>
+      </div>
 
-<!-- SCANNER -->
-<section class="section-block">
-  <div class="section-heading">
-    <div>
-      <span class="eyebrow">AI SCANNER</span>
-      <h2>Volatility Market Scanner</h2>
-    </div>
-
-    <div class="heading-actions">
-      <span class="section-badge">
-        <strong id="marketCount">0</strong> MARKETS
-      </span>
-
-      <button id="scanAll" class="secondary-button small" type="button">
+      <button id="scanAllBtn" class="secondary-button" type="button">
         SCAN ALL
       </button>
     </div>
-  </div>
 
-  <div id="marketScannerList" class="scanner-grid"></div>
-</section>
+    <div id="marketScanner" class="scanner-grid"></div>
+  </section>
 
-<!-- SELECTED MARKET -->
-<section class="section-block">
-  <div class="section-heading">
-    <div>
-      <span class="eyebrow">INTELLIGENCE</span>
-      <h2>Selected Market</h2>
-    </div>
-    <span id="marketQuality" class="quality-badge">WAIT</span>
-  </div>
+  <!-- SELECTED MARKET -->
+  <section class="section-block">
+    <div class="section-heading">
+      <div>
+        <span class="eyebrow">SELECTED MARKET</span>
+        <h2 id="selectedMarketName">Volatility 10 Index</h2>
+      </div>
 
-  <div class="selected-market-grid">
-
-    <div class="selected-card">
-      <span>MARKET</span>
-      <strong id="selectedMarketSymbol">R_10</strong>
-      <small id="selectedMarketName">Volatility 10 Index</small>
+      <span id="selectedQuality" class="quality-badge wait">WAIT</span>
     </div>
 
-    <div class="selected-card">
-      <span>QUOTE</span>
-      <strong id="selectedQuote">—</strong>
-      <small>Live price</small>
-    </div>
+    <div class="selected-market-card">
 
-    <div class="selected-card">
-      <span>LAST DIGIT</span>
-      <strong id="selectedDigit">—</strong>
-      <small>Latest tick</small>
-    </div>
+      <div class="selected-top">
+        <div>
+          <span id="selectedSymbol">R_10</span>
+          <small id="selectedQuote">—</small>
+        </div>
 
-    <div class="selected-card">
-      <span>SAMPLE</span>
-      <strong id="selectedSample">0</strong>
-      <small>Recent ticks</small>
-    </div>
+        <div class="selected-digit">
+          <span>LAST DIGIT</span>
+          <strong id="selectedLastDigit">—</strong>
+        </div>
+      </div>
 
-    <div class="selected-card">
-      <span>EDGE</span>
-      <strong id="selectedEdge">0%</strong>
-      <small>Statistical edge</small>
-    </div>
+      <div class="selected-stats">
+        <div>
+          <span>SAMPLE</span>
+          <strong id="selectedSample">0</strong>
+        </div>
 
-  </div>
+        <div>
+          <span>EDGE</span>
+          <strong id="selectedEdge">0%</strong>
+        </div>
 
-  <div class="sub-heading">
-    <h3>Digit Distribution</h3>
-    <span>0 — 9</span>
-  </div>
-
-  <div id="digitDistribution" class="digit-grid horizontal-digits"></div>
-
-</section>
-
-<!-- PROBABILITIES -->
-<section class="section-block">
-  <div class="section-heading">
-    <div>
-      <span class="eyebrow">PROBABILITY MATRIX</span>
-      <h2>Market Probabilities</h2>
-    </div>
-  </div>
-
-  <div id="probabilityGrid" class="probability-grid"></div>
-</section>
-
-<!-- STRATEGY -->
-<section class="section-block">
-  <div class="section-heading">
-    <div>
-      <span class="eyebrow">STRATEGY</span>
-      <h2>Signal Strategy</h2>
-    </div>
-  </div>
-
-  <div id="strategyControl" class="strategy-control-card">
-
-    <button id="strategyCurrent" class="strategy-current" type="button">
-      <span class="strategy-icon">AI</span>
-      <span>
-        <small>ACTIVE STRATEGY</small>
-        <strong id="strategyCurrentName">AUTO</strong>
-      </span>
-      <span class="strategy-arrow">⌄</span>
-    </button>
-
-    <div id="strategyMenu" class="strategy-menu">
-
-      <button data-strategy="AUTO" class="strategy-button active">AUTO</button>
-      <button data-strategy="EVEN" class="strategy-button">EVEN</button>
-      <button data-strategy="ODD" class="strategy-button">ODD</button>
-      <button data-strategy="HIGH" class="strategy-button">HIGH</button>
-      <button data-strategy="LOW" class="strategy-button">LOW</button>
-      <button data-strategy="OVER" class="strategy-button">OVER</button>
-      <button data-strategy="UNDER" class="strategy-button">UNDER</button>
-      <button data-strategy="MATCH" class="strategy-button">MATCH</button>
-      <button data-strategy="DIFFER" class="strategy-button">DIFFER</button>
-      <button data-strategy="RISE" class="strategy-button">RISE</button>
-      <button data-strategy="FALL" class="strategy-button">FALL</button>
+        <div>
+          <span>QUALITY</span>
+          <strong id="selectedQualityText">WAIT</strong>
+        </div>
+      </div>
 
     </div>
-  </div>
-</section>
+  </section>
 
-<!-- AI -->
-<section class="section-block">
-  <div class="section-heading">
-    <div>
-      <span class="eyebrow">AI ENGINE</span>
-      <h2>Current Prediction</h2>
-    </div>
-    <span id="aiQualityBadge" class="quality-badge">WAIT</span>
-  </div>
-
-  <div class="ai-layout">
-
-    <div class="ai-result-card">
-      <span>SIGNAL</span>
-      <strong id="aiSignal">WAIT</strong>
-      <small id="aiTarget">Target: —</small>
-    </div>
-
-    <div class="ai-result-card">
-      <span>CONFIDENCE</span>
-      <strong id="aiConfidence">50%</strong>
-      <small id="aiSample">Sample: 0</small>
-    </div>
-
-    <div class="ai-result-card">
-      <span>EDGE</span>
-      <strong id="aiEdge">0%</strong>
-      <small>Statistical advantage</small>
-    </div>
-
-    <div class="ai-reason-card">
-      <span>AI REASON</span>
-      <p id="aiReason">
-        Waiting for sufficient market data.
-      </p>
-    </div>
-
-  </div>
-</section>
-
-<!-- ENGINE -->
-<section class="section-block">
-  <div class="engine-panel">
-
-    <div class="engine-ring">
-      <div class="engine-inner">
-        <span id="enginePhase">READY</span>
-        <strong id="engineTimer">10</strong>
-        <small>SECONDS</small>
+  <!-- DIGITS -->
+  <section class="section-block">
+    <div class="section-heading">
+      <div>
+        <span class="eyebrow">DIGIT INTELLIGENCE</span>
+        <h2>0–9 Distribution</h2>
       </div>
     </div>
 
-    <div class="engine-info">
-      <span class="eyebrow">KRISHWAVE ENGINE</span>
-      <h2>Analysis Cycle</h2>
-      <p id="engineMessage">
-        Start the engine to begin the analysis cycle.
-      </p>
+    <div class="digit-grid horizontal-digits" id="digitDistribution"></div>
+  </section>
 
-      <div class="button-row">
-        <button id="startAI" class="primary-button" type="button">
-          START AI
-        </button>
-
-        <button id="stopAI" class="secondary-button" type="button">
-          STOP
-        </button>
+  <!-- PROBABILITIES -->
+  <section class="section-block">
+    <div class="section-heading">
+      <div>
+        <span class="eyebrow">PROBABILITY ENGINE</span>
+        <h2>Market Probabilities</h2>
       </div>
     </div>
 
-  </div>
-</section>
+    <div id="probabilityGrid" class="probability-grid"></div>
+  </section>
 
-<!-- STATUS -->
-<section class="section-block">
-  <div class="section-heading">
-    <div>
-      <span class="eyebrow">SYSTEM STATUS</span>
-      <h2>KRISHWAVE Control</h2>
-    </div>
-  </div>
+  <!-- AI -->
+  <section class="section-block">
+    <div class="section-heading">
+      <div>
+        <span class="eyebrow">AI ANALYSIS</span>
+        <h2>Current Prediction</h2>
+      </div>
 
-  <div class="status-grid">
-
-    <div>
-      <span>ACCOUNT</span>
-      <strong id="statusAccount">DEMO</strong>
+      <span id="aiQuality" class="quality-badge wait">WAIT</span>
     </div>
 
-    <div>
-      <span>ENGINE</span>
-      <strong id="statusEngine">READY</strong>
+    <div class="ai-layout">
+
+      <div class="ai-result-card">
+
+        <div class="ai-live-result">
+          <span>PRIMARY SIGNAL</span>
+          <strong id="aiSignal">WAIT</strong>
+          <small id="aiTarget">—</small>
+        </div>
+
+        <div class="ai-stats">
+
+          <div>
+            <span>CONFIDENCE</span>
+            <strong id="aiConfidence">0%</strong>
+          </div>
+
+          <div>
+            <span>SAMPLE</span>
+            <strong id="aiSample">0</strong>
+          </div>
+
+          <div>
+            <span>EDGE</span>
+            <strong id="aiEdge">0%</strong>
+          </div>
+
+        </div>
+
+        <div class="reason-card">
+          <span>ANALYSIS REASON</span>
+          <p id="aiReason">Waiting for enough live market data.</p>
+        </div>
+
+      </div>
+
+      <div class="reason-grid">
+
+        <div class="reason-item">
+          <span>DIGIT PRESSURE</span>
+          <strong id="reasonDigit">—</strong>
+        </div>
+
+        <div class="reason-item">
+          <span>MOMENTUM</span>
+          <strong id="reasonMomentum">—</strong>
+        </div>
+
+        <div class="reason-item">
+          <span>STREAK</span>
+          <strong id="reasonStreak">—</strong>
+        </div>
+
+        <div class="reason-item">
+          <span>MARKET STATE</span>
+          <strong id="reasonState">WAIT</strong>
+        </div>
+
+      </div>
+
+    </div>
+  </section>
+
+  <!-- STRATEGY -->
+  <section class="section-block">
+    <div class="section-heading">
+      <div>
+        <span class="eyebrow">STRATEGY ENGINE</span>
+        <h2>Choose Strategy</h2>
+      </div>
     </div>
 
-    <div>
-      <span>LAST ACTION</span>
-      <strong id="statusAction">READY</strong>
+    <div class="strategy-options">
+
+      <button class="strategy-button active" data-strategy="AUTO">AUTO</button>
+      <button class="strategy-button" data-strategy="EVEN">EVEN</button>
+      <button class="strategy-button" data-strategy="ODD">ODD</button>
+      <button class="strategy-button" data-strategy="HIGH">HIGH</button>
+      <button class="strategy-button" data-strategy="LOW">LOW</button>
+      <button class="strategy-button" data-strategy="OVER">OVER</button>
+      <button class="strategy-button" data-strategy="UNDER">UNDER</button>
+      <button class="strategy-button" data-strategy="MATCH">MATCH</button>
+      <button class="strategy-button" data-strategy="DIFFER">DIFFER</button>
+      <button class="strategy-button" data-strategy="RISE">RISE</button>
+      <button class="strategy-button" data-strategy="FALL">FALL</button>
+
     </div>
 
-    <div>
-      <span>SIGNALS</span>
-      <strong id="statusSignals">0</strong>
+    <select id="strategySelect" class="mobile-strategy-select">
+      <option value="AUTO">AUTO</option>
+      <option value="EVEN">EVEN</option>
+      <option value="ODD">ODD</option>
+      <option value="HIGH">HIGH</option>
+      <option value="LOW">LOW</option>
+      <option value="OVER">OVER</option>
+      <option value="UNDER">UNDER</option>
+      <option value="MATCH">MATCH</option>
+      <option value="DIFFER">DIFFER</option>
+      <option value="RISE">RISE</option>
+      <option value="FALL">FALL</option>
+    </select>
+  </section>
+
+  <!-- RISK CONTROL -->
+  <section class="section-block">
+    <div class="section-heading">
+      <div>
+        <span class="eyebrow">RISK MANAGEMENT</span>
+        <h2>Stake & Session Control</h2>
+      </div>
+
+      <span id="riskStateBadge" class="risk-badge safe">READY</span>
     </div>
 
-    <div>
-      <span>RISK</span>
-      <strong id="statusRisk">READY</strong>
+    <div class="risk-panel">
+
+      <div class="risk-input">
+        <label for="baseStake">BASE STAKE</label>
+        <input id="baseStake" type="number" min="0.25" step="0.01" value="0.25">
+        <small>Minimum 0.25</small>
+      </div>
+
+      <div class="risk-input">
+        <label for="takeProfit">TAKE PROFIT</label>
+        <input id="takeProfit" type="number" min="0" step="0.01" value="5">
+        <small>Session profit target</small>
+      </div>
+
+      <div class="risk-input">
+        <label for="stopLoss">STOP LOSS</label>
+        <input id="stopLoss" type="number" min="0" step="0.01" value="5">
+        <small>Maximum session loss</small>
+      </div>
+
+      <div class="risk-input">
+        <label for="martingale">MARTINGALE</label>
+        <input id="martingale" type="number" min="1" step="0.1" value="2">
+        <small>Next stake multiplier</small>
+      </div>
+
+      <div class="risk-metric">
+        <span>CURRENT STAKE</span>
+        <strong id="currentStake">0.25</strong>
+      </div>
+
+      <div class="risk-metric">
+        <span>SESSION P/L</span>
+        <strong id="sessionPL">0.00</strong>
+      </div>
+
+      <div class="risk-metric">
+        <span>WINS / LOSSES</span>
+        <strong id="winLoss">0 / 0</strong>
+      </div>
+
+      <div class="risk-metric">
+        <span>LOSS STREAK</span>
+        <strong id="lossStreak">0</strong>
+      </div>
+
     </div>
 
-  </div>
-</section>
+    <div class="risk-actions">
+      <button id="simWinBtn" class="success-button" type="button">
+        PAPER WIN
+      </button>
 
-<section class="notice">
-  <strong>ANALYSIS & SIMULATION ONLY</strong>
-  <p>
-    KRISHWAVE V4 does not place real Deriv contracts. The risk engine,
-    martingale and paper win/loss controls are for planning and simulation.
-    Martingale does not guarantee recovery of losses.
-  </p>
-</section>
+      <button id="simLossBtn" class="danger-button" type="button">
+        PAPER LOSS
+      </button>
 
-<footer>
-  <strong>KRISHWAVE V4</strong>
-  <span>Deriv Market Intelligence • Analysis Only</span>
-</footer>
+      <button id="resetRiskBtn" class="secondary-button" type="button">
+        RESET SESSION
+      </button>
+    </div>
+
+    <div class="risk-warning">
+      ⚠ Martingale can increase exposure rapidly after losses. These controls are
+      for planning/simulation only. KRISHWAVE V4 does not automatically place
+      real-money trades.
+    </div>
+  </section>
+
+  <!-- AI ENGINE -->
+  <section class="ai-engine-section">
+
+    <div class="ai-circle">
+      <div class="ai-circle-inner">
+        <span id="aiPhase">READY</span>
+        <strong id="aiSeconds">10</strong>
+        <small>ENGINE</small>
+      </div>
+    </div>
+
+    <div class="ai-engine-content">
+      <span class="eyebrow">AUTOMATED ANALYSIS CYCLE</span>
+      <h2>KRISHWAVE AI ENGINE</h2>
+      <p>
+        Analyze → countdown → signal. No real-money contract is submitted.
+      </p>
+
+      <div class="engine-actions">
+        <button id="startEngineBtn" class="primary-button">START ENGINE</button>
+        <button id="stopEngineBtn" class="secondary-button">STOP ENGINE</button>
+      </div>
+
+      <div id="tradeSignalBox" class="trade-signal-box">
+        WAITING FOR ENGINE
+      </div>
+    </div>
+
+  </section>
+
+  <!-- STATUS -->
+  <section class="section-block">
+    <div class="section-heading">
+      <div>
+        <span class="eyebrow">SYSTEM STATUS</span>
+        <h2>Control Dashboard</h2>
+      </div>
+    </div>
+
+    <div class="status-grid">
+
+      <div class="status-card">
+        <span>ACCOUNT</span>
+        <strong id="statusAccount">PUBLIC</strong>
+      </div>
+
+      <div class="status-card">
+        <span>ENGINE</span>
+        <strong id="statusEngine">READY</strong>
+      </div>
+
+      <div class="status-card">
+        <span>LAST ACTION</span>
+        <strong id="statusAction">READY</strong>
+      </div>
+
+      <div class="status-card">
+        <span>SIGNALS</span>
+        <strong id="statusSignals">0</strong>
+      </div>
+
+      <div class="status-card">
+        <span>RISK</span>
+        <strong id="statusRisk">READY</strong>
+      </div>
+
+    </div>
+  </section>
+
+  <section class="notice">
+    <strong>ANALYSIS & EDUCATION MODE</strong>
+    <p>
+      KRISHWAVE provides statistical market analysis and paper risk simulation.
+      Connecting a real Deriv account displays authenticated account information,
+      but this version does not submit real-money contracts.
+    </p>
+  </section>
 
 </main>
+
+<footer>
+  <strong>KRISHWAVE V4.0</strong>
+  <span>LIVE DERIV MARKET INTELLIGENCE</span>
+</footer>
 
 <script>
 window.KRISHWAVE_CONFIG = {
   derivAppId: "34jzkIFHayWQzG6sXikax",
-
-  /*
-   * IMPORTANT:
-   * This must be the OAuth client ID registered with Deriv.
-   * If your 34jzk... ID is a legacy App ID, create/register
-   * an OAuth 2.0 application in Deriv and put that client ID here.
-   */
-  oauthClientId: "34jzkIFHayWQzG6sXikax",
-
-  oauthRedirectUri:
-    window.location.origin + window.location.pathname,
-
-  /*
-   * GitHub Pages cannot safely exchange the OAuth code.
-   * This endpoint will be connected when the secure backend
-   * is deployed.
-   */
-  oauthExchangeEndpoint: "",
-
+  tradingEnabled: false,
   defaultAccount: "demo",
-
-  /*
-   * REAL trading remains disabled.
-   */
-  tradingEnabled: false
+  minStake: 0.25
 };
 </script>
 
