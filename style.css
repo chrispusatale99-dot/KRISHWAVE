@@ -1,1 +1,1626 @@
-*{box-sizing:border-box;margin:0;padding:0}body{background:linear-gradient(135deg,#050811,#080d18);color:#f5f8ff;font:14px Arial,sans-serif;min-height:100vh}header{position:sticky;top:0;z-index:5;padding:18px 5%;display:flex;justify-content:space-between;background:#080d18ee;border-bottom:1px solid #20304a}header b{font-size:20px;letter-spacing:1px}header span{color:#00e59b;font-weight:bold}main{width:min(1100px,94%);margin:auto;padding:24px 0 50px}section{margin:24px 0}.account,.hero,.card,.ai,.manual,.controls,.paper>div{background:#0d1626;border:1px solid #20304a;border-radius:20px}.account{display:grid;grid-template-columns:1fr 1fr;gap:12px;padding:20px}.account>div{padding:15px}.account small,.controls label,.paper small,.stats small,.counts small{display:block;color:#8795aa;font-size:10px;font-weight:bold;letter-spacing:1px}.account strong{display:block;color:#00e59b;font-size:25px;margin-top:7px}.account em{color:#8795aa;font-style:normal}.hero{padding:28px;display:flex;justify-content:space-between;align-items:center}.hero small,.notice b,.reason b{color:#00d9ff;font-weight:bold;letter-spacing:2px;font-size:10px}.hero h1{font-size:clamp(35px,7vw,62px);margin:10px 0}.hero i{color:#00d9ff;font-style:normal}.hero p,.notice p,.reason p{color:#8795aa}.ring{width:150px;height:150px;border-radius:50%;padding:13px;background:conic-gradient(#00d9ff,#4d8dff,#9b6cff,#00d9ff);display:grid;place-items:center;text-align:center;animation:spin 8s linear infinite}.ring:before{content:"";position:absolute}.ring strong,.ring span{grid-column:1;grid-row:1}.ring strong{font-size:38px}.ring span{margin-top:60px;font-size:8px;color:#8795aa}.head,.selected{display:flex;justify-content:space-between;align-items:center}.head button,.actions button{border:0;border-radius:12px;padding:12px 18px;font-weight:bold;background:#4d8dff;color:#fff}.markets{display:grid;grid-template-columns:repeat(4,1fr);gap:10px}.market{padding:15px;background:#0b1220;border:1px solid #20304a;border-radius:16px;cursor:pointer}.market.sel{border-color:#00d9ff}.market small{color:#8795aa}.market b{display:block;margin:7px 0}.live{color:#00e59b!important}.selected strong{font-size:42px;color:#00d9ff}.stats,.counts,.paper{display:grid;grid-template-columns:repeat(3,1fr);gap:10px;margin-top:15px}.stats div,.counts div,.paper>div{padding:13px;background:#ffffff06;border-radius:12px}.stats b,.counts b,.paper b{display:block;margin-top:5px;font-size:19px}.digits{display:grid;grid-template-columns:repeat(10,1fr);gap:7px}.digit{padding:12px 5px;text-align:center;background:#0b1220;border:1px solid #20304a;border-radius:12px}.digit b{font-size:18px}.digit span{display:block;color:#00d9ff;font-size:11px;margin-top:4px}.bar{height:4px;background:#ffffff12;margin-top:7px;border-radius:5px}.bar i{display:block;height:100%;background:linear-gradient(90deg,#4d8dff,#00d9ff)}.strategies{display:grid;grid-template-columns:repeat(6,1fr);gap:7px}.strategies button{min-height:44px;background:#0b1220;color:#8795aa;border:1px solid #20304a;border-radius:10px;font-weight:bold}.strategies button.on{color:#fff;border-color:#00d9ff;background:#00d9ff18}select{display:none;width:100%;padding:12px;background:#0b1220;color:#fff;border:1px solid #20304a;border-radius:10px}.manual{margin-top:10px;padding:15px;display:flex;justify-content:space-between;gap:10px;align-items:center}.manual small{display:block;color:#8795aa;font-size:10px}.manual input{width:110px;padding:12px;border-radius:10px;border:1px solid #20304a;background:#050811;color:#fff;font-weight:bold}.ai{padding:20px}.airesult{text-align:center;padding:20px;background:radial-gradient(circle,#00d9ff12,transparent 70%);border-radius:15px}.airesult small{color:#8795aa;letter-spacing:1px}.airesult strong{display:block;color:#00d9ff;font-size:40px;margin:7px}.airesult span{color:#ffd166;font-weight:bold}.reason{margin-top:12px;padding:14px;background:#ffffff06;border-radius:12px}.controls{padding:15px;display:grid;grid-template-columns:repeat(4,1fr);gap:10px;background:#0d1626}.controls input{width:100%;margin-top:7px;padding:10px;background:#050811;color:#fff;border:1px solid #20304a;border-radius:8px}.actions{display:flex;gap:10px;margin-top:10px}.actions button:first-child{flex:1}.actions button:last-child{background:#101a2c;border:1px solid #20304a}.notice{padding:15px;background:#4d8dff0d;border:1px solid #20304a;border-radius:14px}.hide{display:none!important}@keyframes spin{to{transform:rotate(360deg)}}@media(max-width:800px){.markets{grid-template-columns:repeat(2,1fr)}.controls{grid-template-columns:repeat(2,1fr)}.strategies{grid-template-columns:repeat(3,1fr)}.hero .ring{display:none}}@media(max-width:520px){.account,.controls{grid-template-columns:1fr}.markets{grid-template-columns:1fr}.digits{min-width:680px}.strategies{display:none}select{display:block}.manual{flex-direction:column;align-items:stretch}.manual input{width:100%}.stats,.counts,.paper{grid-template-columns:1fr}}
+/* =========================================================
+   KRISHWAVE V5.0
+   PROFESSIONAL AI TRADING DASHBOARD
+========================================================= */
+
+* {
+    box-sizing: border-box;
+    margin: 0;
+    padding: 0;
+}
+
+:root {
+    --bg: #05070d;
+    --panel: #0b101a;
+    --panel2: #101722;
+    --border: #1d2938;
+    --text: #f5f7fa;
+    --muted: #8290a3;
+    --green: #18e58c;
+    --red: #ff4d67;
+    --blue: #3b82f6;
+    --yellow: #ffd166;
+    --cyan: #22d3ee;
+    --purple: #9b6cff;
+}
+
+body {
+    background:
+        radial-gradient(
+            circle at top,
+            #111b2c 0,
+            #05070d 45%,
+            #03050a 100%
+        );
+
+    color: var(--text);
+
+    font-family:
+        Arial,
+        Helvetica,
+        sans-serif;
+
+    min-height: 100vh;
+
+    padding-bottom: 90px;
+}
+
+
+/* =========================================================
+   HEADER
+========================================================= */
+
+.topbar {
+    position: sticky;
+
+    top: 0;
+
+    z-index: 100;
+
+    display: grid;
+
+    grid-template-columns:
+        1fr
+        auto
+        auto;
+
+    gap: 20px;
+
+    align-items: center;
+
+    padding: 14px 18px;
+
+    background:
+        rgba(5, 7, 13, 0.94);
+
+    backdrop-filter:
+        blur(15px);
+
+    border-bottom:
+        1px solid var(--border);
+}
+
+.brand {
+    display: flex;
+
+    flex-direction: column;
+
+    gap: 5px;
+}
+
+.brand strong {
+    font-size: 22px;
+
+    letter-spacing: 2px;
+}
+
+.brand span {
+    font-size: 12px;
+
+    font-weight: 700;
+}
+
+.live {
+    color: var(--green);
+}
+
+.connecting {
+    color: var(--yellow);
+}
+
+.offline {
+    color: var(--red);
+}
+
+.account,
+.balance {
+    display: flex;
+
+    flex-direction: column;
+
+    gap: 4px;
+
+    min-width: 120px;
+}
+
+.account span,
+.balance span {
+    color: var(--muted);
+
+    font-size: 10px;
+
+    letter-spacing: 1px;
+}
+
+.account b,
+.balance strong {
+    font-size: 13px;
+}
+
+.account small {
+    color: var(--muted);
+
+    font-size: 10px;
+}
+
+
+/* =========================================================
+   NAVIGATION
+========================================================= */
+
+.navigation {
+    display: flex;
+
+    gap: 8px;
+
+    padding: 12px;
+
+    background: var(--panel);
+
+    border-bottom:
+        1px solid var(--border);
+
+    overflow-x: auto;
+}
+
+.nav-btn {
+    border: 1px solid var(--border);
+
+    background: var(--panel2);
+
+    color: var(--muted);
+
+    padding: 12px 18px;
+
+    border-radius: 10px;
+
+    font-weight: 800;
+
+    white-space: nowrap;
+
+    cursor: pointer;
+
+    transition: 0.2s;
+}
+
+.nav-btn:hover {
+    color: var(--text);
+
+    border-color: var(--blue);
+}
+
+.nav-btn.active {
+    color: white;
+
+    background:
+        linear-gradient(
+            135deg,
+            #1c5fd4,
+            #5934bd
+        );
+
+    border-color: transparent;
+
+    box-shadow:
+        0 0 18px
+        rgba(59,130,246,0.25);
+}
+
+
+/* =========================================================
+   ERROR
+========================================================= */
+
+.error {
+    color: var(--red);
+
+    font-size: 12px;
+
+    text-align: center;
+
+    min-height: 18px;
+
+    padding: 5px 12px;
+}
+
+
+/* =========================================================
+   PAGES
+========================================================= */
+
+.page {
+    display: none;
+
+    width: 100%;
+
+    max-width: 1250px;
+
+    margin: auto;
+
+    padding: 16px;
+}
+
+.page.active-page {
+    display: block;
+}
+
+
+/* =========================================================
+   HERO
+========================================================= */
+
+.hero {
+    margin-bottom: 15px;
+
+    padding: 20px;
+
+    border:
+        1px solid var(--border);
+
+    border-radius: 16px;
+
+    background:
+        linear-gradient(
+            135deg,
+            rgba(20,35,60,0.8),
+            rgba(10,14,23,0.8)
+        );
+
+    box-shadow:
+        0 12px 40px
+        rgba(0,0,0,0.25);
+}
+
+.hero h1 {
+    font-size: 20px;
+
+    margin-bottom: 7px;
+}
+
+.hero p {
+    color: var(--muted);
+
+    font-size: 13px;
+}
+
+
+/* =========================================================
+   PANELS
+========================================================= */
+
+.panel,
+.ai-card {
+    background:
+        linear-gradient(
+            145deg,
+            rgba(15,22,34,0.98),
+            rgba(8,12,20,0.98)
+        );
+
+    border:
+        1px solid var(--border);
+
+    border-radius: 16px;
+
+    padding: 18px;
+
+    margin-bottom: 15px;
+
+    box-shadow:
+        0 10px 35px
+        rgba(0,0,0,0.2);
+}
+
+.panel h2 {
+    font-size: 16px;
+
+    margin-bottom: 10px;
+}
+
+.panel h3 {
+    margin-top: 18px;
+
+    margin-bottom: 8px;
+
+    font-size: 13px;
+
+    color: var(--muted);
+}
+
+.panel-title {
+    display: flex;
+
+    justify-content: space-between;
+
+    align-items: center;
+
+    gap: 10px;
+
+    margin-bottom: 15px;
+}
+
+.panel-title h2 {
+    margin-bottom: 4px;
+}
+
+.panel-title small {
+    color: var(--muted);
+
+    font-size: 11px;
+}
+
+
+/* =========================================================
+   AI CARD
+========================================================= */
+
+.ai-card {
+    overflow: hidden;
+
+    position: relative;
+}
+
+.ai-card::before {
+    content: "";
+
+    position: absolute;
+
+    width: 260px;
+
+    height: 260px;
+
+    left: 50%;
+
+    top: 120px;
+
+    transform: translateX(-50%);
+
+    background:
+        radial-gradient(
+            circle,
+            rgba(59,130,246,0.15),
+            transparent 70%
+        );
+
+    pointer-events: none;
+}
+
+.ai-header {
+    display: flex;
+
+    justify-content: space-between;
+
+    align-items: center;
+
+    position: relative;
+
+    z-index: 2;
+}
+
+.ai-header h2 {
+    font-size: 18px;
+
+    margin-bottom: 4px;
+}
+
+.ai-header p {
+    color: var(--muted);
+
+    font-size: 11px;
+}
+
+.ai-score {
+    font-size: 20px;
+
+    font-weight: 900;
+
+    color: var(--green);
+}
+
+
+/* =========================================================
+   CIRCULAR AI
+========================================================= */
+
+.ai-circle-wrap {
+    display: flex;
+
+    justify-content: center;
+
+    align-items: center;
+
+    gap: 35px;
+
+    padding: 30px 10px;
+}
+
+.ai-circle {
+    --progress: 0%;
+
+    width: 190px;
+
+    height: 190px;
+
+    border-radius: 50%;
+
+    display: flex;
+
+    align-items: center;
+
+    justify-content: center;
+
+    position: relative;
+
+    background:
+        conic-gradient(
+            var(--cyan) var(--progress),
+            #172231 var(--progress)
+        );
+
+    box-shadow:
+        0 0 35px
+        rgba(34,211,238,0.15);
+}
+
+.ai-circle::before {
+    content: "";
+
+    position: absolute;
+
+    inset: 8px;
+
+    border-radius: 50%;
+
+    background:
+        radial-gradient(
+            circle,
+            #111a28,
+            #070b12
+        );
+
+    border:
+        1px solid #263447;
+}
+
+.circle-inner {
+    position: relative;
+
+    z-index: 2;
+
+    display: flex;
+
+    flex-direction: column;
+
+    align-items: center;
+
+    justify-content: center;
+}
+
+.circle-inner small {
+    color: var(--cyan);
+
+    font-size: 9px;
+
+    letter-spacing: 1px;
+
+    font-weight: 800;
+}
+
+.circle-inner strong {
+    font-size: 48px;
+
+    line-height: 1;
+
+    margin: 8px 0;
+}
+
+.circle-inner span {
+    color: var(--muted);
+
+    font-size: 9px;
+
+    letter-spacing: 2px;
+}
+
+.ai-result {
+    display: flex;
+
+    flex-direction: column;
+
+    gap: 7px;
+}
+
+.ai-result span {
+    color: var(--muted);
+
+    font-size: 10px;
+
+    letter-spacing: 1px;
+}
+
+.ai-result strong {
+    font-size: 42px;
+
+    color: var(--yellow);
+}
+
+.ai-result b {
+    font-size: 22px;
+
+    color: var(--green);
+}
+
+
+/* =========================================================
+   PREDICTION BOX
+========================================================= */
+
+.prediction-box {
+    display: grid;
+
+    grid-template-columns:
+        repeat(3, 1fr);
+
+    gap: 10px;
+
+    margin-top: 10px;
+}
+
+.prediction-box > div {
+    background: var(--panel2);
+
+    border:
+        1px solid var(--border);
+
+    border-radius: 12px;
+
+    padding: 14px;
+
+    display: flex;
+
+    flex-direction: column;
+
+    gap: 7px;
+}
+
+.prediction-box span {
+    color: var(--muted);
+
+    font-size: 10px;
+
+    letter-spacing: 1px;
+}
+
+.prediction-box strong {
+    font-size: 20px;
+}
+
+
+/* =========================================================
+   AI CYCLE
+========================================================= */
+
+.ai-cycle {
+    display: grid;
+
+    grid-template-columns:
+        repeat(4, 1fr);
+
+    gap: 8px;
+
+    margin-top: 12px;
+}
+
+.cycle-item {
+    background: #080d15;
+
+    border:
+        1px solid var(--border);
+
+    border-radius: 10px;
+
+    padding: 10px;
+
+    text-align: center;
+}
+
+.cycle-item span {
+    display: block;
+
+    color: var(--muted);
+
+    font-size: 9px;
+
+    margin-bottom: 6px;
+}
+
+.cycle-item strong {
+    font-size: 14px;
+
+    color: var(--cyan);
+}
+
+
+/* =========================================================
+   AI MESSAGE
+========================================================= */
+
+.ai-message {
+    margin-top: 12px;
+
+    padding: 14px;
+
+    border-radius: 10px;
+
+    background:
+        rgba(59,130,246,0.08);
+
+    border:
+        1px solid rgba(59,130,246,0.2);
+}
+
+.ai-message strong {
+    color: var(--cyan);
+
+    font-size: 12px;
+}
+
+.ai-message p {
+    margin-top: 5px;
+
+    color: var(--muted);
+
+    font-size: 12px;
+}
+
+
+/* =========================================================
+   MARKETS
+========================================================= */
+
+.markets {
+    display: grid;
+
+    grid-template-columns:
+        repeat(3, 1fr);
+
+    gap: 9px;
+}
+
+.market {
+    position: relative;
+
+    padding: 13px;
+
+    border:
+        1px solid var(--border);
+
+    border-radius: 11px;
+
+    background: #090e17;
+
+    cursor: pointer;
+
+    transition: 0.2s;
+}
+
+.market:hover {
+    transform: translateY(-2px);
+
+    border-color: var(--blue);
+}
+
+.market.sel {
+    border-color: var(--cyan);
+
+    background:
+        rgba(34,211,238,0.08);
+
+    box-shadow:
+        0 0 15px
+        rgba(34,211,238,0.08);
+}
+
+.market b {
+    display: block;
+
+    font-size: 12px;
+
+    padding-right: 35px;
+}
+
+.market small {
+    display: block;
+
+    color: var(--muted);
+
+    margin-top: 4px;
+
+    font-size: 10px;
+}
+
+.market strong {
+    position: absolute;
+
+    right: 8px;
+
+    top: 8px;
+
+    font-size: 8px;
+}
+
+
+/* =========================================================
+   BUTTONS
+========================================================= */
+
+button {
+    font-family: inherit;
+
+    cursor: pointer;
+}
+
+#scan,
+.start-btn,
+.main-control {
+    border: none;
+
+    background:
+        linear-gradient(
+            135deg,
+            #159f6a,
+            #0c7651
+        );
+
+    color: white;
+
+    font-weight: 900;
+
+    border-radius: 9px;
+
+    padding: 11px 15px;
+}
+
+#scan:hover,
+.start-btn:hover,
+.main-control:hover {
+    filter: brightness(1.15);
+}
+
+.stop-btn,
+.reset-control,
+.danger-btn {
+    border:
+        1px solid rgba(255,77,103,0.4);
+
+    background:
+        rgba(255,77,103,0.08);
+
+    color: var(--red);
+
+    font-weight: 900;
+
+    border-radius: 9px;
+
+    padding: 11px 15px;
+}
+
+.stop-btn:hover,
+.reset-control:hover,
+.danger-btn:hover {
+    background:
+        rgba(255,77,103,0.15);
+}
+
+.reconnect-control {
+    border:
+        1px solid var(--border);
+
+    background: var(--panel2);
+
+    color: var(--text);
+
+    border-radius: 9px;
+
+    padding: 11px 15px;
+
+    font-weight: 700;
+}
+
+
+/* =========================================================
+   MARKET HEADER
+========================================================= */
+
+.market-header {
+    display: flex;
+
+    justify-content: space-between;
+
+    align-items: center;
+
+    gap: 10px;
+}
+
+.market-header span {
+    color: var(--muted);
+
+    font-size: 10px;
+
+    letter-spacing: 1px;
+}
+
+.market-header h2 {
+    margin-top: 5px;
+
+    margin-bottom: 2px;
+}
+
+.market-header small {
+    color: var(--cyan);
+
+    font-size: 11px;
+}
+
+.market-status {
+    color: var(--yellow);
+
+    font-size: 11px;
+
+    font-weight: 800;
+}
+
+
+/* =========================================================
+   STATS
+========================================================= */
+
+.stats {
+    display: grid;
+
+    grid-template-columns:
+        repeat(4, 1fr);
+
+    gap: 9px;
+
+    margin-top: 12px;
+}
+
+.stats.large {
+    margin: 0 0 15px;
+}
+
+.stats > div {
+    background: var(--panel2);
+
+    border:
+        1px solid var(--border);
+
+    border-radius: 11px;
+
+    padding: 13px;
+
+    text-align: center;
+}
+
+.stats span {
+    display: block;
+
+    color: var(--muted);
+
+    font-size: 9px;
+
+    letter-spacing: 1px;
+
+    margin-bottom: 7px;
+}
+
+.stats strong {
+    font-size: 20px;
+}
+
+
+/* =========================================================
+   DIGITS
+========================================================= */
+
+.digits {
+    display: grid;
+
+    grid-template-columns:
+        repeat(5, 1fr);
+
+    gap: 8px;
+}
+
+.digit {
+    background: #080d15;
+
+    border:
+        1px solid var(--border);
+
+    border-radius: 9px;
+
+    padding: 9px;
+}
+
+.digit b {
+    font-size: 16px;
+}
+
+.digit span {
+    float: right;
+
+    color: var(--muted);
+
+    font-size: 10px;
+}
+
+.bar {
+    clear: both;
+
+    height: 5px;
+
+    background: #182230;
+
+    border-radius: 10px;
+
+    margin-top: 8px;
+
+    overflow: hidden;
+}
+
+.bar i {
+    display: block;
+
+    height: 100%;
+
+    background:
+        linear-gradient(
+            90deg,
+            var(--blue),
+            var(--cyan)
+        );
+
+    border-radius: inherit;
+}
+
+
+/* =========================================================
+   STRATEGIES
+========================================================= */
+
+.strategies {
+    display: grid;
+
+    grid-template-columns:
+        repeat(6, 1fr);
+
+    gap: 7px;
+
+    margin-bottom: 10px;
+}
+
+.strategies button {
+    padding: 11px 5px;
+
+    border:
+        1px solid var(--border);
+
+    background: #080d15;
+
+    color: var(--muted);
+
+    border-radius: 9px;
+
+    font-weight: 800;
+
+    font-size: 11px;
+}
+
+.strategies button.on {
+    background:
+        rgba(34,211,238,0.1);
+
+    border-color: var(--cyan);
+
+    color: var(--cyan);
+}
+
+.strategy-select {
+    width: 100%;
+
+    display: none;
+}
+
+
+/* =========================================================
+   ANALYSIS
+========================================================= */
+
+.analysis,
+.reason {
+    padding: 13px;
+
+    border-radius: 10px;
+
+    background: #080d15;
+
+    border:
+        1px solid var(--border);
+
+    color: var(--muted);
+
+    font-size: 12px;
+
+    line-height: 1.6;
+}
+
+.reason {
+    color: var(--text);
+}
+
+
+/* =========================================================
+   TRADE PAGE
+========================================================= */
+
+.trade-signal {
+    margin-bottom: 15px;
+
+    padding: 22px;
+
+    text-align: center;
+
+    border:
+        1px solid rgba(34,211,238,0.25);
+
+    border-radius: 16px;
+
+    background:
+        radial-gradient(
+            circle,
+            rgba(34,211,238,0.08),
+            #080d15
+        );
+}
+
+.trade-signal > span {
+    display: block;
+
+    color: var(--muted);
+
+    font-size: 10px;
+
+    letter-spacing: 2px;
+
+    margin-bottom: 8px;
+}
+
+.trade-signal > strong {
+    display: block;
+
+    font-size: 40px;
+
+    color: var(--yellow);
+
+    margin-bottom: 8px;
+}
+
+.trade-signal div {
+    color: var(--muted);
+
+    font-size: 11px;
+}
+
+.trade-signal b {
+    color: var(--green);
+}
+
+
+/* =========================================================
+   FORM
+========================================================= */
+
+label {
+    display: block;
+
+    color: var(--muted);
+
+    font-size: 10px;
+
+    letter-spacing: 1px;
+
+    margin-top: 13px;
+
+    margin-bottom: 6px;
+}
+
+input,
+select {
+    width: 100%;
+
+    padding: 12px;
+
+    background: #070b12;
+
+    color: var(--text);
+
+    border:
+        1px solid var(--border);
+
+    border-radius: 9px;
+
+    outline: none;
+}
+
+input:focus,
+select:focus {
+    border-color: var(--cyan);
+}
+
+.manual {
+    margin-top: 15px;
+
+    padding: 15px;
+
+    background:
+        rgba(255,209,102,0.04);
+
+    border:
+        1px solid rgba(255,209,102,0.2);
+
+    border-radius: 11px;
+}
+
+.manual h3 {
+    margin: 0 0 5px;
+
+    color: var(--yellow);
+}
+
+.manual p,
+.manual small {
+    color: var(--muted);
+
+    font-size: 10px;
+}
+
+.manual input {
+    margin-top: 10px;
+}
+
+.hide {
+    display: none !important;
+}
+
+.form-grid {
+    display: grid;
+
+    grid-template-columns:
+        repeat(4, 1fr);
+
+    gap: 10px;
+
+    margin-top: 8px;
+}
+
+
+/* =========================================================
+   TRADE CONTROLS
+========================================================= */
+
+.trade-controls {
+    display: grid;
+
+    grid-template-columns:
+        1fr 1fr;
+
+    gap: 10px;
+
+    margin-top: 18px;
+}
+
+.trade-controls button {
+    min-height: 50px;
+}
+
+.trade-message {
+    text-align: center;
+
+    color: var(--muted);
+
+    font-size: 11px;
+
+    padding-top: 12px;
+}
+
+
+/* =========================================================
+   HISTORY
+========================================================= */
+
+.history-header,
+.history-row {
+    display: grid;
+
+    grid-template-columns:
+        1fr
+        1fr
+        1fr
+        0.8fr
+        0.8fr
+        0.8fr;
+
+    gap: 8px;
+
+    align-items: center;
+}
+
+.history-header {
+    padding: 10px;
+
+    color: var(--muted);
+
+    font-size: 8px;
+
+    letter-spacing: 1px;
+
+    border-bottom:
+        1px solid var(--border);
+}
+
+.history-row {
+    padding: 11px 10px;
+
+    border-bottom:
+        1px solid rgba(255,255,255,0.04);
+
+    font-size: 10px;
+}
+
+.history-row.win {
+    border-left:
+        3px solid var(--green);
+}
+
+.history-row.loss {
+    border-left:
+        3px solid var(--red);
+}
+
+.history-row span:nth-child(5) {
+    font-weight: 900;
+}
+
+.history-row.win span:nth-child(5),
+.history-row.win span:nth-child(6) {
+    color: var(--green);
+}
+
+.history-row.loss span:nth-child(5),
+.history-row.loss span:nth-child(6) {
+    color: var(--red);
+}
+
+.history-empty {
+    padding: 30px;
+
+    text-align: center;
+
+    color: var(--muted);
+
+    font-size: 12px;
+}
+
+
+/* =========================================================
+   BOTTOM CONTROLS
+========================================================= */
+
+.bottom-controls {
+    position: fixed;
+
+    bottom: 0;
+
+    left: 0;
+
+    right: 0;
+
+    z-index: 90;
+
+    display: flex;
+
+    justify-content: center;
+
+    gap: 8px;
+
+    padding: 10px;
+
+    background:
+        rgba(5,7,13,0.95);
+
+    backdrop-filter:
+        blur(15px);
+
+    border-top:
+        1px solid var(--border);
+}
+
+.bottom-controls button {
+    min-width: 120px;
+}
+
+
+/* =========================================================
+   FOOTER
+========================================================= */
+
+footer {
+    text-align: center;
+
+    padding: 20px;
+
+    color: var(--muted);
+
+    font-size: 10px;
+}
+
+footer strong {
+    display: block;
+
+    color: var(--text);
+
+    letter-spacing: 2px;
+
+    margin-bottom: 5px;
+}
+
+footer small {
+    display: block;
+
+    margin-top: 5px;
+}
+
+
+/* =========================================================
+   TRADE NOW EFFECT
+========================================================= */
+
+body.trade-now .ai-card {
+    animation:
+        tradePulse
+        0.8s
+        ease-in-out
+        infinite;
+}
+
+@keyframes tradePulse {
+
+    0% {
+        box-shadow:
+            0 0 0
+            rgba(34,211,238,0);
+    }
+
+    50% {
+        box-shadow:
+            0 0 35px
+            rgba(34,211,238,0.35);
+    }
+
+    100% {
+        box-shadow:
+            0 0 0
+            rgba(34,211,238,0);
+    }
+
+}
+
+
+/* =========================================================
+   MOBILE
+========================================================= */
+
+@media (
+    max-width: 800px
+) {
+
+    .topbar {
+        grid-template-columns: 1fr 1fr;
+
+        gap: 10px;
+    }
+
+    .brand {
+        grid-column:
+            1 / -1;
+    }
+
+    .markets {
+        grid-template-columns:
+            repeat(2, 1fr);
+    }
+
+    .stats {
+        grid-template-columns:
+            repeat(2, 1fr);
+    }
+
+    .digits {
+        grid-template-columns:
+            repeat(5, 1fr);
+    }
+
+    .strategies {
+        grid-template-columns:
+            repeat(3, 1fr);
+    }
+
+    .form-grid {
+        grid-template-columns:
+            repeat(2, 1fr);
+    }
+
+    .ai-circle-wrap {
+        flex-direction: column;
+
+        gap: 20px;
+    }
+
+    .ai-result {
+        display: grid;
+
+        grid-template-columns:
+            1fr 1fr;
+
+        text-align: center;
+
+        width: 100%;
+    }
+
+}
+
+
+/* =========================================================
+   SMALL ANDROID PHONES
+========================================================= */
+
+@media (
+    max-width: 480px
+) {
+
+    body {
+        padding-bottom: 105px;
+    }
+
+    .topbar {
+        padding: 12px;
+    }
+
+    .brand strong {
+        font-size: 19px;
+    }
+
+    .page {
+        padding: 10px;
+    }
+
+    .panel,
+    .ai-card {
+        padding: 13px;
+
+        border-radius: 13px;
+    }
+
+    .hero {
+        padding: 15px;
+    }
+
+    .hero h1 {
+        font-size: 17px;
+    }
+
+    .markets {
+        grid-template-columns:
+            1fr 1fr;
+
+        gap: 7px;
+    }
+
+    .market {
+        padding: 10px;
+    }
+
+    .market b {
+        font-size: 10px;
+    }
+
+    .digits {
+        grid-template-columns:
+            repeat(5, 1fr);
+
+        gap: 5px;
+    }
+
+    .digit {
+        padding: 7px 5px;
+    }
+
+    .digit b {
+        font-size: 13px;
+    }
+
+    .digit span {
+        font-size: 8px;
+    }
+
+    .prediction-box {
+        grid-template-columns:
+            1fr;
+    }
+
+    .ai-cycle {
+        grid-template-columns:
+            repeat(2, 1fr);
+    }
+
+    .ai-circle {
+        width: 160px;
+
+        height: 160px;
+    }
+
+    .circle-inner strong {
+        font-size: 40px;
+    }
+
+    .strategies {
+        grid-template-columns:
+            repeat(2, 1fr);
+    }
+
+    .form-grid {
+        grid-template-columns:
+            1fr;
+    }
+
+    .trade-controls {
+        grid-template-columns:
+            1fr;
+    }
+
+    .bottom-controls {
+        flex-wrap: wrap;
+    }
+
+    .bottom-controls button {
+        flex: 1;
+
+        min-width: 0;
+
+        font-size: 10px;
+
+        padding: 10px 6px;
+    }
+
+    .history-header,
+    .history-row {
+        grid-template-columns:
+            0.8fr
+            1fr
+            0.9fr
+            0.6fr
+            0.7fr
+            0.6fr;
+
+        gap: 4px;
+
+        font-size: 8px;
+    }
+
+    .history-header {
+        font-size: 7px;
+    }
+
+}
