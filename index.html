@@ -1,12 +1,1093 @@
-<!doctype html><html><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><title>KRISHWAVE</title><link rel="stylesheet" href="style.css"></head><body>
-<header><b>KRISHWAVE</b><span id="conn">● OFFLINE</span></header><main>
-<section class="account"><div><small>ACCOUNT</small><h3>DEMO ACCOUNT</h3><p id="aid">Waiting for connection</p></div><div><small>DEMO BALANCE</small><strong id="bal">—</strong><em id="cur">—</em></div></section>
-<section class="hero"><div><small>KRISHWAVE AI ENGINE</small><h1>Market <i>Analysis</i></h1><p>AI predicts the market. You enter the contract number manually.</p></div><div class="ring"><strong id="timer">10</strong><span>ANALYZING</span></div></section>
-<section><div class="head"><h2>Volatility Markets</h2><button id="scan">SCAN</button></div><div id="markets" class="markets"></div></section>
-<section class="card"><div class="selected"><div><h2 id="mname">Volatility 10</h2><small id="sym">R_10</small></div><strong id="last">—</strong></div><div class="stats"><div><small>TICKS</small><b id="ticks">0</b></div><div><small>HOT DIGIT</small><b id="hot">—</b></div><div><small>AI SCORE</small><b id="score">—</b></div></div></section>
-<section><h2>Digit Distribution</h2><div id="digits" class="digits"></div></section>
-<section><h2>Strategy</h2><div id="strategies" class="strategies"></div><select id="strategy"></select><div id="manual" class="manual hide"><div><b id="manualTitle">NUMBER</b><small>Enter your number manually. AI never fills this box.</small></div><input id="number" type="number" min="0" max="9" inputmode="numeric" placeholder="0–9"></div></section>
-<section class="ai"><div class="airesult"><small id="phase">AI ANALYSIS</small><strong id="prediction">—</strong><span id="msg">Collecting live ticks…</span></div><div class="reason"><b>AI REASON</b><p id="reason">Waiting for enough data.</p></div><div class="counts"><div><small>10s ANALYSIS</small><b id="a10">10s</b></div><div><small>5s COUNTDOWN</small><b id="a5">—</b></div><div><small>TRADE NOW</small><b id="a3">—</b></div></div></section>
-<section><h2>Paper Trading</h2><div class="controls"><label>STAKE $<input id="stake" type="number" value="10" min=".35"></label><label>TAKE PROFIT $<input id="tp" type="number" value="50"></label><label>STOP LOSS $<input id="sl" type="number" value="100"></label><label>MARTINGALE<input id="mg" type="number" value="2.1" min="1"></label></div><div class="actions"><button id="toggle">START TRADING</button><button id="reset">RESET PAPER</button></div><div class="paper"><div><small>PAPER WIN</small><b id="win">0</b></div><div><small>PAPER LOSS</small><b id="loss">0</b></div><div><small>PAPER P/L</small><b id="pl">$0.00</b></div></div></section>
-<div class="notice"><b>MANUAL ENTRY</b><p>For Matches, Differs, Over and Under, the number box appears after you choose the strategy. The AI prediction is displayed separately and is never copied into your number.</p></div>
-</main><script src="app.js"></script></body></html>
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+
+    <meta
+        name="viewport"
+        content="width=device-width, initial-scale=1.0"
+    >
+
+    <meta
+        name="theme-color"
+        content="#05070d"
+    >
+
+    <title>KRISHWAVE AI</title>
+
+    <link
+        rel="stylesheet"
+        href="style.css"
+    >
+</head>
+
+<body>
+
+<!-- =====================================================
+     HEADER
+===================================================== -->
+
+<header class="topbar">
+
+    <div class="brand">
+        <strong>KRISHWAVE</strong>
+        <span id="conn" class="offline">
+            ● OFFLINE
+        </span>
+    </div>
+
+    <div class="account">
+
+        <span>ACCOUNT</span>
+
+        <b>
+            DEMO ACCOUNT
+        </b>
+
+        <small>
+            Waiting for connection
+        </small>
+
+    </div>
+
+    <div class="balance">
+
+        <span>DEMO BALANCE</span>
+
+        <strong id="balance">
+            —
+        </strong>
+
+    </div>
+
+</header>
+
+
+<!-- =====================================================
+     NAVIGATION
+===================================================== -->
+
+<nav class="navigation">
+
+    <button
+        class="nav-btn active"
+        data-page="analysisPage"
+    >
+        🤖 AI ANALYSIS
+    </button>
+
+    <button
+        class="nav-btn"
+        data-page="tradePage"
+    >
+        💹 TRADE
+    </button>
+
+    <button
+        class="nav-btn"
+        data-page="historyPage"
+    >
+        📊 HISTORY
+    </button>
+
+</nav>
+
+
+<!-- =====================================================
+     ERROR
+===================================================== -->
+
+<div
+    id="error"
+    class="error"
+></div>
+
+
+<!-- =====================================================
+     AI ANALYSIS PAGE
+===================================================== -->
+
+<main
+    id="analysisPage"
+    class="page active-page"
+>
+
+    <section class="hero">
+
+        <div>
+
+            <h1>
+                KRISHWAVE AI ENGINE
+            </h1>
+
+            <p>
+                Advanced statistical market analysis
+                and prediction engine.
+            </p>
+
+        </div>
+
+    </section>
+
+
+    <!-- =================================================
+         CIRCULAR AI
+    ================================================== -->
+
+    <section class="ai-card">
+
+        <div class="ai-header">
+
+            <div>
+
+                <h2>
+                    🧠 CIRCULAR AI
+                </h2>
+
+                <p>
+                    Live market intelligence
+                </p>
+
+            </div>
+
+            <div
+                id="aiScore"
+                class="ai-score"
+            >
+                —
+            </div>
+
+        </div>
+
+
+        <div class="ai-circle-wrap">
+
+            <div
+                id="aiCircle"
+                class="ai-circle"
+            >
+
+                <div class="circle-inner">
+
+                    <small>
+                        <span id="aiCircleStatus">
+                            IDLE
+                        </span>
+                    </small>
+
+                    <strong
+                        id="aiCircleTimer"
+                    >
+                        —
+                    </strong>
+
+                    <span>
+                        SECONDS
+                    </span>
+
+                </div>
+
+            </div>
+
+
+            <div class="ai-result">
+
+                <span>
+                    PREDICTION
+                </span>
+
+                <strong
+                    id="aiCirclePrediction"
+                >
+                    —
+                </strong>
+
+                <span>
+                    CONFIDENCE
+                </span>
+
+                <b
+                    id="aiCircleConfidence"
+                >
+                    —
+                </b>
+
+            </div>
+
+        </div>
+
+
+        <!-- AI DETAILS -->
+
+        <div class="prediction-box">
+
+            <div>
+
+                <span>
+                    AI PREDICTION
+                </span>
+
+                <strong id="aiPrediction">
+                    WAITING
+                </strong>
+
+            </div>
+
+            <div>
+
+                <span>
+                    TYPE
+                </span>
+
+                <strong id="aiType">
+                    —
+                </strong>
+
+            </div>
+
+            <div>
+
+                <span>
+                    CONFIDENCE
+                </span>
+
+                <strong id="confidence">
+                    —
+                </strong>
+
+            </div>
+
+        </div>
+
+
+        <div class="ai-cycle">
+
+            <div class="cycle-item">
+
+                <span>
+                    10s ANALYSIS
+                </span>
+
+                <strong id="a10">
+                    —
+                </strong>
+
+            </div>
+
+            <div class="cycle-item">
+
+                <span>
+                    5s PREDICTION
+                </span>
+
+                <strong id="a5">
+                    —
+                </strong>
+
+            </div>
+
+            <div class="cycle-item">
+
+                <span>
+                    TRADE NOW
+                </span>
+
+                <strong id="tradeTimer">
+                    —
+                </strong>
+
+            </div>
+
+            <div class="cycle-item">
+
+                <span>
+                    COOLDOWN
+                </span>
+
+                <strong id="cooldown">
+                    —
+                </strong>
+
+            </div>
+
+        </div>
+
+
+        <div class="ai-message">
+
+            <strong id="phase">
+                IDLE
+            </strong>
+
+            <p id="msg">
+                Waiting to start AI analysis.
+            </p>
+
+        </div>
+
+    </section>
+
+
+    <!-- =================================================
+         MARKETS
+    ================================================== -->
+
+    <section class="panel">
+
+        <div class="panel-title">
+
+            <div>
+
+                <h2>
+                    Volatility Markets
+                </h2>
+
+                <small>
+                    Select a live Deriv market
+                </small>
+
+            </div>
+
+            <button id="scan">
+                SCAN
+            </button>
+
+        </div>
+
+        <div
+            id="markets"
+            class="markets"
+        ></div>
+
+    </section>
+
+
+    <!-- =================================================
+         CURRENT MARKET
+    ================================================== -->
+
+    <section class="panel">
+
+        <div class="market-header">
+
+            <div>
+
+                <span>
+                    CURRENT MARKET
+                </span>
+
+                <h2 id="mname">
+                    Volatility 10
+                </h2>
+
+                <small id="sym">
+                    R_10
+                </small>
+
+            </div>
+
+            <div
+                id="market"
+                class="market-status"
+            >
+                CONNECTING TO DERIV…
+            </div>
+
+        </div>
+
+
+        <div class="stats">
+
+            <div>
+                <span>TICKS</span>
+                <strong id="ticks">0</strong>
+            </div>
+
+            <div>
+                <span>LAST DIGIT</span>
+                <strong id="last">—</strong>
+            </div>
+
+            <div>
+                <span>HOT DIGIT</span>
+                <strong id="hot">—</strong>
+            </div>
+
+            <div>
+                <span>AI SCORE</span>
+                <strong id="score">—</strong>
+            </div>
+
+        </div>
+
+    </section>
+
+
+    <!-- =================================================
+         DIGIT DISTRIBUTION
+    ================================================== -->
+
+    <section class="panel">
+
+        <div class="panel-title">
+
+            <div>
+
+                <h2>
+                    Digit Distribution
+                </h2>
+
+                <small>
+                    Recent live tick distribution
+                </small>
+
+            </div>
+
+        </div>
+
+        <div
+            id="digits"
+            class="digits"
+        ></div>
+
+    </section>
+
+
+    <!-- =================================================
+         STRATEGY
+    ================================================== -->
+
+    <section class="panel">
+
+        <div class="panel-title">
+
+            <div>
+
+                <h2>
+                    Strategy
+                </h2>
+
+                <small>
+                    Choose what the AI should analyze
+                </small>
+
+            </div>
+
+        </div>
+
+        <div
+            id="strategies"
+            class="strategies"
+        ></div>
+
+        <select
+            id="strategy"
+            class="strategy-select"
+        ></select>
+
+    </section>
+
+
+    <!-- =================================================
+         AI REASON
+    ================================================== -->
+
+    <section class="panel">
+
+        <h2>
+            AI ANALYSIS
+        </h2>
+
+        <div
+            id="analysis"
+            class="analysis"
+        >
+            Collecting live ticks…
+        </div>
+
+        <h3>
+            AI REASON
+        </h3>
+
+        <div
+            id="reason"
+            class="reason"
+        >
+            Waiting for enough data.
+        </div>
+
+    </section>
+
+</main>
+
+
+<!-- =====================================================
+     TRADE PAGE
+===================================================== -->
+
+<main
+    id="tradePage"
+    class="page"
+>
+
+    <section class="hero">
+
+        <h1>
+            💹 TRADE CENTER
+        </h1>
+
+        <p>
+            Paper trading control center.
+        </p>
+
+    </section>
+
+
+    <!-- CURRENT SIGNAL -->
+
+    <section class="trade-signal">
+
+        <span>
+            CURRENT AI SIGNAL
+        </span>
+
+        <strong id="prediction">
+            WAITING
+        </strong>
+
+        <div>
+
+            <span>
+                CONFIDENCE:
+            </span>
+
+            <b id="confidence">
+                —
+            </b>
+
+        </div>
+
+    </section>
+
+
+    <!-- TRADE SETTINGS -->
+
+    <section class="panel">
+
+        <h2>
+            Trade Settings
+        </h2>
+
+
+        <label>
+            Market
+        </label>
+
+        <select id="symbol">
+
+            <option value="R_10">
+                Volatility 10
+            </option>
+
+            <option value="R_25">
+                Volatility 25
+            </option>
+
+            <option value="R_50">
+                Volatility 50
+            </option>
+
+            <option value="R_75">
+                Volatility 75
+            </option>
+
+            <option value="R_100">
+                Volatility 100
+            </option>
+
+            <option value="1HZ10V">
+                Volatility 10 (1s)
+            </option>
+
+            <option value="1HZ25V">
+                Volatility 25 (1s)
+            </option>
+
+            <option value="1HZ50V">
+                Volatility 50 (1s)
+            </option>
+
+            <option value="1HZ75V">
+                Volatility 75 (1s)
+            </option>
+
+            <option value="1HZ100V">
+                Volatility 100 (1s)
+            </option>
+
+            <option value="1HZ150V">
+                Volatility 150 (1s)
+            </option>
+
+            <option value="1HZ250V">
+                Volatility 250 (1s)
+            </option>
+
+            <option value="1HZ1000V">
+                Volatility 1000 (1s)
+            </option>
+
+        </select>
+
+
+        <label>
+            Strategy
+        </label>
+
+        <select id="tradeStrategy">
+
+            <option value="matches">
+                Matches
+            </option>
+
+            <option value="differs">
+                Differs
+            </option>
+
+            <option value="even">
+                Even
+            </option>
+
+            <option value="odd">
+                Odd
+            </option>
+
+            <option value="over">
+                Over
+            </option>
+
+            <option value="under">
+                Under
+            </option>
+
+        </select>
+
+
+        <!-- MANUAL NUMBER -->
+
+        <div
+            id="manual"
+            class="manual"
+        >
+
+            <h3 id="manualTitle">
+                MATCH DIGIT
+            </h3>
+
+            <p>
+                Enter your contract number manually.
+            </p>
+
+            <input
+                id="number"
+                type="number"
+                min="0"
+                max="9"
+                inputmode="numeric"
+                placeholder="Enter number"
+            >
+
+            <small>
+                AI prediction will NOT be copied
+                automatically.
+            </small>
+
+        </div>
+
+
+        <!-- MONEY SETTINGS -->
+
+        <div class="form-grid">
+
+            <div>
+
+                <label>
+                    STAKE $
+                </label>
+
+                <input
+                    id="stake"
+                    type="number"
+                    value="10"
+                    min="0"
+                    step="0.01"
+                >
+
+            </div>
+
+            <div>
+
+                <label>
+                    TAKE PROFIT $
+                </label>
+
+                <input
+                    id="takeProfit"
+                    type="number"
+                    value="50"
+                    min="0"
+                    step="0.01"
+                >
+
+            </div>
+
+            <div>
+
+                <label>
+                    STOP LOSS $
+                </label>
+
+                <input
+                    id="stopLoss"
+                    type="number"
+                    value="100"
+                    min="0"
+                    step="0.01"
+                >
+
+            </div>
+
+            <div>
+
+                <label>
+                    MARTINGALE
+                </label>
+
+                <input
+                    id="martingale"
+                    type="number"
+                    value="2.1"
+                    min="1"
+                    step="0.1"
+                >
+
+            </div>
+
+        </div>
+
+
+        <!-- CONTROLS -->
+
+        <div class="trade-controls">
+
+            <button
+                id="startTrading"
+                class="start-btn"
+            >
+                ▶ START TRADING
+            </button>
+
+            <button
+                id="stopTrading"
+                class="stop-btn"
+            >
+                ■ STOP TRADING
+            </button>
+
+        </div>
+
+
+        <div
+            id="msg"
+            class="trade-message"
+        >
+            Trading stopped.
+        </div>
+
+    </section>
+
+
+    <!-- PAPER STATS -->
+
+    <section class="stats large">
+
+        <div>
+
+            <span>
+                PAPER WIN
+            </span>
+
+            <strong id="win">
+                0
+            </strong>
+
+        </div>
+
+        <div>
+
+            <span>
+                PAPER LOSS
+            </span>
+
+            <strong id="loss">
+                0
+            </strong>
+
+        </div>
+
+        <div>
+
+            <span>
+                TOTAL TRADES
+            </span>
+
+            <strong id="totalTrades">
+                0
+            </strong>
+
+        </div>
+
+        <div>
+
+            <span>
+                WIN RATE
+            </span>
+
+            <strong id="winRate">
+                0%
+            </strong>
+
+        </div>
+
+        <div>
+
+            <span>
+                PAPER P/L
+            </span>
+
+            <strong id="pl">
+                $0.00
+            </strong>
+
+        </div>
+
+    </section>
+
+</main>
+
+
+<!-- =====================================================
+     HISTORY PAGE
+===================================================== -->
+
+<main
+    id="historyPage"
+    class="page"
+>
+
+    <section class="hero">
+
+        <h1>
+            📊 TRADING HISTORY
+        </h1>
+
+        <p>
+            Review your paper trading performance.
+        </p>
+
+    </section>
+
+
+    <!-- HISTORY SUMMARY -->
+
+    <section class="stats large">
+
+        <div>
+
+            <span>
+                TOTAL TRADES
+            </span>
+
+            <strong id="totalTrades">
+                0
+            </strong>
+
+        </div>
+
+        <div>
+
+            <span>
+                WINS
+            </span>
+
+            <strong id="win">
+                0
+            </strong>
+
+        </div>
+
+        <div>
+
+            <span>
+                LOSSES
+            </span>
+
+            <strong id="loss">
+                0
+            </strong>
+
+        </div>
+
+        <div>
+
+            <span>
+                WIN RATE
+            </span>
+
+            <strong id="winRate">
+                0%
+            </strong>
+
+        </div>
+
+        <div>
+
+            <span>
+                NET P/L
+            </span>
+
+            <strong id="pl">
+                $0.00
+            </strong>
+
+        </div>
+
+    </section>
+
+
+    <!-- HISTORY CONTROLS -->
+
+    <section class="panel">
+
+        <div class="panel-title">
+
+            <div>
+
+                <h2>
+                    Paper Trade History
+                </h2>
+
+                <small>
+                    Saved on this device
+                </small>
+
+            </div>
+
+            <button
+                id="clearHistory"
+                class="danger-btn"
+            >
+                CLEAR HISTORY
+            </button>
+
+        </div>
+
+
+        <!-- TABLE HEADER -->
+
+        <div class="history-header">
+
+            <span>TIME</span>
+            <span>MARKET</span>
+            <span>STRATEGY</span>
+            <span>NUMBER</span>
+            <span>RESULT</span>
+            <span>P/L</span>
+
+        </div>
+
+
+        <!-- HISTORY -->
+
+        <div
+            id="historyList"
+            class="history-list"
+        >
+
+            <div class="history-empty">
+                No paper trades yet.
+            </div>
+
+        </div>
+
+    </section>
+
+</main>
+
+
+<!-- =====================================================
+     GLOBAL CONTROLS
+===================================================== -->
+
+<section class="bottom-controls">
+
+    <button
+        id="toggle"
+        class="main-control"
+    >
+        START TRADING
+    </button>
+
+    <button
+        id="reset"
+        class="reset-control"
+    >
+        RESET PAPER
+    </button>
+
+    <button
+        id="reconnect"
+        class="reconnect-control"
+    >
+        RECONNECT
+    </button>
+
+</section>
+
+
+<!-- =====================================================
+     FOOTER
+===================================================== -->
+
+<footer>
+
+    <strong>
+        KRISHWAVE AI
+    </strong>
+
+    <span>
+        Statistical analysis • Paper trading
+    </span>
+
+    <small>
+        AI predictions are estimates and are not guaranteed.
+    </small>
+
+</footer>
+
+
+<!-- =====================================================
+     JAVASCRIPT
+===================================================== -->
+
+<script
+    src="app.js"
+    defer
+></script>
+
+</body>
+</html>
+
+Important: I spotted one issue in this HTML before you paste it: the same IDs such as "win", "loss", "pl", "totalTrades", "confidence", and "msg" appear more than once because they're displayed on multiple pages. That can cause JavaScript to update only the first one.
+
+So don't paste this version yet. I'll correct the duplicate IDs first so the Trade and History pages work properly with the "app.js" we just created.
