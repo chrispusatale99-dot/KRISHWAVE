@@ -1,3568 +1,2086 @@
 /* =========================================================
    KRISHWAVE V5.6
    LIVE DERIV MARKET INTELLIGENCE
+   PAPER / ANALYSIS MODE
 
-   AI CYCLE
+   AI CYCLE:
+   10s ANALYSIS
+   5s LOCK
+   3s TRADE NOW
+   REPEAT
 
-   10 seconds = ANALYSIS
-        ↓
-   prediction LOCKED
-        ↓
-   5 seconds = ENTRY WINDOW
-        ↓
-   TRADE NOW
-        ↓
-   3 seconds = TRADE NOW DISPLAY
-        ↓
-   new 10 seconds = ANALYSIS
-
-   PAPER TRADING ONLY
+   No real trading is performed.
 ========================================================= */
 
 "use strict";
 
+/* =========================
+   CONFIG
+========================= */
 
-/* =========================================================
-   DERIV CONNECTION
-========================================================= */
-
-const DERIV_WS =
-    "wss://ws.binaryws.com/websockets/v3";
-
-let ws = null;
-
-let reconnectTimer = null;
-
-let reqId = 1;
-
-
-/* =========================================================
-   MARKET STATE
-========================================================= */
-
-const markets = {};
-
-let marketList = [];
+const DERIV_URLS = [
+  "wss://ws.binaryws.com/websockets/v3",
+  "wss://api.derivws.com/trading/v1/options/ws/public"
+];
 
 const MAX_MARKETS = 13;
+const HISTORY_LIMIT = 150;
+const STORAGE_KEY = "KRISHWAVE_V56_HISTORY";
 
-const HISTORY_COUNT = 100;
+const FALLBACK_MARKETS = [
+  ["R_10", "Volatility 10 Index"],
+  ["R_25", "Volatility 25 Index"],
+  ["R_50", "Volatility 50 Index"],
+  ["R_75", "Volatility 75 Index"],
+  ["R_100", "Volatility 100 Index"],
+  ["R_150", "Volatility 150 Index"],
+  ["R_250", "Volatility 250 Index"],
+  ["1HZ10V", "Volatility 10 (1s) Index"],
+  ["1HZ25V", "Volatility 25 (1s) Index"],
+  ["1HZ50V", "Volatility 50 (1s) Index"],
+  ["1HZ75V", "Volatility 75 (1s) Index"],
+  ["1HZ100V", "Volatility 100 (1s) Index"],
+  ["1HZ150V", "Volatility 150 (1s) Index"]
+];
 
-let selectedSymbol = "";
+/* =========================
+   STATE
+========================= */
 
+let socket = null;
+let socketUrlIndex = 0;
+let socketOpened = false;
+let reconnectTimer = null;
+let connecting = false;
+
+let requestId = 100;
+
+const requests = new Map();
+
+let markets = [];
+const marketData = new Map();
+
+let selectedMarket = null;
 let selectedStrategy = "MATCHES";
 
-
-/* =========================================================
-   AI STATE
-========================================================= */
-
 let aiRunning = false;
-
-let aiPhase = "IDLE";
-
+let aiPhase = "idle";
 let aiRemaining = 10;
-
 let aiTimer = null;
 
-let lockedSignal = null;
+let lockedPrediction = null;
+let lastSignal = null;
+let lastSignalId = null;
 
-
-/* =========================================================
-   PAPER STATE
-========================================================= */
-
-let paperTrading = false;
-
+let paperRunning = false;
 let accountMode = "DEMO";
 
+let history = loadHistory();
 
-/* =========================================================
-   HELPERS
-========================================================= */
+/* =========================
+   DOM
+========================= */
 
-function $(id) {
-    return document.getElementById(id);
+const $ = id => document.getElementById(id);
+
+function text(id, value) {
+  const el = $(id);
+  if (el) el.textContent = value;
 }
 
+function escapeHTML(value) {
+  return String(value ?? "")
+    .replaceAll("&", "&amp;")
+    .replaceAll("<", "&lt;")
+    .replaceAll(">", "&gt;")
+    .replaceAll('"', "&quot;")
+    .replaceAll("'", "&#039;");
+}
 
-function setText(id, value) {
+/* =========================
+   CONNECTION
+========================= */
+
+function setConnection(status, type = "offline") {
+
+  text("connectionStatus", status);
+
+  const dot = $("statusDot");
+
+  if (!dot) return;
+
+  dot.className = "status-dot " + type;
+}
+
+function connectDeriv() {
+
+  if (connecting) return;
+
+  connecting = true;
+
+  clearTimeout(reconnectTimer);
+
+  setConnection("CONNECTING...", "connecting");
+
+  const url = DERIV_URLS[socketUrlIndex];
+
+  try {
+
+    if (socket) {
+      try {
+        socket.close();
+      } catch (_) {}
+    }
+
+    socket = new WebSocket(url);
+
+    socket.onopen = () => {
+
+      connecting = false;
+      socketOpened = true;
+
+      setConnection("ONLINE • LIVE DATA", "online");
+
+      text(
+        "analysisMsg",
+        "Connected to Deriv. Loading live Volatility markets..."
+      );
+
+      requestActiveSymbols();
+    };
+
+    socket.onmessage = event => {
+
+      try {
+
+        const data = JSON.parse(event.data);
+
+        handleDerivMessage(data);
+
+      } catch (error) {
+
+        console.error("Message error:", error);
+
+      }
+
+    };
+
+    socket.onerror = error => {
+
+      console.warn("Deriv WebSocket error:", error);
+
+      setConnection("CONNECTION ERROR", "offline");
+
+      text(
+        "analysisMsg",
+        "Deriv connection error. Trying the backup connection..."
+      );
+
+    };
+
+    socket.onclose = () => {
+
+      socketOpened = false;
+      connecting = false;
+
+      setConnection("RECONNECTING...", "connecting");
+
+      scheduleReconnect();
+
+    };
+
+  } catch (error) {
+
+    connecting = false;
+
+    console.error(error);
+
+    setConnection("CONNECTION FAILED", "offline");
+
+    scheduleReconnect();
+  }
+}
+
+function scheduleReconnect() {
+
+  clearTimeout(reconnectTimer);
+
+  reconnectTimer = setTimeout(() => {
+
+    /*
+      First connection:
+      legacy Deriv endpoint.
+
+      If it repeatedly fails, switch to the
+      current public Options endpoint.
+    */
+
+    if (!socketOpened) {
+
+      socketUrlIndex++;
+
+      if (socketUrlIndex >= DERIV_URLS.length) {
+        socketUrlIndex = 0;
+      }
+
+    }
+
+    connectDeriv();
+
+  }, 5000);
+}
+
+function send(payload, type = null, extra = {}) {
+
+  if (!socket || socket.readyState !== WebSocket.OPEN) {
+    return false;
+  }
+
+  const req_id = ++requestId;
+
+  const message = {
+    ...payload,
+    req_id
+  };
+
+  requests.set(req_id, {
+    type,
+    ...extra
+  });
+
+  try {
+
+    socket.send(JSON.stringify(message));
+
+    return req_id;
+
+  } catch (error) {
+
+    console.error("Send failed:", error);
+
+    return false;
+  }
+}
+
+/* =========================
+   ACTIVE SYMBOLS
+========================= */
+
+function requestActiveSymbols() {
+
+  /*
+    Legacy endpoint accepts product_type.
+    Current endpoint does not require it.
+  */
+
+  const payload = {
+    active_symbols: "brief"
+  };
+
+  if (socketUrlIndex === 0) {
+    payload.product_type = "basic";
+  }
+
+  send(payload, "active_symbols");
+
+  setTimeout(() => {
+
+    if (markets.length === 0) {
+
+      console.warn("No active symbols received. Using fallback list.");
+
+      useFallbackMarkets();
+
+    }
+
+  }, 8000);
+}
+
+function handleActiveSymbols(data) {
+
+  const source = Array.isArray(data.active_symbols)
+    ? data.active_symbols
+    : [];
+
+  const found = [];
+  const used = new Set();
+
+  for (const item of source) {
+
+    const symbol =
+      item.underlying_symbol ||
+      item.symbol ||
+      "";
+
+    const name =
+      item.underlying_symbol_name ||
+      item.display_name ||
+      symbol;
+
+    const combined = `${symbol} ${name}`.toLowerCase();
+
+    const volatility =
+      combined.includes("volatility") ||
+      /^r_\d+$/i.test(symbol) ||
+      /^1hz\d+v$/i.test(symbol);
+
+    if (!volatility) continue;
+
+    if (used.has(symbol)) continue;
+
+    used.add(symbol);
+
+    found.push({
+      symbol,
+      name
+    });
+  }
+
+  /*
+    Prefer normal Volatility symbols first,
+    then 1-second symbols.
+  */
+
+  found.sort((a, b) => {
+
+    const a1 = /1hz/i.test(a.symbol) ? 1 : 0;
+    const b1 = /1hz/i.test(b.symbol) ? 1 : 0;
+
+    if (a1 !== b1) return a1 - b1;
+
+    return a.symbol.localeCompare(b.symbol);
+  });
+
+  if (found.length) {
+
+    markets = found.slice(0, MAX_MARKETS);
+
+    initializeMarkets();
+
+  } else {
+
+    useFallbackMarkets();
+
+  }
+}
+
+function useFallbackMarkets() {
+
+  markets = FALLBACK_MARKETS.map(([symbol, name]) => ({
+    symbol,
+    name
+  }));
+
+  initializeMarkets();
+}
+
+/* =========================
+   MARKET INITIALIZATION
+========================= */
+
+function initializeMarkets() {
+
+  marketData.clear();
+
+  for (const market of markets) {
+
+    marketData.set(market.symbol, {
+      symbol: market.symbol,
+      name: market.name,
+      digits: [],
+      prices: [],
+      times: [],
+      counts: Array(10).fill(0),
+      score: 0,
+      strength: "WAITING"
+    });
+  }
+
+  selectedMarket = markets[0]?.symbol || null;
+
+  populateMarketSelect();
+
+  renderMarkets();
+
+  subscribeMarkets();
+
+  text(
+    "analysisMsg",
+    `${markets.length} Volatility markets loaded. Collecting live ticks...`
+  );
+}
+
+/* =========================
+   SUBSCRIBE
+========================= */
+
+function subscribeMarkets() {
+
+  let index = 0;
+
+  for (const market of markets) {
+
+    /*
+      Historical ticks
+    */
+
+    const historyReq = send(
+      {
+        ticks_history: market.symbol,
+        count: 100,
+        end: "latest",
+        style: "ticks",
+        subscribe: 0
+      },
+      "history",
+      {
+        symbol: market.symbol
+      }
+    );
+
+    /*
+      Live ticks
+    */
+
+    send(
+      {
+        ticks: market.symbol,
+        subscribe: 1
+      },
+      "tick",
+      {
+        symbol: market.symbol
+      }
+    );
+
+    index++;
+
+    if (index >= MAX_MARKETS) break;
+  }
+}
+
+/* =========================
+   DERIV MESSAGE HANDLER
+========================= */
+
+function handleDerivMessage(data) {
+
+  if (data.error) {
+
+    console.error("Deriv API error:", data.error);
+
+    text(
+      "analysisMsg",
+      `Deriv API: ${data.error.message || "Request failed"}`
+    );
+
+    return;
+  }
+
+  if (data.msg_type === "active_symbols") {
+
+    handleActiveSymbols(data);
+
+    return;
+  }
+
+  if (
+    data.msg_type === "history" ||
+    data.history
+  ) {
+
+    handleHistory(data);
+
+    return;
+  }
+
+  if (
+    data.msg_type === "tick" ||
+    data.tick
+  ) {
+
+    handleTick(data);
+
+    return;
+  }
+}
+
+/* =========================
+   HISTORY DATA
+========================= */
+
+function handleHistory(data) {
+
+  const historyData = data.history;
+
+  if (!historyData) return;
+
+  let symbol = null;
+
+  if (data.req_id && requests.has(data.req_id)) {
+
+    symbol = requests.get(data.req_id).symbol;
+    requests.delete(data.req_id);
+
+  }
+
+  symbol =
+    symbol ||
+    historyData.symbol ||
+    data.echo_req?.ticks_history ||
+    data.echo_req?.symbol;
+
+  if (!symbol) return;
+
+  const item = marketData.get(symbol);
+
+  if (!item) return;
+
+  const prices = Array.isArray(historyData.prices)
+    ? historyData.prices
+    : [];
+
+  const times = Array.isArray(historyData.times)
+    ? historyData.times
+    : [];
+
+  for (let i = 0; i < prices.length; i++) {
+
+    addTick(
+      symbol,
+      prices[i],
+      times[i] || Date.now() / 1000,
+      false
+    );
+  }
+
+  calculateMarket(item);
+
+  renderMarkets();
+
+  if (!selectedMarket) {
+    selectedMarket = symbol;
+  }
+
+  updateAnalysisPreview();
+}
+
+/* =========================
+   LIVE TICK
+========================= */
+
+function handleTick(data) {
+
+  const tick = data.tick;
+
+  if (!tick) return;
+
+  const symbol = tick.symbol;
+
+  if (!symbol) return;
+
+  if (!marketData.has(symbol)) {
+
+    /*
+      Some Deriv responses can use
+      underlying_symbol.
+    */
+
+    const alt = tick.underlying_symbol;
+
+    if (!alt || !marketData.has(alt)) return;
+  }
+
+  const finalSymbol =
+    marketData.has(symbol)
+      ? symbol
+      : tick.underlying_symbol;
+
+  addTick(
+    finalSymbol,
+    tick.quote,
+    tick.epoch,
+    true
+  );
+
+  const item = marketData.get(finalSymbol);
+
+  if (!item) return;
+
+  calculateMarket(item);
+
+  renderMarkets();
+
+  updateAnalysisPreview();
+
+  /*
+    If AI is analyzing, keep collecting ticks.
+    Prediction is only locked at the end
+    of the 10-second analysis phase.
+  */
+}
+
+/* =========================
+   TICK PROCESSING
+========================= */
+
+function addTick(symbol, quote, epoch, live = true) {
+
+  const item = marketData.get(symbol);
+
+  if (!item) return;
+
+  const number = Number(quote);
+
+  if (!Number.isFinite(number)) return;
+
+  const digit = getLastDigit(quote);
+
+  item.prices.push(number);
+  item.times.push(epoch);
+  item.digits.push(digit);
+
+  if (item.prices.length > HISTORY_LIMIT) {
+    item.prices.shift();
+    item.times.shift();
+    item.digits.shift();
+  }
+
+  item.counts[digit]++;
+
+  if (live) {
+
+    /*
+      Keep scanner responsive.
+    */
+
+    if (item.digits.length % 5 === 0) {
+      calculateMarket(item);
+    }
+  }
+}
+
+function getLastDigit(value) {
+
+  const stringValue = String(value);
+
+  const decimalIndex = stringValue.indexOf(".");
+
+  if (decimalIndex >= 0) {
+
+    const decimals =
+      stringValue.slice(decimalIndex + 1);
+
+    const digitsOnly =
+      decimals.replace(/\D/g, "");
+
+    if (digitsOnly.length) {
+      return Number(digitsOnly.at(-1));
+    }
+  }
+
+  const clean =
+    stringValue.replace(/\D/g, "");
+
+  return Number(clean.at(-1) || 0);
+}
+
+/* =========================
+   MARKET ANALYSIS
+========================= */
+
+function calculateMarket(item) {
+
+  const digits = item.digits;
+
+  if (digits.length < 10) {
+
+    item.score = 0;
+    item.strength = "WAITING";
+
+    return;
+  }
+
+  const recent = digits.slice(-30);
+
+  const counts = Array(10).fill(0);
+
+  for (const digit of recent) {
+    counts[digit]++;
+  }
+
+  const max = Math.max(...counts);
+
+  const dominance =
+    max / recent.length;
+
+  const unique =
+    new Set(recent).size;
+
+  const diversity =
+    unique / 10;
+
+  let movement = 0;
+
+  const prices =
+    item.prices.slice(-30);
+
+  for (let i = 1; i < prices.length; i++) {
+
+    if (prices[i] !== prices[i - 1]) {
+      movement++;
+    }
+  }
+
+  const movementRate =
+    prices.length > 1
+      ? movement / (prices.length - 1)
+      : 0;
+
+  /*
+    Statistical score.
+    This is a ranking signal, not a guarantee.
+  */
+
+  let score =
+    dominance * 60 +
+    (1 - diversity) * 20 +
+    movementRate * 20;
+
+  score = Math.round(score * 100);
+
+  score = Math.max(0, Math.min(99, score));
+
+  item.score = score;
+
+  if (score >= 70) {
+    item.strength = "STRONG";
+  } else if (score >= 45) {
+    item.strength = "MEDIUM";
+  } else {
+    item.strength = "WEAK";
+  }
+}
+
+/* =========================
+   BEST MARKET
+========================= */
+
+function bestMarket() {
+
+  const available = [...marketData.values()]
+    .filter(item => item.digits.length >= 10)
+    .sort((a, b) => b.score - a.score);
+
+  return available[0] || null;
+}
+
+/* =========================
+   PREDICTION
+========================= */
+
+function makePrediction(item, strategy) {
+
+  if (!item || item.digits.length < 10) {
+    return null;
+  }
+
+  const recent =
+    item.digits.slice(-50);
+
+  const counts =
+    Array(10).fill(0);
+
+  recent.forEach(d => counts[d]++);
+
+  const strongestDigit =
+    counts.indexOf(Math.max(...counts));
+
+  const strongestFrequency =
+    counts[strongestDigit] / recent.length;
+
+  const evenCount =
+    recent.filter(d => d % 2 === 0).length;
+
+  const oddCount =
+    recent.length - evenCount;
+
+  let type = strategy;
+  let digit = strongestDigit;
+  let confidence = 0;
+
+  if (strategy === "MATCHES") {
+
+    confidence =
+      strongestFrequency * 100;
+
+  }
+
+  else if (strategy === "DIFFERS") {
+
+    confidence =
+      (1 - strongestFrequency) * 100;
+
+  }
+
+  else if (strategy === "OVER") {
+
+    const manual =
+      Number($("number")?.value);
+
+    const threshold =
+      Number.isInteger(manual)
+        ? manual
+        : 4;
+
+    const overCount =
+      recent.filter(d => d > threshold).length;
+
+    confidence =
+      overCount / recent.length * 100;
+
+  }
+
+  else if (strategy === "UNDER") {
+
+    const manual =
+      Number($("number")?.value);
+
+    const threshold =
+      Number.isInteger(manual)
+        ? manual
+        : 5;
+
+    const underCount =
+      recent.filter(d => d < threshold).length;
+
+    confidence =
+      underCount / recent.length * 100;
+
+  }
+
+  else if (strategy === "EVEN") {
+
+    digit =
+      counts
+        .map((count, d) => ({
+          digit:d,
+          count:d % 2 === 0 ? count : -1
+        }))
+        .sort((a,b) => b.count - a.count)[0].digit;
+
+    confidence =
+      evenCount / recent.length * 100;
+
+  }
+
+  else if (strategy === "ODD") {
+
+    digit =
+      counts
+        .map((count, d) => ({
+          digit:d,
+          count:d % 2 !== 0 ? count : -1
+        }))
+        .sort((a,b) => b.count - a.count)[0].digit;
+
+    confidence =
+      oddCount / recent.length * 100;
+  }
+
+  confidence =
+    Math.max(0, Math.min(99.9, confidence));
+
+  return {
+    market:item.symbol,
+    marketName:item.name,
+    strategy,
+    type,
+    digit,
+    confidence:Number(confidence.toFixed(1)),
+    score:item.score,
+    created:Date.now()
+  };
+}
+
+/* =========================
+   ANALYSIS PREVIEW
+========================= */
+
+function updateAnalysisPreview() {
+
+  const item =
+    selectedMarket
+      ? marketData.get(selectedMarket)
+      : bestMarket();
+
+  if (!item) return;
+
+  text("aiMarket", item.name);
+  text("analysisMarket", item.name);
+  text("aiScore", item.score || "—");
+
+  if (item.digits.length) {
+    renderDigits(item);
+  }
+
+  if (!aiRunning) {
+
+    text(
+      "analysisText",
+      `${item.digits.length} live/history ticks available.`
+    );
+  }
+}
+
+/* =========================
+   LOCK PREDICTION
+========================= */
+
+function createLockedPrediction() {
+
+  const item = bestMarket();
+
+  if (!item) {
+
+    text(
+      "analysisMsg",
+      "Waiting for enough live ticks to make a statistical prediction..."
+    );
+
+    return false;
+  }
+
+  /*
+    Automatically choose strongest market.
+  */
+
+  selectedMarket = item.symbol;
+
+  lockedPrediction =
+    makePrediction(
+      item,
+      selectedStrategy
+    );
+
+  if (!lockedPrediction) return false;
+
+  lastSignal = lockedPrediction;
+
+  updatePredictionUI(
+    item,
+    lockedPrediction
+  );
+
+  return true;
+}
+
+/* =========================
+   PREDICTION UI
+========================= */
+
+function updatePredictionUI(item, prediction) {
+
+  if (!prediction) return;
+
+  const digit =
+    prediction.digit;
+
+  const confidence =
+    prediction.confidence;
+
+  text("aiMarket", item.name);
+  text("aiPrediction", digit);
+  text("aiType", prediction.type);
+  text("analysisPrediction", digit);
+  text("analysisConfidence", `${confidence}%`);
+  text("analysisConfidenceBox", `${confidence}%`);
+  text("analysisMarket", item.name);
+  text("analysisStrategy", prediction.strategy);
+
+  text("tradePrediction", digit);
+  text("tradeType", prediction.type);
+  text("tradeConfidence", `${confidence}%`);
+
+  text(
+    "reason",
+    `${item.name} selected as the strongest available market with score ${item.score}. The AI is using recent digit frequency and market movement statistics.`
+  );
+
+  text(
+    "analysisText",
+    `Prediction ${digit} is LOCKED. Confidence: ${confidence}%. The prediction will remain unchanged through the 5-second lock and TRADE NOW phase.`
+  );
+
+  updateTradePanel();
+}
+
+/* =========================
+   AI CYCLE
+========================= */
+
+function startAI() {
+
+  if (aiRunning) return;
+
+  const available = bestMarket();
+
+  if (!available) {
+
+    text(
+      "analysisMsg",
+      "AI is waiting for live market ticks. Keep KRISHWAVE open for a few seconds."
+    );
+
+    return;
+  }
+
+  aiRunning = true;
+
+  enterPhase("analysis", 10);
+}
+
+function stopAI() {
+
+  aiRunning = false;
+
+  clearInterval(aiTimer);
+
+  aiTimer = null;
+
+  aiPhase = "idle";
+
+  aiRemaining = 10;
+
+  lockedPrediction = null;
+
+  text("aiCircleTimer", "10");
+  text("aiCircleLabel", "ANALYSIS");
+  text("aiCircleStatus", "AI STOPPED");
+
+  const circle = $("aiCircle");
+
+  if (circle) {
+    circle.className = "ai-circle";
+  }
+
+  updateCycleCards(null);
+
+  text(
+    "analysisMsg",
+    "AI stopped. Live market data remains connected."
+  );
+}
+
+function enterPhase(phase, seconds) {
+
+  clearInterval(aiTimer);
+
+  aiPhase = phase;
+  aiRemaining = seconds;
+
+  if (phase === "analysis") {
+
+    lockedPrediction = null;
+
+    text(
+      "analysisMsg",
+      "AI is analysing live market data..."
+    );
+
+  }
+
+  else if (phase === "lock") {
+
+    const success =
+      createLockedPrediction();
+
+    if (!success) {
+
+      enterPhase("analysis", 10);
+
+      return;
+    }
+
+    text(
+      "analysisMsg",
+      "Prediction LOCKED. Enter your manual number now if required."
+    );
+
+  }
+
+  else if (phase === "trade") {
+
+    /*
+      IMPORTANT:
+      Do NOT recalculate prediction here.
+      TRADE NOW uses the exact locked prediction.
+    */
+
+    if (lockedPrediction) {
+
+      const item =
+        marketData.get(
+          lockedPrediction.market
+        );
+
+      if (item) {
+        updatePredictionUI(
+          item,
+          lockedPrediction
+        );
+      }
+    }
+
+    text(
+      "analysisMsg",
+      "TRADE NOW — entry window active for 3 seconds."
+    );
+
+    recordSignal();
+  }
+
+  renderPhase();
+
+  aiTimer =
+    setInterval(() => {
+
+      if (!aiRunning) return;
+
+      /*
+        Never display zero or negative values.
+      */
+
+      if (aiRemaining > 1) {
+
+        aiRemaining--;
+
+        renderPhase();
+
+        return;
+      }
+
+      clearInterval(aiTimer);
+
+      if (aiPhase === "analysis") {
+
+        enterPhase("lock", 5);
+
+      } else if (aiPhase === "lock") {
+
+        enterPhase("trade", 3);
+
+      } else if (aiPhase === "trade") {
+
+        enterPhase("analysis", 10);
+
+      }
+
+    }, 1000);
+}
+
+function renderPhase() {
+
+  let label = "ANALYSIS";
+
+  if (aiPhase === "lock") {
+    label = "LOCK";
+  }
+
+  if (aiPhase === "trade") {
+    label = "TRADE NOW";
+  }
+
+  if (aiPhase === "idle") {
+    label = "ANALYSIS";
+  }
+
+  text(
+    "aiCircleTimer",
+    aiRemaining
+  );
+
+  text(
+    "aiCircleLabel",
+    label
+  );
+
+  text(
+    "aiCircleStatus",
+    aiRunning
+      ? `AI RUNNING • ${label}`
+      : "AI STOPPED"
+  );
+
+  const circle =
+    $("aiCircle");
+
+  if (circle) {
+
+    circle.className =
+      "ai-circle";
+
+    if (aiPhase === "lock") {
+      circle.classList.add("locked");
+    }
+
+    if (aiPhase === "trade") {
+      circle.classList.add("trade");
+    }
+  }
+
+  updateCycleCards(aiPhase);
+}
+
+function updateCycleCards(active) {
+
+  const ids = [
+    "cycleAnalysis",
+    "cyclePrediction",
+    "cycleTrade",
+    "cycleCooldown"
+  ];
+
+  ids.forEach(id => {
 
     const el = $(id);
 
     if (el) {
-        el.textContent = value;
+      el.classList.remove("active");
     }
+  });
+
+  if (active === "analysis") {
+    $("cycleAnalysis")?.classList.add("active");
+  }
+
+  if (active === "lock") {
+    $("cyclePrediction")?.classList.add("active");
+  }
+
+  if (active === "trade") {
+    $("cycleTrade")?.classList.add("active");
+    $("cycleCooldown")?.classList.add("active");
+  }
 }
 
-
-function escapeHTML(value) {
-
-    return String(value)
-        .replace(/&/g, "&amp;")
-        .replace(/</g, "&lt;")
-        .replace(/>/g, "&gt;")
-        .replace(/"/g, "&quot;")
-        .replace(/'/g, "&#039;");
-
-}
-
-
-function clamp(value, min, max) {
-
-    return Math.max(
-        min,
-        Math.min(max, value)
-    );
-
-}
-
-
-/* =========================================================
-   CONNECTION
-========================================================= */
-
-function connectDeriv() {
-
-    clearTimeout(reconnectTimer);
-
-    setConnection(
-        "CONNECTING...",
-        false
-    );
-
-    try {
-
-        ws = new WebSocket(
-            DERIV_WS
-        );
-
-    } catch (error) {
-
-        console.error(error);
-
-        reconnectDeriv();
-
-        return;
-    }
-
-
-    ws.onopen = () => {
-
-        console.log(
-            "KRISHWAVE connected to Deriv"
-        );
-
-        setConnection(
-            "ONLINE",
-            true
-        );
-
-        setText(
-            "analysisMsg",
-            "Connected to Deriv. Loading Volatility markets..."
-        );
-
-
-        requestActiveSymbols();
-
-    };
-
-
-    ws.onmessage = event => {
-
-        let data;
-
-        try {
-
-            data =
-                JSON.parse(
-                    event.data
-                );
-
-        } catch (error) {
-
-            console.warn(
-                "Invalid WebSocket message"
-            );
-
-            return;
-        }
-
-
-        handleMessage(data);
-
-    };
-
-
-    ws.onerror = error => {
-
-        console.warn(
-            "Deriv WebSocket error",
-            error
-        );
-
-        setConnection(
-            "ERROR",
-            false
-        );
-
-    };
-
-
-    ws.onclose = () => {
-
-        setConnection(
-            "RECONNECTING...",
-            false
-        );
-
-        setText(
-            "analysisMsg",
-            "Deriv connection closed. Reconnecting..."
-        );
-
-        reconnectDeriv();
-
-    };
-
-}
-
-
-function reconnectDeriv() {
-
-    clearTimeout(
-        reconnectTimer
-    );
-
-    reconnectTimer =
-        setTimeout(
-            connectDeriv,
-            3000
-        );
-
-}
-
-
-/* =========================================================
-   CONNECTION UI
-========================================================= */
-
-function setConnection(
-    text,
-    online
-) {
-
-    setText(
-        "connectionStatus",
-        text
-    );
-
-
-    const dot =
-        $("statusDot");
-
-
-    if (dot) {
-
-        dot.classList.toggle(
-            "online",
-            online
-        );
-
-        dot.classList.toggle(
-            "offline",
-            !online
-        );
-
-    }
-
-}
-
-
-/* =========================================================
-   SEND
-========================================================= */
-
-function send(payload) {
-
-    if (
-        !ws ||
-        ws.readyState !== WebSocket.OPEN
-    ) {
-
-        return false;
-
-    }
-
-
-    payload.req_id =
-        reqId++;
-
-
-    try {
-
-        ws.send(
-            JSON.stringify(
-                payload
-            )
-        );
-
-        return true;
-
-    } catch (error) {
-
-        console.error(
-            error
-        );
-
-        return false;
-    }
-
-}
-
-
-/* =========================================================
-   ACTIVE SYMBOLS
-========================================================= */
-
-function requestActiveSymbols() {
-
-    send({
-        active_symbols: "brief",
-        product_type: "basic"
-    });
-
-}
-
-
-/* =========================================================
-   HANDLE MESSAGE
-========================================================= */
-
-function handleMessage(data) {
-
-    if (data.error) {
-
-        console.warn(
-            "Deriv error:",
-            data.error
-        );
-
-        setText(
-            "analysisMsg",
-            "Deriv: " +
-            (
-                data.error.message ||
-                "API error"
-            )
-        );
-
-        return;
-    }
-
-
-    if (
-        data.msg_type ===
-        "active_symbols"
-    ) {
-
-        processActiveSymbols(
-            data.active_symbols || []
-        );
-
-        return;
-    }
-
-
-    if (
-        data.msg_type ===
-        "history"
-    ) {
-
-        processHistory(
-            data
-        );
-
-        return;
-    }
-
-
-    if (
-        data.msg_type ===
-        "tick"
-    ) {
-
-        processTick(
-            data.tick
-        );
-
-        return;
-    }
-
-}
-
-
-/* =========================================================
-   PROCESS ACTIVE SYMBOLS
-========================================================= */
-
-function processActiveSymbols(
-    symbols
-) {
-
-    console.log(
-        "Active symbols:",
-        symbols.length
-    );
-
-
-    const found = [];
-
-
-    symbols.forEach(item => {
-
-        const symbol =
-            item.symbol ||
-            item.underlying_symbol;
-
-
-        const name =
-            item.display_name ||
-            item.underlying_symbol_name ||
-            symbol;
-
-
-        if (!symbol) {
-            return;
-        }
-
-
-        const text =
-            (
-                symbol +
-                " " +
-                name
-            ).toLowerCase();
-
-
-        const isVolatility =
-            text.includes(
-                "volatility"
-            ) ||
-            /^1hz\d+v$/i.test(
-                symbol
-            ) ||
-            /^r_\d+$/i.test(
-                symbol
-            );
-
-
-        if (!isVolatility) {
-            return;
-        }
-
-
-        if (
-            found.some(
-                x =>
-                    x.symbol ===
-                    symbol
-            )
-        ) {
-            return;
-        }
-
-
-        found.push({
-            symbol,
-            name
-        });
-
-    });
-
-
-    /*
-       Prefer the well-known
-       Volatility markets.
-    */
-
-    found.sort(
-        (a, b) => {
-
-            const aNum =
-                parseInt(
-                    a.symbol
-                        .replace(/\D/g, "")
-                ) || 0;
-
-            const bNum =
-                parseInt(
-                    b.symbol
-                        .replace(/\D/g, "")
-                ) || 0;
-
-            return aNum - bNum;
-
-        }
-    );
-
-
-    marketList =
-        found.slice(
-            0,
-            MAX_MARKETS
-        );
-
-
-    /*
-       Safety fallback if filtering
-       produces no results.
-    */
-
-    if (
-        marketList.length === 0
-    ) {
-
-        marketList = [
-
-            {
-                symbol: "1HZ10V",
-                name: "Volatility 10 Index"
-            },
-
-            {
-                symbol: "1HZ25V",
-                name: "Volatility 25 Index"
-            },
-
-            {
-                symbol: "1HZ50V",
-                name: "Volatility 50 Index"
-            },
-
-            {
-                symbol: "1HZ75V",
-                name: "Volatility 75 Index"
-            },
-
-            {
-                symbol: "1HZ100V",
-                name: "Volatility 100 Index"
-            },
-
-            {
-                symbol: "1HZ150V",
-                name: "Volatility 150 Index"
-            },
-
-            {
-                symbol: "1HZ200V",
-                name: "Volatility 200 Index"
-            }
-
-        ];
-
-    }
-
-
-    marketList.forEach(
-        setupMarket
-    );
-
-
-    renderMarkets();
-
-    updateMarketSelect();
-
-    updateBestMarket();
-
-
-    setText(
-        "scannerCount",
-        `${marketList.length} markets`
-    );
-
-
-    setText(
-        "analysisMsg",
-        `${marketList.length} Volatility markets connected. Waiting for ticks...`
-    );
-
-}
-
-
-/* =========================================================
-   SETUP MARKET
-========================================================= */
-
-function setupMarket(
-    market
-) {
-
-    if (
-        !markets[
-            market.symbol
-        ]
-    ) {
-
-        markets[
-            market.symbol
-        ] = {
-
-            symbol:
-                market.symbol,
-
-            name:
-                market.name,
-
-            prices: [],
-
-            digits: [],
-
-            counts:
-                Array(10).fill(0),
-
-            score: 0,
-
-            strength:
-                "WAITING",
-
-            lastQuote:
-                null,
-
-            lastEpoch:
-                null
-
-        };
-
-    }
-
-
-    /*
-       Historical data
-    */
-
-    send({
-
-        ticks_history:
-            market.symbol,
-
-        count:
-            HISTORY_COUNT,
-
-        end:
-            "latest",
-
-        style:
-            "ticks",
-
-        subscribe:
-            0
-
-    });
-
-
-    /*
-       Live ticks
-    */
-
-    send({
-
-        ticks:
-            market.symbol,
-
-        subscribe:
-            1
-
-    });
-
-}
-
-
-/* =========================================================
-   PROCESS HISTORY
-========================================================= */
-
-function processHistory(
-    response
-) {
-
-    const history =
-        response.history;
-
-
-    if (
-        !history ||
-        !history.prices ||
-        !history.prices.length
-    ) {
-
-        return;
-
-    }
-
-
-    /*
-       The legacy API normally returns
-       echo_req, so identify the symbol.
-    */
-
-    const symbol =
-        response.echo_req &&
-        response.echo_req.ticks_history;
-
-
-    if (!symbol) {
-
-        return;
-
-    }
-
-
-    const data =
-        markets[symbol];
-
-
-    if (!data) {
-
-        return;
-
-    }
-
-
-    data.prices =
-        history.prices
-            .map(Number)
-            .filter(
-                Number.isFinite
-            );
-
-
-    data.digits =
-        data.prices.map(
-            extractDigit
-        );
-
-
-    data.counts =
-        countDigits(
-            data.digits
-        );
-
-
-    calculateMarket(
-        data
-    );
-
-
-    renderMarkets();
-
-    renderDigits();
-
-    updateBestMarket();
-
-}
-
-
-/* =========================================================
-   PROCESS TICK
-========================================================= */
-
-function processTick(
-    tick
-) {
-
-    if (!tick) {
-        return;
-    }
-
-
-    const symbol =
-        tick.symbol;
-
-
-    if (
-        !symbol ||
-        !markets[symbol]
-    ) {
-
-        return;
-
-    }
-
-
-    const quote =
-        Number(
-            tick.quote
-        );
-
-
-    if (
-        !Number.isFinite(
-            quote
-        )
-    ) {
-
-        return;
-
-    }
-
-
-    const data =
-        markets[symbol];
-
-
-    data.lastQuote =
-        quote;
-
-
-    data.lastEpoch =
-        tick.epoch ||
-        Date.now() / 1000;
-
-
-    data.prices.push(
-        quote
-    );
-
-
-    data.digits.push(
-        extractDigit(
-            quote
-        )
-    );
-
-
-    /*
-       Keep enough recent data
-       for statistics.
-    */
-
-    if (
-        data.prices.length >
-        150
-    ) {
-
-        data.prices.shift();
-
-    }
-
-
-    if (
-        data.digits.length >
-        150
-    ) {
-
-        data.digits.shift();
-
-    }
-
-
-    data.counts =
-        countDigits(
-            data.digits
-        );
-
-
-    calculateMarket(
-        data
-    );
-
-
-    renderMarkets();
-
-    renderDigits();
-
-    updateBestMarket();
-
-
-    /*
-       During the 10-second
-       analysis period only,
-       the signal can update.
-
-       Once the 5-second lock
-       starts, this function
-       NEVER changes lockedSignal.
-    */
-
-    if (
-        aiRunning &&
-        aiPhase === "ANALYSIS"
-    ) {
-
-        updateLiveAnalysis();
-
-    }
-
-}
-
-
-/* =========================================================
-   DIGIT
-========================================================= */
-
-function extractDigit(
-    value
-) {
-
-    const text =
-        String(value);
-
-
-    const clean =
-        text.replace(
-            /[^0-9]/g,
-            ""
-        );
-
-
-    if (!clean) {
-        return 0;
-    }
-
-
-    return Number(
-        clean[
-            clean.length - 1
-        ]
-    );
-
-}
-
-
-/* =========================================================
-   COUNT DIGITS
-========================================================= */
-
-function countDigits(
-    digits
-) {
-
-    const counts =
-        Array(10).fill(0);
-
-
-    digits.forEach(
-        digit => {
-
-            if (
-                digit >= 0 &&
-                digit <= 9
-            ) {
-
-                counts[digit]++;
-
-            }
-
-        }
-    );
-
-
-    return counts;
-
-}
-
-
-/* =========================================================
-   MARKET STATISTICS
-========================================================= */
-
-function calculateMarket(
-    data
-) {
-
-    const digits =
-        data.digits;
-
-
-    if (
-        digits.length < 10
-    ) {
-
-        data.score = 0;
-
-        data.strength =
-            "WAITING";
-
-        return;
-
-    }
-
-
-    const total =
-        digits.length;
-
-
-    const counts =
-        data.counts;
-
-
-    let strongest =
-        0;
-
-
-    for (
-        let i = 1;
-        i < 10;
-        i++
-    ) {
-
-        if (
-            counts[i] >
-            counts[strongest]
-        ) {
-
-            strongest = i;
-
-        }
-
-    }
-
-
-    const concentration =
-        counts[strongest] /
-        total;
-
-
-    /*
-       Recent movement
-    */
-
-    let changes = 0;
-
-
-    for (
-        let i = 1;
-        i < data.prices.length;
-        i++
-    ) {
-
-        if (
-            data.prices[i] !==
-            data.prices[i - 1]
-        ) {
-
-            changes++;
-
-        }
-
-    }
-
-
-    const movement =
-        data.prices.length > 1
-            ? changes /
-              (
-                  data.prices.length -
-                  1
-              )
-            : 0;
-
-
-    /*
-       Recency weighting
-    */
-
-    const recent =
-        digits.slice(
-            -30
-        );
-
-
-    const recentCounts =
-        countDigits(
-            recent
-        );
-
-
-    let recentStrong =
-        0;
-
-
-    for (
-        let i = 1;
-        i < 10;
-        i++
-    ) {
-
-        if (
-            recentCounts[i] >
-            recentCounts[recentStrong]
-        ) {
-
-            recentStrong = i;
-
-        }
-
-    }
-
-
-    const recentRate =
-        recent.length
-            ? recentCounts[
-                recentStrong
-            ] /
-            recent.length
-            : 0;
-
-
-    const score =
-        clamp(
-            Math.round(
-                concentration * 35 +
-                recentRate * 45 +
-                movement * 20
-            ),
-            0,
-            99
-        );
-
-
-    data.score =
-        score;
-
-
-    if (score >= 70) {
-
-        data.strength =
-            "STRONG";
-
-    } else if (
-        score >= 50
-    ) {
-
-        data.strength =
-            "MEDIUM";
-
-    } else {
-
-        data.strength =
-            "WEAK";
-
-    }
-
-
-    data.dominant =
-        recentStrong;
-
-}
-
-
-/* =========================================================
-   BEST MARKET
-========================================================= */
-
-function getBestMarket() {
-
-    const available =
-        marketList
-            .map(
-                market =>
-                    markets[
-                        market.symbol
-                    ]
-            )
-            .filter(
-                data =>
-                    data &&
-                    data.digits.length >= 10
-            );
-
-
-    if (
-        !available.length
-    ) {
-
-        return null;
-
-    }
-
-
-    available.sort(
-        (a, b) =>
-            b.score -
-            a.score
-    );
-
-
-    return available[0];
-
-}
-
-
-function updateBestMarket() {
-
-    const best =
-        getBestMarket();
-
-
-    if (!best) {
-
-        return;
-
-    }
-
-
-    if (!selectedSymbol) {
-
-        selectedSymbol =
-            best.symbol;
-
-    }
-
-
-    if (
-        !aiRunning ||
-        aiPhase === "ANALYSIS"
-    ) {
-
-        updateLiveAnalysis();
-
-    }
-
-}
-
-
-/* =========================================================
-   PREDICTION
-========================================================= */
-
-function createPrediction(
-    data,
-    strategy
-) {
-
-    if (
-        !data ||
-        data.digits.length < 10
-    ) {
-
-        return {
-
-            number: "—",
-
-            confidence: 0,
-
-            reason:
-                "Waiting for more live ticks."
-
-        };
-
-    }
-
-
-    const digits =
-        data.digits;
-
-
-    const counts =
-        data.counts;
-
-
-    let strongest =
-        0;
-
-
-    for (
-        let i = 1;
-        i < 10;
-        i++
-    ) {
-
-        if (
-            counts[i] >
-            counts[strongest]
-        ) {
-
-            strongest = i;
-
-        }
-
-    }
-
-
-    const total =
-        digits.length;
-
-
-    let number =
-        strongest;
-
-
-    let confidence =
-        50;
-
-
-    if (
-        strategy ===
-        "MATCHES"
-    ) {
-
-        confidence =
-            (
-                counts[strongest] /
-                total
-            ) * 100;
-
-    }
-
-
-    if (
-        strategy ===
-        "DIFFERS"
-    ) {
-
-        confidence =
-            100 -
-            (
-                counts[strongest] /
-                total
-            ) * 100;
-
-    }
-
-
-    if (
-        strategy ===
-        "OVER"
-    ) {
-
-        const over =
-            digits.filter(
-                d => d > 4
-            ).length;
-
-
-        confidence =
-            (
-                over /
-                total
-            ) * 100;
-
-    }
-
-
-    if (
-        strategy ===
-        "UNDER"
-    ) {
-
-        const under =
-            digits.filter(
-                d => d < 5
-            ).length;
-
-
-        confidence =
-            (
-                under /
-                total
-            ) * 100;
-
-    }
-
-
-    if (
-        strategy ===
-        "EVEN"
-    ) {
-
-        number =
-            "EVEN";
-
-
-        const even =
-            digits.filter(
-                d =>
-                    d % 2 === 0
-            ).length;
-
-
-        confidence =
-            (
-                even /
-                total
-            ) * 100;
-
-    }
-
-
-    if (
-        strategy ===
-        "ODD"
-    ) {
-
-        number =
-            "ODD";
-
-
-        const odd =
-            digits.filter(
-                d =>
-                    d % 2 !== 0
-            ).length;
-
-
-        confidence =
-            (
-                odd /
-                total
-            ) * 100;
-
-    }
-
-
-    confidence =
-        clamp(
-            Math.round(
-                confidence
-            ),
-            1,
-            99
-        );
-
-
-    return {
-
-        number,
-
-        confidence,
-
-        reason:
-            `${data.name} has ` +
-            `${total} recent ticks. ` +
-            `Dominant digit: ` +
-            `${strongest}. ` +
-            `Statistical strength: ` +
-            `${data.strength}.`
-
-    };
-
-}
-
-
-/* =========================================================
-   LIVE ANALYSIS
-========================================================= */
-
-function updateLiveAnalysis() {
-
-    if (
-        aiPhase !== "ANALYSIS"
-    ) {
-
-        return;
-
-    }
-
-
-    const best =
-        getBestMarket();
-
-
-    if (!best) {
-
-        setText(
-            "aiMarket",
-            "Waiting for ticks"
-        );
-
-        setText(
-            "analysisMsg",
-            "Waiting for enough live tick data..."
-        );
-
-        return;
-
-    }
-
-
-    selectedSymbol =
-        best.symbol;
-
-
-    const prediction =
-        createPrediction(
-            best,
-            selectedStrategy
-        );
-
-
-    /*
-       This is LIVE analysis.
-
-       It is allowed to change
-       during the 10 seconds.
-    */
-
-    setText(
-        "aiMarket",
-        best.name
-    );
-
-    setText(
-        "aiMarketSignal",
-        best.name
-    );
-
-    setText(
-        "aiType",
-        selectedStrategy
-    );
-
-    setText(
-        "aiPrediction",
-        prediction.number
-    );
-
-    setText(
-        "aiConfidence",
-        `${prediction.confidence}%`
-    );
-
-    setText(
-        "analysisPrediction",
-        prediction.number
-    );
-
-    setText(
-        "analysisConfidenceBox",
-        `${prediction.confidence}%`
-    );
-
-    setText(
-        "analysisMarket",
-        best.name
-    );
-
-    setText(
-        "analysisStrategy",
-        selectedStrategy
-    );
-
-    setText(
-        "reason",
-        prediction.reason
-    );
-
-    setText(
-        "aiScore",
-        best.score
-    );
-
-
-    setText(
-        "liveSignal",
-        "ANALYSING"
-    );
-
-
-    setText(
-        "analysisMsg",
-        `Analysing ${best.name}. Prediction will lock when the 10 seconds ends.`
-    );
-
-
-    updateTradePage();
-
-}
-
-
-/* =========================================================
-   LOCK PREDICTION
-========================================================= */
-
-function lockPrediction() {
-
-    const best =
-        getBestMarket();
-
-
-    if (!best) {
-
-        return false;
-
-    }
-
-
-    const prediction =
-        createPrediction(
-            best,
-            selectedStrategy
-        );
-
-
-    /*
-       IMPORTANT:
-
-       This object is frozen in the
-       AI cycle until TRADE NOW
-       finishes.
-
-       Live ticks cannot change it.
-    */
-
-    lockedSignal = {
-
-        symbol:
-            best.symbol,
-
-        market:
-            best.name,
-
-        strategy:
-            selectedStrategy,
-
-        number:
-            prediction.number,
-
-        confidence:
-            prediction.confidence,
-
-        reason:
-            prediction.reason,
-
-        createdAt:
-            Date.now()
-
-    };
-
-
-    setText(
-        "aiMarket",
-        lockedSignal.market
-    );
-
-    setText(
-        "aiMarketSignal",
-        lockedSignal.market
-    );
-
-    setText(
-        "aiType",
-        lockedSignal.strategy
-    );
-
-    setText(
-        "aiPrediction",
-        lockedSignal.number
-    );
-
-    setText(
-        "aiConfidence",
-        `${lockedSignal.confidence}%`
-    );
-
-    setText(
-        "analysisPrediction",
-        lockedSignal.number
-    );
-
-    setText(
-        "analysisConfidenceBox",
-        `${lockedSignal.confidence}%`
-    );
-
-    setText(
-        "analysisMarket",
-        lockedSignal.market
-    );
-
-    setText(
-        "analysisStrategy",
-        lockedSignal.strategy
-    );
-
-    setText(
-        "reason",
-        lockedSignal.reason
-    );
-
-    setText(
-        "aiScore",
-        best.score
-    );
-
-
-    setText(
-        "liveSignal",
-        "PREDICTION LOCKED"
-    );
-
-
-    updateTradePage();
-
-
-    return true;
-
-}
-
-
-/* =========================================================
-   AI PHASE DISPLAY
-========================================================= */
-
-function setAIPhase(
-    phase,
-    seconds
-) {
-
-    aiPhase =
-        phase;
-
-
-    aiRemaining =
-        seconds;
-
-
-    setText(
-        "aiCircleTimer",
-        seconds
-    );
-
-
-    const label =
-        $("aiCircleLabel");
-
-
-    if (label) {
-
-        if (
-            phase ===
-            "ANALYSIS"
-        ) {
-
-            label.textContent =
-                "ANALYSIS";
-
-        } else if (
-            phase ===
-            "ENTRY"
-        ) {
-
-            label.textContent =
-                "ENTRY";
-
-        } else if (
-            phase ===
-            "TRADE"
-        ) {
-
-            label.textContent =
-                "TRADE NOW";
-
-        }
-
-    }
-
-
-    setText(
-        "aiCircleStatus",
-        aiRunning
-            ? "AI RUNNING"
-            : "AI STOPPED"
-    );
-
-
-    /*
-       During ENTRY the number
-       remains the locked number.
-    */
-
-    if (
-        phase ===
-        "ENTRY" &&
-        lockedSignal
-    ) {
-
-        setText(
-            "aiPrediction",
-            lockedSignal.number
-        );
-
-        setText(
-            "analysisPrediction",
-            lockedSignal.number
-        );
-
-    }
-
-}
-
-
-/* =========================================================
-   AI TICK
-========================================================= */
-
-function aiTick() {
-
-    if (!aiRunning) {
-
-        return;
-
-    }
-
-
-    /*
-       ANALYSIS
-       10 -> 9 -> 8 ... -> 1
-    */
-
-    if (
-        aiPhase ===
-        "ANALYSIS"
-    ) {
-
-        if (
-            aiRemaining > 1
-        ) {
-
-            aiRemaining--;
-
-            setText(
-                "aiCircleTimer",
-                aiRemaining
-            );
-
-
-            aiTimer =
-                setTimeout(
-                    aiTick,
-                    1000
-                );
-
-
-            return;
-
-        }
-
-
-        /*
-           EXACTLY at the end
-           of the 10th second:
-
-           freeze prediction
-           and begin 5-second entry.
-        */
-
-        const locked =
-            lockPrediction();
-
-
-        if (!locked) {
-
-            setText(
-                "aiCircleTimer",
-                "10"
-            );
-
-
-            aiTimer =
-                setTimeout(
-                    aiTick,
-                    1000
-                );
-
-
-            return;
-
-        }
-
-
-        setAIPhase(
-            "ENTRY",
-            5
-        );
-
-
-        aiTimer =
-            setTimeout(
-                aiTick,
-                1000
-            );
-
-
-        return;
-
-    }
-
-
-    /*
-       ENTRY
-       5 -> 4 -> 3 -> 2 -> 1
-    */
-
-    if (
-        aiPhase ===
-        "ENTRY"
-    ) {
-
-        if (
-            aiRemaining > 1
-        ) {
-
-            aiRemaining--;
-
-            setText(
-                "aiCircleTimer",
-                aiRemaining
-            );
-
-
-            setText(
-                "analysisMsg",
-                `ENTRY WINDOW: ${aiRemaining}s remaining. Prediction locked at ${lockedSignal.number}.`
-            );
-
-
-            aiTimer =
-                setTimeout(
-                    aiTick,
-                    1000
-                );
-
-
-            return;
-
-        }
-
-
-        /*
-           Exactly after 5 seconds:
-
-           TRADE NOW
-        */
-
-        triggerTradeNow();
-
-
-        setAIPhase(
-            "TRADE",
-            3
-        );
-
-
-        aiTimer =
-            setTimeout(
-                aiTick,
-                1000
-            );
-
-
-        return;
-
-    }
-
-
-    /*
-       TRADE NOW
-       3 -> 2 -> 1
-    */
-
-    if (
-        aiPhase ===
-        "TRADE"
-    ) {
-
-        if (
-            aiRemaining > 1
-        ) {
-
-            aiRemaining--;
-
-            setText(
-                "aiCircleTimer",
-                aiRemaining
-            );
-
-
-            setText(
-                "analysisMsg",
-                `TRADE NOW • ${aiRemaining}s`
-            );
-
-
-            aiTimer =
-                setTimeout(
-                    aiTick,
-                    1000
-                );
-
-
-            return;
-
-        }
-
-
-        /*
-           Exactly after 3 seconds:
-
-           START NEW 10 SECOND ANALYSIS
-        */
-
-        lockedSignal =
-            null;
-
-
-        setAIPhase(
-            "ANALYSIS",
-            10
-        );
-
-
-        setText(
-            "liveSignal",
-            "ANALYSING"
-        );
-
-
-        setText(
-            "analysisMsg",
-            "New 10-second market analysis started."
-        );
-
-
-        updateLiveAnalysis();
-
-
-        aiTimer =
-            setTimeout(
-                aiTick,
-                1000
-            );
-
-    }
-
-}
-
-
-/* =========================================================
-   START AI
-========================================================= */
-
-function startAI() {
-
-    if (aiRunning) {
-
-        return;
-
-    }
-
-
-    if (
-        !getBestMarket()
-    ) {
-
-        setText(
-            "analysisMsg",
-            "AI cannot start yet. Waiting for live ticks..."
-        );
-
-        return;
-
-    }
-
-
-    aiRunning =
-        true;
-
-
-    lockedSignal =
-        null;
-
-
-    clearTimeout(
-        aiTimer
-    );
-
-
-    setAIPhase(
-        "ANALYSIS",
-        10
-    );
-
-
-    setText(
-        "analysisMsg",
-        "KRISH AI started. Analysing market for 10 seconds..."
-    );
-
-
-    updateLiveAnalysis();
-
-
-    /*
-       The first second begins now.
-    */
-
-    aiTimer =
-        setTimeout(
-            aiTick,
-            1000
-        );
-
-}
-
-
-/* =========================================================
-   STOP AI
-========================================================= */
-
-function stopAI() {
-
-    aiRunning =
-        false;
-
-
-    clearTimeout(
-        aiTimer
-    );
-
-
-    aiTimer =
-        null;
-
-
-    aiPhase =
-        "IDLE";
-
-
-    lockedSignal =
-        null;
-
-
-    setText(
-        "aiCircleTimer",
-        "10"
-    );
-
-
-    setText(
-        "aiCircleLabel",
-        "ANALYSIS"
-    );
-
-
-    setText(
-        "aiCircleStatus",
-        "AI STOPPED"
-    );
-
-
-    setText(
-        "liveSignal",
-        "STOPPED"
-    );
-
-
-    setText(
-        "analysisMsg",
-        "AI stopped. Press START AI to begin a new 10-second analysis."
-    );
-
-}
-
-
-/* =========================================================
-   TRADE NOW
-========================================================= */
-
-function triggerTradeNow() {
-
-    if (!lockedSignal) {
-
-        return;
-
-    }
-
-
-    setText(
-        "aiCircleTimer",
-        "GO"
-    );
-
-
-    setText(
-        "aiCircleLabel",
-        "TRADE NOW"
-    );
-
-
-    setText(
-        "aiCircleStatus",
-        "SIGNAL ACTIVE"
-    );
-
-
-    setText(
-        "liveSignal",
-        "TRADE NOW"
-    );
-
-
-    setText(
-        "analysisMsg",
-        `TRADE NOW • ${lockedSignal.market} • ${lockedSignal.strategy} • ${lockedSignal.number}`
-    );
-
-
-    /*
-       Update Trade page with
-       the frozen signal.
-    */
-
-    updateTradePage();
-
-
-    /*
-       Save a paper signal so
-       History is never empty
-       once AI produces signals.
-    */
-
-    savePaperSignal(
-        lockedSignal
-    );
-
-
-    renderHistory();
-
-}
-
-
-/* =========================================================
-   MARKET SELECT
-========================================================= */
-
-function selectMarket(
-    symbol
-) {
-
-    if (
-        !markets[symbol]
-    ) {
-
-        return;
-
-    }
-
-
-    selectedSymbol =
-        symbol;
-
-
-    const data =
-        markets[symbol];
-
-
-    setText(
-        "digitMarket",
-        data.name
-    );
-
-
-    updateTradePage();
-
-    renderDigits();
-
-}
-
-
-/* =========================================================
-   RENDER MARKETS
-========================================================= */
+/* =========================
+   MARKET RENDERING
+========================= */
 
 function renderMarkets() {
 
-    const container =
-        $("markets");
+  const container = $("markets");
 
+  if (!container) return;
 
-    if (!container) {
-        return;
-    }
-
-
-    const list =
-        marketList
-            .map(
-                market =>
-                    markets[
-                        market.symbol
-                    ]
-            )
-            .filter(Boolean)
-            .sort(
-                (a, b) =>
-                    b.score -
-                    a.score
-            );
-
-
-    if (!list.length) {
-
-        container.innerHTML =
-            `<div class="empty-state">
-                Waiting for live markets...
-             </div>`;
-
-        return;
-
-    }
-
+  if (!markets.length) {
 
     container.innerHTML =
-        "";
+      `<div class="message">Waiting for Volatility markets...</div>`;
 
+    return;
+  }
 
-    list.forEach(
-        data => {
+  const sorted =
+    markets
+      .map(m => marketData.get(m.symbol))
+      .filter(Boolean)
+      .sort((a,b) => b.score - a.score);
 
-            const card =
-                document.createElement(
-                    "div"
-                );
+  container.innerHTML =
+    sorted.map(item => {
 
+      const selected =
+        item.symbol === selectedMarket
+          ? "selected"
+          : "";
 
-            card.className =
-                "market-card";
+      const strengthClass =
+        item.strength === "STRONG"
+          ? "strength-strong"
+          : item.strength === "MEDIUM"
+            ? "strength-medium"
+            : item.strength === "WEAK"
+              ? "strength-weak"
+              : "";
 
+      return `
+        <div
+          class="market-card ${selected}"
+          data-symbol="${escapeHTML(item.symbol)}"
+        >
+          <div>
+            <strong>${escapeHTML(item.name)}</strong>
+            <span>${escapeHTML(item.symbol)}</span>
+          </div>
 
-            if (
-                data.symbol ===
-                selectedSymbol
-            ) {
+          <div>
+            <span>SCORE</span>
+            <strong>${item.score || "—"}</strong>
+          </div>
 
-                card.style.borderColor =
-                    "var(--blue)";
+          <div>
+            <span>STRENGTH</span>
+            <strong class="${strengthClass}">
+              ${item.strength}
+            </strong>
+          </div>
+        </div>
+      `;
 
-            }
+    }).join("");
 
+  container
+    .querySelectorAll(".market-card")
+    .forEach(card => {
 
-            card.innerHTML = `
+      card.addEventListener("click", () => {
 
-                <div class="market-name">
-                    ${escapeHTML(data.name)}
-                </div>
+        selectedMarket =
+          card.dataset.symbol;
 
-                <div class="market-symbol">
-                    ${escapeHTML(data.symbol)}
-                </div>
+        renderMarkets();
 
-                <div class="market-strength">
-                    ${data.strength}
-                </div>
+        updateTradePanel();
 
-                <div class="market-score">
-                    ${data.score}
-                </div>
+        updateAnalysisPreview();
+      });
 
-            `;
-
-
-            card.onclick =
-                () => {
-
-                    selectMarket(
-                        data.symbol
-                    );
-
-                    renderMarkets();
-
-                };
-
-
-            container.appendChild(
-                card
-            );
-
-        }
-    );
-
-
-    setText(
-        "scannerCount",
-        `${list.length} markets`
-    );
-
+    });
 }
 
+/* =========================
+   DIGITS
+========================= */
 
-/* =========================================================
-   DIGIT DISTRIBUTION
-========================================================= */
+function renderDigits(item) {
 
-function renderDigits() {
+  const container = $("digits");
 
-    const container =
-        $("digits");
+  if (!container) return;
 
+  const recent =
+    item.digits.slice(-50);
 
-    if (!container) {
-        return;
-    }
+  const counts =
+    Array(10).fill(0);
 
+  recent.forEach(d => counts[d]++);
 
-    let data =
-        markets[
-            selectedSymbol
-        ];
+  container.innerHTML =
+    counts.map((count, digit) => {
 
+      const percentage =
+        recent.length
+          ? ((count / recent.length) * 100).toFixed(0)
+          : 0;
 
-    if (!data) {
+      return `
+        <div class="digit">
+          <strong>${digit}</strong>
+          <span>${percentage}%</span>
+        </div>
+      `;
 
-        data =
-            getBestMarket();
-
-    }
-
-
-    if (!data) {
-
-        container.innerHTML =
-            `<div class="empty-state">
-                Waiting for ticks...
-             </div>`;
-
-        return;
-
-    }
-
-
-    setText(
-        "digitMarket",
-        data.name
-    );
-
-
-    container.innerHTML =
-        "";
-
-
-    const max =
-        Math.max(
-            1,
-            ...data.counts
-        );
-
-
-    data.counts.forEach(
-        (count, digit) => {
-
-            const row =
-                document.createElement(
-                    "div"
-                );
-
-
-            row.className =
-                "digit-item";
-
-
-            const width =
-                Math.round(
-                    (
-                        count /
-                        max
-                    ) *
-                    100
-                );
-
-
-            row.innerHTML = `
-
-                <span>
-                    ${digit}
-                </span>
-
-                <div class="digit-bar">
-                    <i style="width:${width}%"></i>
-                </div>
-
-                <b>
-                    ${count}
-                </b>
-
-            `;
-
-
-            container.appendChild(
-                row
-            );
-
-        }
-    );
-
+    }).join("");
 }
 
+/* =========================
+   STRATEGIES
+========================= */
 
-/* =========================================================
-   TRADE SELECT
-========================================================= */
+function setStrategy(strategy) {
 
-function updateMarketSelect() {
+  selectedStrategy = strategy;
 
-    const select =
-        $("symbol");
+  document
+    .querySelectorAll(".strategy")
+    .forEach(button => {
 
-
-    if (!select) {
-        return;
-    }
-
-
-    select.innerHTML =
-        "";
-
-
-    marketList.forEach(
-        market => {
-
-            const option =
-                document.createElement(
-                    "option"
-                );
-
-
-            option.value =
-                market.symbol;
-
-
-            option.textContent =
-                market.name;
-
-
-            if (
-                market.symbol ===
-                selectedSymbol
-            ) {
-
-                option.selected =
-                    true;
-
-            }
-
-
-            select.appendChild(
-                option
-            );
-
-        }
-    );
-
-}
-
-
-function updateTradePage() {
-
-    const data =
-        lockedSignal
-            ? markets[
-                lockedSignal.symbol
-              ]
-            : markets[
-                selectedSymbol
-              ] ||
-              getBestMarket();
-
-
-    if (!data) {
-        return;
-    }
-
-
-    const strategy =
-        lockedSignal
-            ? lockedSignal.strategy
-            : selectedStrategy;
-
-
-    const prediction =
-        lockedSignal
-            ? lockedSignal
-            : createPrediction(
-                data,
-                strategy
-            );
-
-
-    setText(
-        "tradePrediction",
-        prediction.number
-    );
-
-
-    setText(
-        "tradeType",
-        strategy
-    );
-
-
-    setText(
-        "tradeConfidence",
-        `${prediction.confidence}%`
-    );
-
-
-    const select =
-        $("symbol");
-
-
-    if (
-        select &&
-        data.symbol
-    ) {
-
-        select.value =
-            data.symbol;
-
-    }
-
-
-    const strategySelect =
-        $("tradeStrategy");
-
-
-    if (strategySelect) {
-
-        strategySelect.value =
-            strategy;
-
-    }
-
-}
-
-
-/* =========================================================
-   STRATEGY
-========================================================= */
-
-function setStrategy(
-    strategy
-) {
-
-    selectedStrategy =
-        strategy;
-
-
-    document
-        .querySelectorAll(
-            "[data-strategy]"
-        )
-        .forEach(
-            button => {
-
-                button.classList.toggle(
-                    "active",
-                    button.dataset.strategy ===
-                    strategy
-                );
-
-            }
-        );
-
-
-    const manualGroup =
-        $("manualNumberGroup");
-
-
-    if (manualGroup) {
-
-        const requiresNumber =
-            [
-                "MATCHES",
-                "DIFFERS",
-                "OVER",
-                "UNDER"
-            ].includes(
-                strategy
-            );
-
-
-        manualGroup.style.display =
-            requiresNumber
-                ? ""
-                : "none";
-
-    }
-
-
-    const title =
-        $("manualTitle");
-
-
-    if (title) {
-
-        const titles = {
-
-            MATCHES:
-                "MATCH NUMBER",
-
-            DIFFERS:
-                "DIFFER NUMBER",
-
-            OVER:
-                "OVER NUMBER",
-
-            UNDER:
-                "UNDER NUMBER"
-
-        };
-
-
-        title.textContent =
-            titles[strategy] ||
-            "MANUAL NUMBER";
-
-    }
-
-
-    /*
-       IMPORTANT:
-
-       We deliberately DO NOT
-       modify #number.
-
-       The user enters it manually.
-    */
-
-
-    if (
-        aiRunning &&
-        aiPhase ===
-        "ANALYSIS"
-    ) {
-
-        updateLiveAnalysis();
-
-    }
-
-
-    updateTradePage();
-
-}
-
-
-/* =========================================================
-   PAPER TRADING
-========================================================= */
-
-function startTrading() {
-
-    paperTrading =
-        true;
-
-
-    setText(
-        "tradeStatus",
-        "PAPER TRADING ACTIVE"
-    );
-
-
-    setText(
-        "analysisMsg",
-        "Paper trading is active. No real Deriv trade is being placed."
-    );
-
-}
-
-
-function stopTrading() {
-
-    paperTrading =
-        false;
-
-
-    setText(
-        "tradeStatus",
-        "PAPER TRADING STOPPED"
-    );
-
-}
-
-
-/* =========================================================
-   HISTORY STORAGE
-========================================================= */
-
-function getHistory() {
-
-    try {
-
-        return JSON.parse(
-            localStorage.getItem(
-                "KRISHWAVE_HISTORY"
-            ) ||
-            "[]"
-        );
-
-    } catch (
-        error
-    ) {
-
-        return [];
-
-    }
-
-}
-
-
-function savePaperSignal(
-    signal
-) {
-
-    const history =
-        getHistory();
-
-
-    const duplicate =
-        history.some(
-            item =>
-                item.signalTime ===
-                signal.createdAt
-        );
-
-
-    if (duplicate) {
-        return;
-    }
-
-
-    history.unshift({
-
-        signalTime:
-            signal.createdAt,
-
-        time:
-            new Date(
-                signal.createdAt
-            ).toLocaleTimeString(),
-
-        market:
-            signal.market,
-
-        symbol:
-            signal.symbol,
-
-        strategy:
-            signal.strategy,
-
-        number:
-            signal.number,
-
-        confidence:
-            signal.confidence,
-
-        result:
-            "SIGNAL",
-
-        pl:
-            0
+      button.classList.toggle(
+        "active",
+        button.dataset.strategy === strategy
+      );
 
     });
 
+  const select =
+    $("tradeStrategy");
 
-    localStorage.setItem(
-        "KRISHWAVE_HISTORY",
-        JSON.stringify(
-            history.slice(
-                0,
-                200
-            )
-        )
+  if (select) {
+    select.value = strategy;
+  }
+
+  const manual =
+    $("manualNumberGroup");
+
+  /*
+    Manual number required for:
+    Matches, Differs, Over, Under.
+
+    Even/Odd do not require a number.
+  */
+
+  if (
+    strategy === "EVEN" ||
+    strategy === "ODD"
+  ) {
+
+    if (manual) {
+      manual.style.display = "none";
+    }
+
+  } else {
+
+    if (manual) {
+      manual.style.display = "block";
+    }
+  }
+
+  if (aiRunning && aiPhase === "analysis") {
+
+    text(
+      "analysisMsg",
+      `Strategy changed to ${strategy}. AI will lock a new prediction when analysis ends.`
     );
+  }
 
+  else if (!aiRunning) {
 
-    updateStats();
+    const item = bestMarket();
 
+    if (item) {
+
+      const prediction =
+        makePrediction(
+          item,
+          selectedStrategy
+        );
+
+      if (prediction) {
+        updatePredictionUI(
+          item,
+          prediction
+        );
+      }
+    }
+  }
 }
 
+/* =========================
+   TRADE PANEL
+========================= */
+
+function populateMarketSelect() {
+
+  const select = $("symbol");
+
+  if (!select) return;
+
+  select.innerHTML =
+    markets.map(m => `
+      <option value="${escapeHTML(m.symbol)}">
+        ${escapeHTML(m.name)}
+      </option>
+    `).join("");
+
+  if (selectedMarket) {
+    select.value = selectedMarket;
+  }
+}
+
+function updateTradePanel() {
+
+  const select =
+    $("symbol");
+
+  if (select && selectedMarket) {
+    select.value = selectedMarket;
+  }
+
+  const item =
+    selectedMarket
+      ? marketData.get(selectedMarket)
+      : bestMarket();
+
+  if (!item) {
+
+    text(
+      "tradeStatus",
+      "WAITING FOR LIVE DATA"
+    );
+
+    return;
+  }
+
+  if (!lastSignal) {
+
+    text(
+      "tradePrediction",
+      "WAITING"
+    );
+
+    text(
+      "tradeStatus",
+      `${item.name} selected • Waiting for AI signal`
+    );
+
+  } else {
+
+    text(
+      "tradePrediction",
+      lastSignal.digit
+    );
+
+    text(
+      "tradeStatus",
+      `${lastSignal.strategy} • ${lastSignal.confidence}% confidence`
+    );
+  }
+}
+
+/* =========================
+   PAPER TRADING
+========================= */
+
+function startTrading() {
+
+  paperRunning = true;
+
+  text(
+    "tradeStatus",
+    "PAPER TRADING ACTIVE"
+  );
+}
+
+function stopTrading() {
+
+  paperRunning = false;
+
+  text(
+    "tradeStatus",
+    "PAPER TRADING STOPPED"
+  );
+}
+
+/* =========================
+   HISTORY
+========================= */
+
+function loadHistory() {
+
+  try {
+
+    const saved =
+      localStorage.getItem(STORAGE_KEY);
+
+    return saved
+      ? JSON.parse(saved)
+      : [];
+
+  } catch (_) {
+
+    return [];
+  }
+}
+
+function saveHistory() {
+
+  localStorage.setItem(
+    STORAGE_KEY,
+    JSON.stringify(history.slice(0,100))
+  );
+}
+
+function recordSignal() {
+
+  if (!lockedPrediction) return;
+
+  const id =
+    `${lockedPrediction.created}-${lockedPrediction.market}-${lockedPrediction.strategy}`;
+
+  if (lastSignalId === id) return;
+
+  lastSignalId = id;
+
+  const entry = {
+
+    id,
+
+    time:
+      new Date().toLocaleTimeString(),
+
+    market:
+      lockedPrediction.market,
+
+    strategy:
+      lockedPrediction.strategy,
+
+    number:
+      lockedPrediction.digit,
+
+    result:
+      "SIGNAL",
+
+    pl:
+      0
+
+  };
+
+  history.unshift(entry);
+
+  history =
+    history.slice(0,100);
+
+  saveHistory();
+
+  renderHistory();
+
+  /*
+    History shows the AI signal.
+    It does NOT falsely claim that a real trade happened.
+  */
+}
 
 function renderHistory() {
 
-    const list =
-        $("historyList");
+  const tbody =
+    $("historyList");
 
+  if (!tbody) return;
 
-    if (!list) {
-        return;
-    }
+  if (!history.length) {
 
+    tbody.innerHTML =
+      `<tr><td colspan="6">No signals yet.</td></tr>`;
 
-    const history =
-        getHistory();
+  } else {
 
+    tbody.innerHTML =
+      history.map(item => {
 
-    if (!history.length) {
+        let resultClass =
+          "result-signal";
 
-        list.innerHTML =
-            `<div class="empty-state">
-                No AI signals yet.
-                Start AI and wait for TRADE NOW.
-             </div>`;
-
-        updateStats();
-
-        return;
-
-    }
-
-
-    list.innerHTML =
-        "";
-
-
-    history.forEach(
-        item => {
-
-            const row =
-                document.createElement(
-                    "div"
-                );
-
-
-            row.className =
-                "history-row";
-
-
-            row.innerHTML = `
-
-                <div>
-                    ${escapeHTML(item.time)}
-                </div>
-
-                <div>
-                    ${escapeHTML(item.market)}
-                </div>
-
-                <div>
-                    ${escapeHTML(item.strategy)}
-                </div>
-
-                <div>
-                    ${escapeHTML(
-                        String(
-                            item.number
-                        )
-                    )}
-                </div>
-
-                <div>
-                    ${escapeHTML(item.result)}
-                </div>
-
-                <div>
-                    ${Number(
-                        item.pl || 0
-                    ).toFixed(2)}
-                </div>
-
-            `;
-
-
-            list.appendChild(
-                row
-            );
-
+        if (item.result === "WIN") {
+          resultClass = "result-win";
         }
+
+        if (item.result === "LOSS") {
+          resultClass = "result-loss";
+        }
+
+        return `
+          <tr>
+            <td>${escapeHTML(item.time)}</td>
+            <td>${escapeHTML(item.market)}</td>
+            <td>${escapeHTML(item.strategy)}</td>
+            <td>${escapeHTML(item.number)}</td>
+            <td class="${resultClass}">
+              ${escapeHTML(item.result)}
+            </td>
+            <td>${Number(item.pl || 0).toFixed(2)}</td>
+          </tr>
+        `;
+
+      }).join("");
+  }
+
+  const total =
+    history.length;
+
+  const wins =
+    history.filter(x => x.result === "WIN").length;
+
+  const losses =
+    history.filter(x => x.result === "LOSS").length;
+
+  const pl =
+    history.reduce(
+      (sum, x) => sum + Number(x.pl || 0),
+      0
     );
 
+  const resolved =
+    wins + losses;
 
-    updateStats();
+  const winRate =
+    resolved
+      ? ((wins / resolved) * 100).toFixed(1)
+      : "0.0";
 
+  text("historyTotal", total);
+  text("historyWins", wins);
+  text("historyLosses", losses);
+  text("historyWinRate", `${winRate}%`);
+  text("historyPL", pl.toFixed(2));
+
+  text("tradeTotal", total);
+  text("tradeWins", wins);
+  text("tradeLosses", losses);
+  text("tradeWinRate", `${winRate}%`);
+  text("tradePL", pl.toFixed(2));
 }
-
-
-function updateStats() {
-
-    const history =
-        getHistory();
-
-
-    const total =
-        history.length;
-
-
-    const wins =
-        history.filter(
-            item =>
-                item.result ===
-                "WIN"
-        ).length;
-
-
-    const losses =
-        history.filter(
-            item =>
-                item.result ===
-                "LOSS"
-        ).length;
-
-
-    const pl =
-        history.reduce(
-            (
-                sum,
-                item
-            ) =>
-                sum +
-                Number(
-                    item.pl || 0
-                ),
-            0
-        );
-
-
-    const winRate =
-        total
-            ? Math.round(
-                (
-                    wins /
-                    total
-                ) *
-                100
-            )
-            : 0;
-
-
-    setText(
-        "historyTotal",
-        total
-    );
-
-
-    setText(
-        "historyWins",
-        wins
-    );
-
-
-    setText(
-        "historyLosses",
-        losses
-    );
-
-
-    setText(
-        "historyWinRate",
-        `${winRate}%`
-    );
-
-
-    setText(
-        "historyPL",
-        pl.toFixed(2)
-    );
-
-
-    setText(
-        "tradeTotal",
-        total
-    );
-
-
-    setText(
-        "tradeWins",
-        wins
-    );
-
-
-    setText(
-        "tradeLosses",
-        losses
-    );
-
-
-    setText(
-        "tradeWinRate",
-        `${winRate}%`
-    );
-
-
-    setText(
-        "tradePL",
-        pl.toFixed(2)
-    );
-
-}
-
-
-/* =========================================================
-   CLEAR HISTORY
-========================================================= */
 
 function clearHistory() {
 
-    if (
-        !confirm(
-            "Clear all KRISHWAVE history?"
-        )
-    ) {
+  if (
+    !confirm(
+      "Clear KRISHWAVE history?"
+    )
+  ) return;
 
-        return;
+  history = [];
 
-    }
+  localStorage.removeItem(
+    STORAGE_KEY
+  );
 
-
-    localStorage.removeItem(
-        "KRISHWAVE_HISTORY"
-    );
-
-
-    renderHistory();
-
+  renderHistory();
 }
 
-
-/* =========================================================
+/* =========================
    NAVIGATION
-========================================================= */
+========================= */
 
-function showPage(
-    page
-) {
+function showPage(page) {
 
-    const pages = {
+  const pages = {
+    analysis: "analysisPage",
+    trade: "tradePage",
+    history: "historyPage"
+  };
 
-        analysis:
-            $("analysisPage"),
+  /*
+    Also accept old page IDs.
+    This fixes the previous navigation bug.
+  */
 
-        trade:
-            $("tradePage"),
+  const normalized =
+    page === "analysisPage"
+      ? "analysis"
+      : page === "tradePage"
+        ? "trade"
+        : page === "historyPage"
+          ? "history"
+          : page;
 
-        history:
-            $("historyPage")
+  Object.values(pages)
+    .forEach(id => {
 
-    };
+      const el = $(id);
 
-
-    Object.values(
-        pages
-    ).forEach(
-        element => {
-
-            if (element) {
-
-                element.style.display =
-                    "none";
-
-            }
-
-        }
-    );
-
-
-    if (
-        pages[page]
-    ) {
-
-        pages[page].style.display =
-            "";
-
-    }
-
-
-    document
-        .querySelectorAll(
-            ".bottom-nav [data-page]"
-        )
-        .forEach(
-            button => {
-
-                button.classList.toggle(
-                    "active",
-                    button.dataset.page ===
-                    page
-                );
-
-            }
+      if (el) {
+        el.classList.remove(
+          "active-page"
         );
+      }
+    });
 
+  const target =
+    $(pages[normalized]);
 
-    if (
-        page ===
-        "trade"
-    ) {
+  if (target) {
+    target.classList.add(
+      "active-page"
+    );
+  }
 
-        updateTradePage();
+  document
+    .querySelectorAll(".nav-btn")
+    .forEach(button => {
 
-        updateStats();
+      button.classList.toggle(
+        "active",
+        button.dataset.page === normalized
+      );
 
-    }
+    });
 
+  if (normalized === "trade") {
+    updateTradePanel();
+  }
 
-    if (
-        page ===
-        "history"
-    ) {
-
-        renderHistory();
-
-    }
-
+  if (normalized === "history") {
+    renderHistory();
+  }
 }
 
+/* =========================
+   ACCOUNT MODE
+========================= */
 
-/* =========================================================
-   ACCOUNT BUTTONS
-========================================================= */
+function setAccountMode(mode) {
 
-function setAccountMode(
+  accountMode = mode;
+
+  text(
+    "accountMode",
     mode
-) {
+  );
 
-    accountMode =
-        mode;
-
-
-    document
-        .querySelectorAll(
-            ".account-btn"
-        )
-        .forEach(
-            button => {
-
-                button.classList.toggle(
-                    "active",
-                    (
-                        mode ===
-                        "DEMO" &&
-                        button.id ===
-                        "demoBtn"
-                    ) ||
-                    (
-                        mode ===
-                        "REAL" &&
-                        button.id ===
-                        "realBtn"
-                    )
-                );
-
-            }
-        );
-
-
-    setText(
-        "accountMode",
-        mode
+  $("demoBtn")
+    ?.classList.toggle(
+      "active",
+      mode === "DEMO"
     );
 
-
-    /*
-       Public Deriv connection
-       cannot read account balance.
-
-       Keep the balance field
-       safe until authenticated
-       account connection is added.
-    */
-
-    setText(
-        "optionsBalance",
-        "—"
+  $("realBtn")
+    ?.classList.toggle(
+      "active",
+      mode === "REAL"
     );
 
+  /*
+    Public market data does not expose
+    account balances.
+  */
 
-    setText(
-        "analysisMsg",
-        `${mode} selected. Account balance connection requires authenticated Deriv access.`
+  text(
+    "balance",
+    "—"
+  );
+
+  if (mode === "REAL") {
+
+    text(
+      "analysisMsg",
+      "REAL selected. Account authentication is required for a real balance/trading connection."
     );
 
+  } else {
+
+    text(
+      "analysisMsg",
+      "DEMO selected. Live public market data is active."
+    );
+  }
 }
 
-
-/* =========================================================
+/* =========================
    THEME
-========================================================= */
+========================= */
 
-function initTheme() {
+function toggleTheme() {
 
-    const saved =
-        localStorage.getItem(
-            "KRISHWAVE_THEME"
-        );
+  document.body.classList.toggle(
+    "light"
+  );
 
+  const light =
+    document.body.classList.contains(
+      "light"
+    );
 
-    if (
-        saved ===
-        "light"
-    ) {
+  localStorage.setItem(
+    "KRISHWAVE_THEME",
+    light
+      ? "light"
+      : "dark"
+  );
 
-        document.body.classList.add(
-            "light"
-        );
-
-    }
-
-
-    const button =
-        $("themeToggle");
-
-
-    if (!button) {
-        return;
-    }
-
-
-    button.onclick =
-        () => {
-
-            document.body.classList.toggle(
-                "light"
-            );
-
-
-            localStorage.setItem(
-                "KRISHWAVE_THEME",
-                document.body.classList.contains(
-                    "light"
-                )
-                    ? "light"
-                    : "dark"
-            );
-
-        };
-
+  text(
+    "themeToggle",
+    light ? "🌙" : "☀️"
+  );
 }
 
+function loadTheme() {
 
-/* =========================================================
+  const saved =
+    localStorage.getItem(
+      "KRISHWAVE_THEME"
+    );
+
+  if (saved === "light") {
+
+    document.body.classList.add(
+      "light"
+    );
+
+    text(
+      "themeToggle",
+      "🌙"
+    );
+  }
+}
+
+/* =========================
    EVENTS
-========================================================= */
+========================= */
 
 function setupEvents() {
 
-    /*
-       AI
-    */
+  document
+    .querySelectorAll(".nav-btn")
+    .forEach(button => {
 
-    $("startAI").onclick =
-        startAI;
-
-
-    $("stopAI").onclick =
-        stopAI;
-
-
-    /*
-       Trading
-    */
-
-    $("startTrading").onclick =
-        startTrading;
-
-
-    $("stopTrading").onclick =
-        stopTrading;
-
-
-    /*
-       History
-    */
-
-    $("clearHistory").onclick =
-        clearHistory;
-
-
-    /*
-       Bottom navigation
-    */
-
-    document
-        .querySelectorAll(
-            ".bottom-nav [data-page]"
+      button.addEventListener(
+        "click",
+        () => showPage(
+          button.dataset.page
         )
-        .forEach(
-            button => {
+      );
 
-                button.onclick =
-                    () => {
+    });
 
-                        showPage(
-                            button.dataset.page
-                        );
+  document
+    .querySelectorAll(".strategy")
+    .forEach(button => {
 
-                    };
+      button.addEventListener(
+        "click",
+        () => setStrategy(
+          button.dataset.strategy
+        )
+      );
 
-            }
+    });
+
+  $("startAI")
+    ?.addEventListener(
+      "click",
+      startAI
+    );
+
+  $("stopAI")
+    ?.addEventListener(
+      "click",
+      stopAI
+    );
+
+  $("startTrading")
+    ?.addEventListener(
+      "click",
+      startTrading
+    );
+
+  $("stopTrading")
+    ?.addEventListener(
+      "click",
+      stopTrading
+    );
+
+  $("clearHistory")
+    ?.addEventListener(
+      "click",
+      clearHistory
+    );
+
+  $("scan")
+    ?.addEventListener(
+      "click",
+      () => {
+
+        renderMarkets();
+
+        updateAnalysisPreview();
+
+        text(
+          "analysisMsg",
+          "Volatility scanner refreshed."
+        );
+      }
+    );
+
+  $("demoBtn")
+    ?.addEventListener(
+      "click",
+      () => setAccountMode("DEMO")
+    );
+
+  $("realBtn")
+    ?.addEventListener(
+      "click",
+      () => setAccountMode("REAL")
+    );
+
+  $("themeToggle")
+    ?.addEventListener(
+      "click",
+      toggleTheme
+    );
+
+  $("symbol")
+    ?.addEventListener(
+      "change",
+      event => {
+
+        selectedMarket =
+          event.target.value;
+
+        renderMarkets();
+
+        updateAnalysisPreview();
+
+        updateTradePanel();
+      }
+    );
+
+  $("tradeStrategy")
+    ?.addEventListener(
+      "change",
+      event => {
+
+        setStrategy(
+          event.target.value
         );
 
-
-    /*
-       Strategy buttons
-    */
-
-    document
-        .querySelectorAll(
-            "[data-strategy]"
-        )
-        .forEach(
-            button => {
-
-                button.onclick =
-                    () => {
-
-                        setStrategy(
-                            button.dataset.strategy
-                        );
-
-                    };
-
-            }
-        );
-
-
-    /*
-       Trade market
-    */
-
-    $("symbol").onchange =
-        event => {
-
-            selectMarket(
-                event.target.value
-            );
-
-            renderMarkets();
-
-        };
-
-
-    /*
-       Trade strategy
-    */
-
-    $("tradeStrategy").onchange =
-        event => {
-
-            setStrategy(
-                event.target.value
-            );
-
-        };
-
-
-    /*
-       Account
-    */
-
-    $("demoBtn").onclick =
-        () => {
-
-            setAccountMode(
-                "DEMO"
-            );
-
-        };
-
-
-    $("realBtn").onclick =
-        () => {
-
-            setAccountMode(
-                "REAL"
-            );
-
-        };
-
+      }
+    );
 }
 
+/* =========================
+   GLOBAL ERROR DISPLAY
+========================= */
 
-/* =========================================================
-   INITIALISE
-========================================================= */
+window.addEventListener(
+  "error",
+  event => {
 
-function initialise() {
-
-    /*
-       Start on Analysis.
-    */
-
-    showPage(
-        "analysis"
+    console.error(
+      "KRISHWAVE ERROR:",
+      event.error
     );
 
-
-    /*
-       Initial strategy.
-    */
-
-    setStrategy(
-        "MATCHES"
+    text(
+      "analysisMsg",
+      `KRISHWAVE error: ${event.message}`
     );
-
-
-    /*
-       Initial values.
-    */
-
-    setText(
-        "aiCircleTimer",
-        "10"
-    );
-
-
-    setText(
-        "aiCircleLabel",
-        "ANALYSIS"
-    );
-
-
-    setText(
-        "aiCircleStatus",
-        "AI STOPPED"
-    );
-
-
-    setText(
-        "liveSignal",
-        "WAITING"
-    );
-
-
-    setText(
-        "optionsBalance",
-        "—"
-    );
-
-
-    setText(
-        "accountMode",
-        "DEMO"
-    );
-
-
-    setText(
-        "scannerCount",
-        "0 markets"
-    );
-
-
-    updateStats();
-
-    renderHistory();
-
-    initTheme();
-
-    setupEvents();
-
-
-    /*
-       Connect to Deriv.
-    */
-
-    connectDeriv();
-
-}
-
-
-/* =========================================================
-   START
-========================================================= */
-
-document.addEventListener(
-    "DOMContentLoaded",
-    initialise
+  }
 );
+
+/* =========================
+   START
+========================= */
+
+function init() {
+
+  loadTheme();
+
+  setupEvents();
+
+  renderHistory();
+
+  setStrategy(
+    selectedStrategy
+  );
+
+  setConnection(
+    "CONNECTING...",
+    "connecting"
+  );
+
+  /*
+    Give the page a moment to render
+    before opening WebSocket.
+  */
+
+  setTimeout(
+    connectDeriv,
+    500
+  );
+}
+
+init();
