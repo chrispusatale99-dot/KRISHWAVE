@@ -1,440 +1,868 @@
-/* KRISHWAVE V5.2
-   AI SCANNER • PAPER MODE • NO REAL TRADES */
+/* =========================================================
+   KRISHWAVE V5.4
+   DERIV LIVE MARKET INTELLIGENCE
+   PAPER TRADING ONLY
+========================================================= */
 
 const $=id=>document.getElementById(id);
-const T=(id,v)=>{const e=$(id);if(e)e.textContent=v};
 
-const MARKETS=[
-["R_10","Volatility 10 Index"],["R_25","Volatility 25 Index"],
-["R_50","Volatility 50 Index"],["R_75","Volatility 75 Index"],
-["R_100","Volatility 100 Index"],["R_150","Volatility 150 Index"],
-["R_250","Volatility 250 Index"],["1HZ10V","Volatility 10 (1s)"],
-["1HZ25V","Volatility 25 (1s)"],["1HZ50V","Volatility 50 (1s)"],
-["1HZ75V","Volatility 75 (1s)"],["1HZ100V","Volatility 100 (1s)"],
-["1HZ150V","Volatility 150 (1s)"]
+const WS_URL="wss://api.derivws.com/trading/v1/options/ws/public";
+
+const markets=[
+ {name:"Volatility 10",symbol:"1HZ10V"},
+ {name:"Volatility 25",symbol:"1HZ25V"},
+ {name:"Volatility 50",symbol:"1HZ50V"},
+ {name:"Volatility 75",symbol:"1HZ75V"},
+ {name:"Volatility 100",symbol:"1HZ100V"},
+ {name:"Volatility 150",symbol:"1HZ150V"},
+ {name:"Volatility 200",symbol:"1HZ200V"},
+ {name:"Volatility 10 (1s)",symbol:"1HZ10V"},
+ {name:"Volatility 25 (1s)",symbol:"1HZ25V"},
+ {name:"Volatility 50 (1s)",symbol:"1HZ50V"},
+ {name:"Volatility 75 (1s)",symbol:"1HZ75V"},
+ {name:"Volatility 100 (1s)",symbol:"1HZ100V"},
+ {name:"Volatility 150 (1s)",symbol:"1HZ150V"}
 ];
 
-const STRATS=["Matches","Differs","Over","Under","Even","Odd"];
-const KEY="KRISHWAVE_HISTORY_V5_2";
+const strategies=["MATCHES","DIFFERS","OVER","UNDER","EVEN","ODD"];
 
-let ws=null,sym="R_10",strategy="Matches",running=false,timer=null;
-let phase="STOPPED",sec=0,locked=false,paper=false,waiting=false;
-let ticks=[],counts=Array(10).fill(0),prediction=null,confidence=0;
-let wins=0,losses=0,pl=0,history=[];
+const data={};
+markets.forEach(m=>{
+ data[m.symbol]={
+  name:m.name,
+  symbol:m.symbol,
+  ticks:[],
+  last:null,
+  score:0,
+  hot:null,
+  prediction:null,
+  confidence:0
+ };
+});
 
+let ws=null;
+let aiTimer=null;
+let aiRunning=false;
+let phase="ANALYSIS";
+let sec=10;
+let locked=null;
+let selectedSymbol="1HZ10V";
+let selectedStrategy="MATCHES";
+let paperRunning=false;
+let history=JSON.parse(localStorage.getItem("krishwave_history")||"[]");
 
-/* ================= NAVIGATION ================= */
+/* ================= CONNECTION ================= */
 
-document.querySelectorAll(".nav-btn").forEach(b=>{
-  b.onclick=()=>{
-    document.querySelectorAll(".nav-btn").forEach(x=>x.classList.remove("active"));
-    document.querySelectorAll(".page").forEach(x=>x.classList.remove("active-page"));
-    b.classList.add("active");
-    $(b.dataset.page)?.classList.add("active-page");
+function setStatus(text,type=""){
+ $("connectionStatus").textContent=text;
+ $("statusDot").className="status-dot "+type;
+}
+
+function connect(){
+
+ setStatus("CONNECTING...");
+
+ try{
+  ws=new WebSocket(WS_URL);
+
+  ws.onopen=()=>{
+   setStatus("DERIV ONLINE","online");
+   $("dataStatus").textContent="Live ticks connected";
+   $("analysisMsg").textContent="Connected to Deriv. Loading market data...";
+
+   ws.send(JSON.stringify({
+    active_symbols:"brief",
+    product_type:"basic",
+    req_id:1
+   }));
+
+   markets.forEach((m,i)=>{
+    ws.send(JSON.stringify({
+     ticks:m.symbol,
+     subscribe:1,
+     req_id:100+i
+    }));
+
+    ws.send(JSON.stringify({
+     ticks_history:m.symbol,
+     count:60,
+     end:"latest",
+     style:"ticks",
+     req_id:500+i
+    }));
+   });
   };
-});
 
+  ws.onmessage=e=>{
+   let d;
+   try{d=JSON.parse(e.data)}catch{return}
 
-/* ================= THEME ================= */
+   if(d.error){
+    console.log("Deriv:",d.error.message);
+    return;
+   }
 
-$("themeToggle")?.addEventListener("click",()=>{
-  document.body.classList.toggle("light-mode");
-  $("themeToggle").textContent=document.body.classList.contains("light-mode")
-    ?"☀️ LIGHT":"🌙 DARK";
-});
+   if(d.msg_type==="tick"&&d.tick){
+    handleTick(d.tick);
+   }
 
+   if(d.msg_type==="history"&&d.history){
+    handleHistory(d);
+   }
+  };
 
-/* ================= STRATEGIES ================= */
+  ws.onerror=()=>{
+   setStatus("CONNECTION ERROR","error");
+   $("dataStatus").textContent="Connection error";
+  };
 
-function buildStrategies(){
-  const box=$("strategies");if(!box)return;
-  box.innerHTML="";
-  STRATS.forEach(s=>{
-    const b=document.createElement("button");
-    b.className="strategy-btn"+(s===strategy?" active":"");
-    b.textContent=s;b.onclick=()=>setStrategy(s);
-    box.appendChild(b);
-  });
-  if($("tradeStrategy"))$("tradeStrategy").value=strategy;
+  ws.onclose=()=>{
+   setStatus("RECONNECTING...");
+   $("dataStatus").textContent="Waiting for Deriv...";
+   setTimeout(connect,4000);
+  };
+
+ }catch(e){
+  setStatus("ERROR","error");
+  setTimeout(connect,4000);
+ }
 }
 
-function setStrategy(s){
-  strategy=s;
-  T("strategy",s);T("analysisStrategy",s);
-  if($("tradeStrategy"))$("tradeStrategy").value=s;
-  document.querySelectorAll(".strategy-btn").forEach(b=>b.classList.toggle("active",b.textContent===s));
-  manualUI();analyze();display();
+/* ================= MARKET DATA ================= */
+
+function digitOf(value){
+ const s=String(value);
+ const clean=s.replace(/[^0-9]/g,"");
+ return Number(clean.slice(-1))||0;
 }
 
-$("tradeStrategy")?.addEventListener("change",e=>setStrategy(e.target.value));
+function addTick(symbol,quote){
+ if(!data[symbol])return;
 
-function manualUI(){
-  const input=$("number"),group=$("manualNumberGroup");
-  if(!input||!group)return;
-  const no=["Even","Odd"].includes(strategy);
-  input.disabled=no;
-  group.style.opacity=no?".55":"1";
-  input.value=no?"":input.value;
-  T("manualTitle",no?"NUMBER NOT REQUIRED":
-    ["Over","Under"].includes(strategy)?"MANUAL THRESHOLD":"MANUAL NUMBER");
-  T("manual",no?"Even/Odd uses the signal automatically.":"AI will never fill this number.");
+ const d=data[symbol];
+
+ d.last=quote;
+ d.ticks.push({
+  quote,
+  digit:digitOf(quote),
+  time:Date.now()
+ });
+
+ if(d.ticks.length>120)d.ticks.shift();
+
+ calculate(d);
+ renderMarkets();
+
+ if(symbol===selectedSymbol)renderDigits();
 }
 
-
-/* ================= MARKETS ================= */
-
-function buildMarkets(){
-  const box=$("markets");if(!box)return;
-  box.innerHTML="";
-  MARKETS.forEach(m=>{
-    const b=document.createElement("button");
-    b.className="market-card"+(m[0]===sym?" active":"");
-    b.innerHTML=`<strong>${m[1]}</strong><span>${m[0]}</span>`;
-    b.onclick=()=>selectMarket(m[0]);
-    box.appendChild(b);
-  });
+function handleTick(t){
+ if(!t.symbol)return;
+ addTick(t.symbol,Number(t.quote));
 }
 
-function selectMarket(s){
-  sym=s;
-  const m=MARKETS.find(x=>x[0]===s);
-  if(m){T("mname",m[1]);T("sym",s);T("analysisMarket",m[1]);}
-  if($("symbol"))$("symbol").value=s;
-  document.querySelectorAll(".market-card").forEach(b=>b.classList.toggle("active",b.textContent.includes(s)));
-  ticks=[];counts=Array(10).fill(0);analyze();display();
+function handleHistory(msg){
+
+ const symbol=msg.echo_req?.ticks_history;
+
+ if(!symbol||!data[symbol])return;
+
+ const prices=msg.history?.prices||[];
+
+ prices.forEach(q=>{
+  if(data[symbol].ticks.length<120){
+   data[symbol].ticks.push({
+    quote:Number(q),
+    digit:digitOf(q),
+    time:Date.now()
+   });
+  }
+ });
+
+ calculate(data[symbol]);
+ renderMarkets();
+
+ if(symbol===selectedSymbol)renderDigits();
 }
 
-$("symbol")?.addEventListener("change",e=>selectMarket(e.target.value));
+/* ================= ANALYSIS ================= */
 
+function calculate(d){
+
+ if(!d.ticks.length){
+  d.score=0;
+  return;
+ }
+
+ const last=d.ticks.slice(-50);
+ const counts=Array(10).fill(0);
+
+ last.forEach(x=>counts[x.digit]++);
+
+ let hot=0;
+
+ counts.forEach((v,i)=>{
+  if(v>counts[hot])hot=i;
+ });
+
+ const total=last.length;
+ const frequency=counts[hot]/total;
+
+ let changes=0;
+
+ for(let i=1;i<last.length;i++){
+  if(last[i].digit!==last[i-1].digit)changes++;
+ }
+
+ const movement=changes/Math.max(1,last.length-1);
+
+ d.hot=hot;
+
+ d.score=Math.min(
+  99,
+  Math.round(
+   35+
+   frequency*45+
+   movement*20
+  )
+ );
+
+ d.prediction=hot;
+ d.confidence=Math.min(
+  98,
+  Math.round(50+frequency*45+movement*10)
+ );
+}
+
+/* ================= BEST MARKET ================= */
+
+function bestMarket(){
+
+ const ready=markets
+  .map(m=>data[m.symbol])
+  .filter(x=>x.ticks.length>=5);
+
+ if(!ready.length)return data[selectedSymbol];
+
+ return ready.sort((a,b)=>b.score-a.score)[0];
+}
+
+/* ================= PREDICTION ================= */
+
+function makePrediction(d,strategy){
+
+ if(!d||!d.ticks.length)return null;
+
+ const counts=Array(10).fill(0);
+
+ d.ticks.slice(-60).forEach(x=>counts[x.digit]++);
+
+ let hot=0;
+
+ for(let i=1;i<10;i++){
+  if(counts[i]>counts[hot])hot=i;
+ }
+
+ const total=Math.max(1,d.ticks.slice(-60).length);
+ const hotRate=counts[hot]/total;
+
+ if(strategy==="MATCHES"){
+  return {
+   text:"MATCHES "+hot,
+   number:hot,
+   confidence:Math.round(50+hotRate*50)
+  };
+ }
+
+ if(strategy==="DIFFERS"){
+  let low=0;
+  for(let i=1;i<10;i++){
+   if(counts[i]<counts[low])low=i;
+  }
+
+  return {
+   text:"DIFFERS "+low,
+   number:low,
+   confidence:Math.round(50+(1-counts[low]/total)*35)
+  };
+ }
+
+ if(strategy==="OVER"){
+  let best=9,bestRate=0;
+  for(let n=0;n<9;n++){
+   const rate=counts.slice(n+1).reduce((a,b)=>a+b,0)/total;
+   if(rate>bestRate){
+    bestRate=rate;
+    best=n;
+   }
+  }
+
+  return {
+   text:"OVER "+best,
+   number:best,
+   confidence:Math.round(50+bestRate*45)
+  };
+ }
+
+ if(strategy==="UNDER"){
+  let best=1,bestRate=0;
+
+  for(let n=1;n<=9;n++){
+   const rate=counts.slice(0,n).reduce((a,b)=>a+b,0)/total;
+
+   if(rate>bestRate){
+    bestRate=rate;
+    best=n;
+   }
+  }
+
+  return {
+   text:"UNDER "+best,
+   number:best,
+   confidence:Math.round(50+bestRate*45)
+  };
+ }
+
+ if(strategy==="EVEN"){
+  const even=counts[0]+counts[2]+counts[4]+counts[6]+counts[8];
+
+  return {
+   text:"EVEN",
+   number:null,
+   confidence:Math.round(50+(even/total)*45)
+  };
+ }
+
+ if(strategy==="ODD"){
+  const odd=counts[1]+counts[3]+counts[5]+counts[7]+counts[9];
+
+  return {
+   text:"ODD",
+   number:null,
+   confidence:Math.round(50+(odd/total)*45)
+  };
+ }
+
+ return null;
+}
+
+/* ================= RENDER MARKETS ================= */
+
+function renderMarkets(){
+
+ const box=$("markets");
+
+ if(!box)return;
+
+ const list=markets
+  .map(m=>data[m.symbol])
+  .filter((v,i,a)=>a.findIndex(x=>x.symbol===v.symbol)===i);
+
+ list.sort((a,b)=>b.score-a.score);
+
+ $("scannerCount").textContent=list.filter(x=>x.ticks.length).length+" live";
+
+ box.innerHTML=list.map((m,i)=>`
+
+  <div class="market-card ${i===0&&m.ticks.length?"best":""}"
+       onclick="selectMarket('${m.symbol}')">
+
+    <div>
+      <div class="market-name">${m.name}</div>
+      <div class="market-symbol">${m.symbol}</div>
+    </div>
+
+    <div class="market-stat">
+      <small>TICKS</small>
+      <strong>${m.ticks.length}</strong>
+    </div>
+
+    <div class="market-stat">
+      <small>HOT</small>
+      <strong>${m.hot===null?"—":m.hot}</strong>
+    </div>
+
+    <div class="market-stat">
+      <small>STRENGTH</small>
+      <strong class="score">${m.score||0}%</strong>
+    </div>
+
+  </div>
+ `).join("");
+
+ const best=bestMarket();
+
+ if(best&&best.ticks.length){
+  $("analysisMarket").textContent=best.name;
+ }
+}
+
+/* ================= SELECT MARKET ================= */
+
+function selectMarket(symbol){
+
+ if(!data[symbol])return;
+
+ selectedSymbol=symbol;
+
+ $("symbol").value=symbol;
+
+ renderDigits();
+
+ const d=data[symbol];
+
+ if(d.ticks.length){
+  $("analysisMarket").textContent=d.name;
+  $("aiMarket").textContent="Market: "+d.name;
+ }
+
+ renderMarkets();
+}
 
 /* ================= DIGITS ================= */
 
-function digit(q){
-  const s=String(q).replace(/\D/g,"");
-  return s?s[s.length-1]:null;
-}
-
 function renderDigits(){
-  const box=$("digits");if(!box)return;
-  const total=counts.reduce((a,b)=>a+b,0);
-  box.innerHTML=counts.map((n,d)=>`
-    <div class="digit-card"><strong>${d}</strong>
-    <span>${total?(n/total*100).toFixed(1):0}%</span>
-    <small>${n}</small></div>`).join("");
-  if(total){
-    const hot=counts.indexOf(Math.max(...counts));T("hot",hot);
-  }
+
+ const d=data[selectedSymbol];
+
+ if(!d){
+  $("digits").innerHTML="";
+  return;
+ }
+
+ const counts=Array(10).fill(0);
+
+ d.ticks.slice(-60).forEach(x=>counts[x.digit]++);
+
+ const max=Math.max(...counts,1);
+
+ $("digitMarket").textContent=d.name;
+
+ $("digits").innerHTML=counts.map((v,i)=>`
+
+  <div class="digit">
+   <div class="digit-bar" style="height:${Math.max(4,(v/max)*82)}px"></div>
+   <span>${i} (${v})</span>
+  </div>
+
+ `).join("");
 }
 
+/* ================= AI CYCLE ================= */
 
-/* ================= AI ================= */
+function setPhase(p,time){
 
-function analyze(){
-  if(ticks.length<10){
-    prediction=null;confidence=0;return;
-  }
+ phase=p;
+ sec=time;
 
-  const sets=[ticks.slice(-20),ticks.slice(-50),ticks.slice(-100)];
-  const score=Array(10).fill(0);
+ ["cycleAnalysis","cyclePrediction","cycleTrade","cycleCooldown"]
+ .forEach(id=>$(id)?.classList.remove("active"));
 
-  sets.forEach((a,i)=>{
-    const weight=[.5,.3,.2][i];
-    a.forEach(d=>score[d]+=weight);
-  });
+ if(p==="ANALYSIS"){
+  $("cycleAnalysis")?.classList.add("active");
+  $("aiCircleLabel").textContent="ANALYSIS";
+ }
 
-  prediction=score.indexOf(Math.max(...score));
-  const total=score.reduce((a,b)=>a+b,0);
-  confidence=total?Math.min(96,Math.round(score[prediction]/total*100+10)):0;
+ if(p==="PREDICTION"){
+  $("cyclePrediction")?.classList.add("active");
+  $("aiCircleLabel").textContent="LOCKED";
+ }
 
-  let even=ticks.slice(-50).filter(d=>d%2===0).length;
-  let high=ticks.slice(-50).filter(d=>d>4).length;
+ if(p==="TRADE"){
+  $("cycleTrade")?.classList.add("active");
+  $("aiCircleLabel").textContent="TRADE NOW";
+ }
 
-  if(strategy==="Matches")T("aiType","MATCH");
-  if(strategy==="Differs")T("aiType","DIFFER");
-  if(strategy==="Over")T("aiType",high>=25?"OVER 4":"UNDER 5");
-  if(strategy==="Under")T("aiType",high<25?"UNDER 5":"OVER 4");
-  if(strategy==="Even")T("aiType",even>=25?"EVEN":"ODD");
-  if(strategy==="Odd")T("aiType",even<25?"ODD":"EVEN");
+ if(p==="COOLDOWN"){
+  $("cycleCooldown")?.classList.add("active");
+  $("aiCircleLabel").textContent="COOLDOWN";
+ }
 
-  T("aiScore",confidence);T("score",confidence);
-  T("reason",`Digit ${prediction} has the strongest weighted recent frequency.`);
+ $("aiCircleTimer").textContent=sec;
 }
 
+function runAnalysis(){
 
-/* ================= DISPLAY ================= */
+ const best=bestMarket();
 
-function display(){
-  T("aiPrediction",prediction??"—");
-  T("analysisPrediction",prediction??"—");
-  T("tradePrediction",prediction??"—");
-  T("analysisConfidence",prediction===null?"—":confidence+"%");
-  T("analysisConfidenceBox",prediction===null?"—":confidence+"%");
-  T("tradeConfidence",prediction===null?"—":confidence+"%");
-  T("tradeType",prediction===null?"—":$("aiType")?.textContent||"—");
-  T("analysisText",prediction===null?
-    "Collecting market data...":
-    `AI analysed ${ticks.length} recent ticks. Statistical confidence: ${confidence}%.`);
+ if(!best||best.ticks.length<5){
+
+  $("analysisMsg").textContent=
+   "Waiting for enough Deriv ticks to analyse the markets.";
+
+  return;
+ }
+
+ selectedSymbol=best.symbol;
+
+ const prediction=makePrediction(best,selectedStrategy);
+
+ if(!prediction)return;
+
+ locked={
+  market:best,
+  prediction,
+  created:Date.now()
+ };
+
+ $("aiMarket").textContent="Market: "+best.name;
+ $("aiPrediction").textContent=prediction.text;
+ $("aiCirclePrediction").textContent=
+  prediction.number===null
+  ?"Predicted: "+(selectedStrategy==="EVEN"?"EVEN":"ODD")
+  :"Predicted number: "+prediction.number;
+
+ $("aiType").textContent="Strategy: "+selectedStrategy;
+ $("analysisConfidence").textContent=
+  "Confidence: "+prediction.confidence+"%";
+
+ $("aiScore").textContent=best.score+"%";
+ $("analysisPrediction").textContent=prediction.text;
+ $("analysisConfidenceBox").textContent=prediction.confidence+"%";
+ $("analysisMarket").textContent=best.name;
+ $("analysisStrategy").textContent=selectedStrategy;
+ $("reason").textContent=
+  "Recent digit frequency, repetition and tick movement.";
+
+ $("analysisText").textContent=
+  best.name+
+  " currently has the strongest statistical score among the live markets.";
+
+ $("analysisMsg").textContent=
+  "Prediction calculated from the latest live tick sample.";
 }
 
+function startAI(){
 
-/* ================= AUTO MARKET SCANNER ================= */
+ if(aiRunning)return;
 
-function scanBestMarket(){
-  if(ticks.length<10)return;
+ aiRunning=true;
+ $("aiCircleStatus").textContent="AI RUNNING";
 
-  let best={symbol:sym,confidence:confidence};
+ clearInterval(aiTimer);
 
-  /*
-    In live mode each market will have its own
-    tick history. The scanner compares those
-    histories and chooses the strongest signal.
-  */
+ setPhase("ANALYSIS",10);
 
-  const candidates=MARKETS.map(m=>{
-    const local=marketHistory[m[0]]||[];
-    if(local.length<10)return {...m,confidence:0};
+ runAnalysis();
 
-    const c=Array(10).fill(0);
-    local.slice(-50).forEach(d=>c[d]++);
-    const max=Math.max(...c);
-    return {...m,confidence:Math.round(max/local.slice(-50).length*100)};
-  });
+ aiTimer=setInterval(()=>{
 
-  candidates.forEach(m=>{
-    if(m.confidence>best.confidence)
-      best={symbol:m[0],confidence:m.confidence};
-  });
-
-  if(best.symbol!==sym)selectMarket(best.symbol);
-}
-
-
-/* ================= MARKET DATA STORAGE ================= */
-
-const marketHistory={};
-
-function addTick(symbol,d){
-  if(!marketHistory[symbol])marketHistory[symbol]=[];
-  marketHistory[symbol].push(Number(d));
-  if(marketHistory[symbol].length>300)
-    marketHistory[symbol].shift();
-}
-
-
-/* ================= CIRCULAR AI ================= */
-
-function cycle(){
-  if(!running)return;
+  if(!aiRunning)return;
 
   sec--;
 
-  if(sec<=0){
-    if(phase==="ANALYSIS"){
-      scanBestMarket();
-      phase="PREDICTION";sec=5;locked=true;
-    }else if(phase==="PREDICTION"){
-      phase="TRADE";sec=0;waiting=paper;
-      T("aiCirclePrediction","⚡ TRADE NOW");
-    }else if(phase==="COOLDOWN"){
-      phase="ANALYSIS";sec=10;locked=false;
-    }
+  if(sec<0){
+
+   if(phase==="ANALYSIS"){
+
+    runAnalysis();
+    setPhase("PREDICTION",5);
+
+   }else if(phase==="PREDICTION"){
+
+    showTradeNow();
+    setPhase("TRADE",1);
+
+   }else if(phase==="TRADE"){
+
+    setPhase("COOLDOWN",3);
+
+   }else if(phase==="COOLDOWN"){
+
+    runAnalysis();
+    setPhase("ANALYSIS",10);
+
+   }
+
+   return;
   }
 
-  T("phase",phase);
-  T("aiCircleTimer",sec);
+  $("aiCircleTimer").textContent=sec;
 
-  const total=phase==="ANALYSIS"?10:phase==="PREDICTION"?5:3;
-  const progress=phase==="TRADE"?100:Math.max(0,100-(sec/total*100));
-
-  $("aiCircle")?.style.setProperty("--progress",progress+"%");
-  T("aiCircleStatus",phase);
-  T("analysisMsg",
-    phase==="ANALYSIS"?`🔎 Scanning markets... ${sec}s`:
-    phase==="PREDICTION"?`🔒 Prediction locked... ${sec}s`:
-    phase==="TRADE"?"⚡ TRADE NOW":
-    `⏸ Cooldown... ${sec}s`);
+ },1000);
 }
 
+function showTradeNow(){
 
-/* ================= START / STOP AI ================= */
+ $("aiCircleStatus").textContent="PREDICTION LOCKED";
 
-function startAI(){
-  if(running)return;
-  running=true;phase="ANALYSIS";sec=10;locked=false;
-  T("aiCirclePrediction","AI analysing all markets...");
-  cycle();
-  timer=setInterval(cycle,1000);
+ if(locked){
+
+  const p=locked.prediction;
+
+  $("aiPrediction").textContent=p.text;
+
+  $("aiCirclePrediction").textContent=
+   p.number===null
+   ?"Predicted: "+(selectedStrategy==="EVEN"?"EVEN":"ODD")
+   :"Predicted number: "+p.number;
+
+  $("tradePrediction").textContent=p.text;
+  $("tradeType").textContent=selectedStrategy;
+  $("tradeConfidence").textContent=p.confidence+"%";
+
+  $("aiCircle").classList.add("trade-now");
+
+  $("analysisMsg").textContent=
+   "TRADE NOW — prediction locked until the next cycle.";
+ }
 }
 
 function stopAI(){
-  running=false;locked=false;waiting=false;
-  clearInterval(timer);timer=null;
-  phase="STOPPED";sec=0;
-  T("phase","STOPPED");T("aiCircleStatus","STOPPED");
-  T("aiCircleTimer","0");
-  T("aiCirclePrediction","AI is stopped");
-  T("analysisMsg","Press START AI to begin.");
+
+ aiRunning=false;
+ clearInterval(aiTimer);
+
+ $("aiCircleStatus").textContent="AI STOPPED";
+ $("aiCircleLabel").textContent="ANALYSIS";
+ $("aiCircleTimer").textContent="10";
+ $("aiCircle").classList.remove("trade-now");
+
+ setPhase("ANALYSIS",10);
 }
 
-$("startAI")?.addEventListener("click",startAI);
-$("stopAI")?.addEventListener("click",stopAI);
+/* ================= STRATEGY ================= */
 
+document.querySelectorAll(".strategy").forEach(btn=>{
+
+ btn.addEventListener("click",()=>{
+
+  document.querySelectorAll(".strategy")
+   .forEach(x=>x.classList.remove("active"));
+
+  btn.classList.add("active");
+
+  selectedStrategy=btn.dataset.strategy;
+
+  $("strategy").value=selectedStrategy;
+
+  $("tradeStrategy").value=selectedStrategy;
+
+  updateManualField();
+
+  if(aiRunning)runAnalysis();
+ });
+});
+
+$("tradeStrategy").addEventListener("change",e=>{
+ selectedStrategy=e.target.value;
+ $("strategy").value=selectedStrategy;
+ updateManualField();
+});
+
+function updateManualField(){
+
+ const needsNumber=
+ ["MATCHES","DIFFERS","OVER","UNDER"]
+ .includes(selectedStrategy);
+
+ $("manualNumberGroup").style.display=
+  needsNumber?"block":"none";
+
+ $("manualTitle").textContent=
+  selectedStrategy==="OVER"||selectedStrategy==="UNDER"
+  ?"MANUAL NUMBER"
+  :"MANUAL NUMBER";
+}
+
+/* ================= NAVIGATION ================= */
+
+document.querySelectorAll(".nav-btn").forEach(btn=>{
+
+ btn.addEventListener("click",()=>{
+
+  document.querySelectorAll(".nav-btn")
+   .forEach(x=>x.classList.remove("active"));
+
+  btn.classList.add("active");
+
+  document.querySelectorAll(".page")
+   .forEach(p=>p.classList.remove("active"));
+
+  $(btn.dataset.page).classList.add("active");
+ });
+});
+
+/* ================= THEME ================= */
+
+$("themeToggle").onclick=()=>{
+
+ document.body.classList.toggle("light-mode");
+
+ $("themeToggle").textContent=
+  document.body.classList.contains("light-mode")
+  ?"☀️"
+  :"🌙";
+
+ localStorage.setItem(
+  "krishwave_theme",
+  document.body.classList.contains("light-mode")
+  ?"light":"dark"
+);
+
+};
+
+if(localStorage.getItem("krishwave_theme")==="light"){
+ document.body.classList.add("light-mode");
+ $("themeToggle").textContent="☀️";
+}
+
+/* ================= MARKET SELECT ================= */
+
+markets.forEach(m=>{
+
+ const o=document.createElement("option");
+ o.value=m.symbol;
+ o.textContent=m.name;
+
+ $("symbol").appendChild(o);
+
+});
+
+$("symbol").addEventListener("change",e=>{
+ selectMarket(e.target.value);
+});
+
+/* ================= SCAN ================= */
+
+$("scan").onclick=()=>{
+
+ const best=bestMarket();
+
+ if(best&&best.ticks.length){
+  selectMarket(best.symbol);
+  runAnalysis();
+
+  $("analysisMsg").textContent=
+   "Scanner selected "+best.name+
+   " with a "+best.score+"% statistical strength.";
+ }else{
+  $("analysisMsg").textContent=
+   "No live tick sample yet. Waiting for Deriv.";
+ }
+};
 
 /* ================= PAPER TRADING ================= */
 
-function tradeResult(d){
-  if(!paper||!waiting)return;
-  waiting=false;
-
-  let n=["Even","Odd"].includes(strategy)?null:Number($("number")?.value);
-  if(n===null&&!["Even","Odd"].includes(strategy)){
-    T("tradeStatus","NUMBER REQUIRED");return;
-  }
-
-  let win=
-    strategy==="Matches"?d===n:
-    strategy==="Differs"?d!==n:
-    strategy==="Over"?d>n:
-    strategy==="Under"?d<n:
-    strategy==="Even"?d%2===0:
-    d%2!==0;
-
-  const stake=Number($("stake")?.value)||1;
-  const result=win?"WIN":"LOSS";
-  const amount=win?stake:-stake;
-
-  const m=MARKETS.find(x=>x[0]===sym);
-
-  history.unshift({
-    time:new Date().toLocaleTimeString(),
-    market:m?m[1]:sym,
-    strategy,
-    number:n??(strategy==="Even"?"EVEN":"ODD"),
-    result,pl:amount
-  });
-
-  localStorage.setItem(KEY,JSON.stringify(history));
-  updateStats();renderHistory();
-  T("tradeStatus",result);
-}
-
-
-/* ================= TRADING CONTROLS ================= */
-
-function startTrading(){
-  paper=true;
-  T("tradeStatus","TRADING");
-  if(!running)startAI();
-}
-
-function stopTrading(){
-  paper=false;waiting=false;
-  T("tradeStatus","STOPPED");
-}
-
-$("startTrading")?.addEventListener("click",startTrading);
-$("stopTrading")?.addEventListener("click",stopTrading);
-
-
-/* ================= HISTORY ================= */
-
 function updateStats(){
-  wins=history.filter(x=>x.result==="WIN").length;
-  losses=history.filter(x=>x.result==="LOSS").length;
-  pl=history.reduce((a,x)=>a+Number(x.pl||0),0);
-  const total=history.length;
-  const rate=total?(wins/total*100).toFixed(1):"0.0";
 
-  [["tradeTotal",total],["tradeWins",wins],["tradeLosses",losses],
-   ["tradeWinRate",rate+"%"],["tradePL",pl.toFixed(2)],
-   ["historyTotal",total],["historyWins",wins],
-   ["historyLosses",losses],["historyWinRate",rate+"%"],
-   ["historyPL",pl.toFixed(2)]].forEach(x=>T(x[0],x[1]));
+ const total=history.length;
+ const wins=history.filter(x=>x.result==="WIN").length;
+ const losses=total-wins;
+ const pl=history.reduce((a,b)=>a+Number(b.pl||0),0);
+ const rate=total?((wins/total)*100).toFixed(1):"0.0";
+
+ ["tradeTotal","historyTotal"].forEach(id=>{
+  if($(id))$(id).textContent=total;
+ });
+
+ ["tradeWins","historyWins"].forEach(id=>{
+  if($(id))$(id).textContent=wins;
+ });
+
+ ["tradeLosses","historyLosses"].forEach(id=>{
+  if($(id))$(id).textContent=losses;
+ });
+
+ ["tradeWinRate","historyWinRate"].forEach(id=>{
+  if($(id))$(id).textContent=rate+"%";
+ });
+
+ ["tradePL","historyPL"].forEach(id=>{
+  if($(id))$(id).textContent=pl.toFixed(2);
+ });
 }
 
 function renderHistory(){
-  const box=$("historyList");if(!box)return;
-  if(!history.length){
-    box.innerHTML=`<tr><td colspan="6" class="empty-history">No paper trades yet.</td></tr>`;
-    return;
-  }
-  box.innerHTML=history.map(x=>`
-    <tr><td>${x.time}</td><td>${x.market}</td>
-    <td>${x.strategy}</td><td>${x.number}</td>
-    <td class="${x.result==="WIN"?"win":"loss"}">${x.result}</td>
-    <td>${Number(x.pl).toFixed(2)}</td></tr>`).join("");
+
+ const list=$("historyList");
+
+ if(!history.length){
+  list.innerHTML=
+   `<div class="history-row">
+    <div colspan="6">No paper trades yet.</div>
+   </div>`;
+  updateStats();
+  return;
+ }
+
+ list.innerHTML=history.slice().reverse().map(x=>`
+
+  <div class="history-row">
+
+   <div>${x.time}</div>
+   <div>${x.market}</div>
+   <div>${x.strategy}</div>
+   <div>${x.number??"—"}</div>
+   <div class="${x.result==="WIN"?"win":"loss"}">${x.result}</div>
+   <div class="${x.pl>=0?"win":"loss"}">${Number(x.pl).toFixed(2)}</div>
+
+  </div>
+
+ `).join("");
+
+ updateStats();
 }
 
-$("clearHistory")?.addEventListener("click",()=>{
-  if(confirm("Clear all paper trading history?")){
-    history=[];localStorage.removeItem(KEY);
-    updateStats();renderHistory();
-  }
-});
+$("clearHistory").onclick=()=>{
+ if(confirm("Clear all paper-trading history?")){
+  history=[];
+  localStorage.removeItem("krishwave_history");
+  renderHistory();
+ }
+};
 
+$("startTrading").onclick=()=>{
+ paperRunning=true;
+ $("tradeStatus").textContent="RUNNING";
+};
 
-/* ================= WEBSOCKET ================= */
+$("stopTrading").onclick=()=>{
+ paperRunning=false;
+ $("tradeStatus").textContent="STOPPED";
+};
 
-function connect(){
-  try{
-    ws=new WebSocket("wss://ws.binaryws.com/websockets/v3");
-    ws.onopen=()=>{
-      T("conn","ONLINE");
-      if($("connDot"))$("connDot").classList.add("online");
-      send({ticks:sym,subscribe:1});
-    };
-    ws.onmessage=e=>{
-      try{
-        const x=JSON.parse(e.data);
-        if(x.tick)processTick(x.tick);
-      }catch(err){}
-    };
-    ws.onclose=()=>{
-      T("conn","OFFLINE");
-      setTimeout(connect,5000);
-    };
-  }catch(e){
-    T("conn","OFFLINE");
-  }
-}
+/* ================= ACCOUNT BUTTONS ================= */
 
-function send(x){
-  if(ws?.readyState===1)ws.send(JSON.stringify(x));
-}
+$("demoBtn").onclick=()=>{
+ $("demoBtn").classList.add("active");
+ $("realBtn").classList.remove("active");
+ $("accountType").textContent="DEMO";
+ $("demoBalance").textContent="Connect account";
+ $("aiMode").textContent="DEMO / PAPER";
+};
 
-function processTick(t){
-  const d=digit(t.quote);
-  if(d===null)return;
-
-  ticks.push(Number(d));
-  if(ticks.length>300)ticks.shift();
-
-  counts[d]++;
-  addTick(sym,d);
-
-  T("last",t.quote);
-  T("ticks",ticks.length);
-
-  analyze();
-  renderDigits();
-  display();
-
-  if(waiting)tradeResult(Number(d));
-}
-
+$("realBtn").onclick=()=>{
+ $("realBtn").classList.add("active");
+ $("demoBtn").classList.remove("active");
+ $("accountType").textContent="REAL";
+ $("demoBalance").textContent="AUTH REQUIRED";
+ $("aiMode").textContent="REAL BALANCE / PAPER";
+};
 
 /* ================= INIT ================= */
 
-try{
-  history=JSON.parse(localStorage.getItem(KEY)||"[]");
-}catch(e){history=[]}
+function initDigits(){
+ $("digits").innerHTML=
+  Array.from({length:10},(_,i)=>`
+   <div class="digit">
+    <div class="digit-bar" style="height:4px"></div>
+    <span>${i} (0)</span>
+   </div>
+  `).join("");
+}
 
-buildStrategies();
-buildMarkets();
-manualUI();
-updateStats();
-renderHistory();
-display();
+function init(){
 
-T("conn","OFFLINE");
-T("phase","STOPPED");
+ initDigits();
+ updateManualField();
+ renderHistory();
+
+ $("symbol").value=selectedSymbol;
+
+ setPhase("ANALYSIS",10);
+
+ connect();
+}
+
+init();
