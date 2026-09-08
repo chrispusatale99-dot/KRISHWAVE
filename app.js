@@ -4,7 +4,7 @@
    DEMO / PAPER MODE
    - Live Tick Price Charting & Digit Distribution
    - AI Bot & Manual Trading Engine Switcher
-   - Custom Strategy Radio Selector Modal
+   - Full 6-Strategy Radio Selector Modal (Matches, Differs, Even, Odd, Over, Under)
    - Card-Based Trading History with Profit/Loss Tracking
    ========================================================= */
 
@@ -44,7 +44,7 @@ const state = {
   currency: null,
 
   engineMode: "ai", // "ai" or "manual"
-  selectedStrategy: "MATCHES", // "MATCHES", "EVEN", "OVER"
+  selectedStrategy: "MATCHES", // "MATCHES", "DIFFERS", "EVEN", "ODD", "OVER", "UNDER"
   selectedMarket: "R_10",
 
   markets: {},
@@ -221,7 +221,7 @@ function executeManualTrade() {
   };
 
   state.activePaperTrade = trade;
-  setText("manualStatusText", `Trade placed for digit ${targetDigit}...`);
+  setText("manualStatusText", `Trade placed [${state.selectedStrategy}] for digit ${targetDigit}...`);
 }
 
 /* ================= STRATEGY MODAL PICKER ================= */
@@ -231,6 +231,7 @@ function bindStrategyModal() {
   const triggerManual = $("manualStrategyTrigger");
   const modal = $("strategyModal");
   const options = document.querySelectorAll(".strategy-option");
+  const targetDigitField = $("targetDigitContainer");
 
   const openModal = () => { if (modal) modal.style.display = "flex"; };
 
@@ -248,6 +249,15 @@ function bindStrategyModal() {
 
       setText("selectedStrategyLabel", label);
       setText("manualSelectedStrategyLabel", label);
+
+      // Hide or show Target Digit input based on strategy
+      if (targetDigitField) {
+        if (val === "EVEN" || val === "ODD") {
+          targetDigitField.style.display = "none";
+        } else {
+          targetDigitField.style.display = "flex";
+        }
+      }
 
       if (modal) modal.style.display = "none";
     });
@@ -468,11 +478,38 @@ function evaluatePaperTradeTick(symbol, digit) {
   if (!trade) return;
 
   let win = false;
-  if (trade.strategy === "MATCHES") win = digit === trade.prediction;
-  else if (trade.strategy === "EVEN") win = digit % 2 === 0;
-  else if (trade.strategy === "OVER") win = digit >= 5;
+  let payoutMultiplier = 0.95; // Default payout ratio
 
-  const profit = win ? trade.stake * 0.95 : -trade.stake;
+  switch (trade.strategy) {
+    case "MATCHES":
+      win = (digit === trade.prediction);
+      payoutMultiplier = 8.5; // Matches typically pays higher (e.g., 1 to 9 payout)
+      break;
+    case "DIFFERS":
+      win = (digit !== trade.prediction);
+      payoutMultiplier = 0.09; // Differs pays lower
+      break;
+    case "EVEN":
+      win = (digit % 2 === 0);
+      payoutMultiplier = 0.95;
+      break;
+    case "ODD":
+      win = (digit % 2 !== 0);
+      payoutMultiplier = 0.95;
+      break;
+    case "OVER":
+      win = (digit > trade.prediction);
+      payoutMultiplier = 0.95;
+      break;
+    case "UNDER":
+      win = (digit < trade.prediction);
+      payoutMultiplier = 0.95;
+      break;
+    default:
+      win = (digit === trade.prediction);
+  }
+
+  const profit = win ? trade.stake * payoutMultiplier : -trade.stake;
 
   trade.status = win ? "WIN" : "LOSS";
   trade.profit = profit;
@@ -532,7 +569,7 @@ function renderHistory() {
         <div class="history-card-left">
           <div class="history-card-market">${esc(trade.market)}</div>
           <div class="history-card-details">
-            ${esc(trade.strategy)} | MATCH ${trade.prediction} | Stake: $${trade.stake.toFixed(2)}
+            ${esc(trade.strategy)} | Target: ${trade.prediction} | Stake: $${trade.stake.toFixed(2)}
           </div>
         </div>
         <div class="history-card-right ${profitClass}">
