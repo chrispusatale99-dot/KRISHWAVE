@@ -44,7 +44,7 @@ const state = {
   currency: null,
 
   engineMode: "ai", // "ai" or "manual"
-  selectedStrategy: "MATCHES", // "MATCHES", "EVEN", "OVER", etc.
+  selectedStrategy: "MATCHES", // "MATCHES", "EVEN", "OVER"
   selectedMarket: "R_10",
 
   markets: {},
@@ -97,6 +97,7 @@ document.addEventListener("DOMContentLoaded", () => {
   bindControls();
   bindStrategyModal();
   bindEngineTabs();
+  bindManualControls();
   renderHistory();
   updateStats();
   connectPublicMarket();
@@ -150,12 +151,8 @@ function bindControls() {
   });
 
   $("startBotBtn")?.addEventListener("click", () => {
-    if (state.engineMode === "ai") {
-      if (!state.aiRunning) startAICycle();
-      else stopAI();
-    } else {
-      executeManualTrade();
-    }
+    if (!state.aiRunning) startAICycle();
+    else stopAI();
   });
 
   $("clearLogsBtn")?.addEventListener("click", () => {
@@ -192,26 +189,66 @@ function bindEngineTabs() {
   });
 }
 
+/* ================= MANUAL ENGINE CONTROLS ================= */
+
+function bindManualControls() {
+  const manualStrategyTrigger = $("manualStrategyTrigger");
+  manualStrategyTrigger?.addEventListener("click", () => {
+    const modal = $("strategyModal");
+    if (modal) modal.style.display = "flex";
+  });
+
+  const placeTradeBtn = $("placeTradeBtn");
+  placeTradeBtn?.addEventListener("click", () => {
+    executeManualTrade();
+  });
+}
+
+function executeManualTrade() {
+  const targetDigit = Number($("manualTargetDigitInput")?.value ?? 4);
+  const stake = Number($("manualStakeInput")?.value ?? 10);
+
+  const trade = {
+    id: Date.now(),
+    time: new Date().toLocaleTimeString(),
+    market: formatMarketName(state.selectedMarket),
+    strategy: state.selectedStrategy,
+    prediction: targetDigit,
+    stake: stake,
+    result: null,
+    status: "PENDING",
+    profit: 0
+  };
+
+  state.activePaperTrade = trade;
+  setText("manualStatusText", `Trade placed for digit ${targetDigit}...`);
+}
+
 /* ================= STRATEGY MODAL PICKER ================= */
 
 function bindStrategyModal() {
-  const trigger = $("strategyTrigger");
+  const triggerAI = $("strategyTrigger");
+  const triggerManual = $("manualStrategyTrigger");
   const modal = $("strategyModal");
   const options = document.querySelectorAll(".strategy-option");
 
-  trigger?.addEventListener("click", () => {
-    if (modal) modal.style.display = "flex";
-  });
+  const openModal = () => { if (modal) modal.style.display = "flex"; };
+
+  triggerAI?.addEventListener("click", openModal);
+  triggerManual?.addEventListener("click", openModal);
 
   options.forEach(opt => {
     opt.addEventListener("click", () => {
       const val = opt.dataset.strategy;
+      const label = opt.dataset.label || val;
       state.selectedStrategy = val;
 
       options.forEach(o => o.classList.remove("selected"));
       opt.classList.add("selected");
 
-      setText("selectedStrategyLabel", opt.dataset.label || val);
+      setText("selectedStrategyLabel", label);
+      setText("manualSelectedStrategyLabel", label);
+
       if (modal) modal.style.display = "none";
     });
   });
@@ -409,11 +446,6 @@ function stopAI() {
   setText("startBotBtn", "Start Trading Bot");
 }
 
-function executeManualTrade() {
-  const manualDigit = Number($("manualDigitInput")?.value || 0);
-  executeTradeSignal(manualDigit);
-}
-
 function executeTradeSignal(predictedDigit) {
   const stake = Number($("stakeInput")?.value || 10);
   const trade = {
@@ -450,6 +482,10 @@ function evaluatePaperTradeTick(symbol, digit) {
   state.totalProfit += profit;
   state.activePaperTrade = null;
 
+  if (state.engineMode === "manual") {
+    setText("manualStatusText", "Manual trading active");
+  }
+
   saveHistory();
   renderHistory();
   updateStats();
@@ -479,7 +515,7 @@ function renderHistory() {
   const list = $("historyCardsList");
   if (!list) return;
 
-  setText("totalProfitDisplay", `$${state.totalProfit.toFixed(2)}`);
+  setText("totalProfitDisplay", `Total Profit: $${state.totalProfit.toFixed(2)}`);
 
   if (!state.history.length) {
     list.innerHTML = `<div class="empty-history-card">No trading history recorded yet.</div>`;
