@@ -1,420 +1,882 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-  <meta charset="UTF-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <meta charset="UTF-8" />
+  <meta
+    name="viewport"
+    content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no"
+  />
+
   <title>KRISHWAVE AI BEAST V5.8</title>
-  <link rel="stylesheet" href="style.css">
+
+  <link rel="stylesheet" href="style.css" />
 </head>
 
 <body>
 
-<header class="topbar">
-  <div>
-    <h1>KRISHWAVE</h1>
-    <span>AI BEAST V5.8</span>
-  </div>
+  <!-- =====================================================
+       TOP BAR
+  ====================================================== -->
+  <header class="topbar">
 
-  <div class="top-actions">
-    <span id="connectionDot" class="connection-dot"></span>
-    <span id="connectionStatus">CONNECTING...</span>
-
-    <button id="demoBtn" class="mode-btn active">DEMO</button>
-    <button id="realBtn" class="mode-btn">REAL</button>
-
-    <button id="themeToggle" class="icon-btn">☀️</button>
-  </div>
-</header>
-
-<main>
-
-  <!-- ================= ANALYSIS PAGE ================= -->
-  <section id="analysisPage" class="page active">
-
-    <div class="account-card">
-      <div>
-        <small>ACCOUNT MODE</small>
-        <strong id="accountMode">DEMO</strong>
-      </div>
-
-      <div>
-        <small>BALANCE</small>
-        <strong id="balance">—</strong>
-      </div>
-
-      <div>
-        <small>DATA</small>
-        <strong>DERIV LIVE</strong>
-      </div>
+    <div class="brand">
+      <div class="brand-name">KRISHWAVE</div>
+      <div class="brand-version">AI BEAST V5.8</div>
     </div>
 
-    <div class="hero">
-      <div>
-        <span class="live-badge">● LIVE AI</span>
-        <h2>AI MARKET INTELLIGENCE</h2>
-        <p>KRISHWAVE scans live market data and searches for the strongest setup.</p>
+    <div class="top-actions">
+
+      <div class="connection-status">
+        <span id="connectionDot" class="status-dot offline"></span>
+        <span id="connectionText">OFFLINE</span>
       </div>
+
+      <button
+        id="demoModeBtn"
+        class="mode-btn active"
+        type="button"
+      >
+        DEMO
+      </button>
+
+      <button
+        id="realModeBtn"
+        class="mode-btn"
+        type="button"
+      >
+        REAL
+      </button>
+
+      <button
+        id="themeToggle"
+        class="icon-btn"
+        type="button"
+        aria-label="Toggle theme"
+      >
+        🌙
+      </button>
+
     </div>
 
-    <!-- AI STATUS -->
-    <div class="status-grid">
+  </header>
 
-      <div class="status-card">
-        <small>AI STATUS</small>
-        <strong id="aiStatus">STOPPED</strong>
+
+  <!-- =====================================================
+       ACCOUNT / DERIV CONNECTION
+  ====================================================== -->
+  <section class="account-card">
+
+    <div class="account-main">
+
+      <div class="account-label">
+        ACCOUNT MODE
       </div>
 
-      <div class="status-card">
-        <small>MARKET</small>
-        <strong id="aiMarket">WAITING</strong>
-      </div>
-
-      <div class="status-card">
-        <small>PREDICTION</small>
-        <strong id="aiPrediction">—</strong>
-      </div>
-
-      <div class="status-card">
-        <small>TYPE</small>
-        <strong id="aiType">—</strong>
-      </div>
-
-      <div class="status-card">
-        <small>CONFIDENCE</small>
-        <strong id="analysisConfidence">0%</strong>
+      <div id="accountMode" class="account-value">
+        DEMO
       </div>
 
     </div>
 
-    <!-- ================= CIRCULAR AI ================= -->
 
-    <div class="ai-circle-section">
+    <div class="account-main">
 
-      <div id="aiCircle" class="ai-circle">
-
-        <div class="ai-circle-inner">
-
-          <div id="aiCircleLabel" class="ai-circle-label">
-            AI READY
-          </div>
-
-          <div id="aiCirclePrediction" class="ai-circle-prediction">
-            —
-          </div>
-
-          <div id="aiCircleTimer" class="ai-circle-timer">
-            10
-          </div>
-
-          <div id="aiCircleStatus" class="ai-circle-status">
-            PRESS START
-          </div>
-
-        </div>
-
+      <div class="account-label">
+        BALANCE
       </div>
 
-      <div class="ai-controls">
-        <button id="startAI" class="primary-btn">
-          START AI
-        </button>
-
-        <button id="stopAI" class="danger-btn">
-          STOP AI
-        </button>
-      </div>
-
-    </div>
-
-    <!-- AI CYCLE -->
-    <div class="cycle-card">
-
-      <h3>AI CYCLE</h3>
-
-      <div class="cycle-grid">
-
-        <div id="cycleAnalysis" class="cycle-item active">
-          <span>01</span>
-          <strong>ANALYSIS</strong>
-          <small>10 SEC</small>
-        </div>
-
-        <div id="cyclePrediction" class="cycle-item">
-          <span>02</span>
-          <strong>PREDICTION</strong>
-          <small>5 SEC</small>
-        </div>
-
-        <div id="cycleTrade" class="cycle-item">
-          <span>03</span>
-          <strong>TRADE NOW</strong>
-          <small>3 SEC</small>
-        </div>
-
-        <div id="cycleCooldown" class="cycle-item">
-          <span>04</span>
-          <strong>RESTART</strong>
-          <small>READY</small>
-        </div>
-
-      </div>
-
-    </div>
-
-    <!-- LARGE PREDICTION -->
-    <div class="prediction-card">
-
-      <small>NEXT 5 SECOND PREDICTION</small>
-
-      <div id="aiPredictionLarge">
+      <div id="balance" class="account-value">
         —
       </div>
 
-      <div id="predictionConfidence">
-        Confidence: 0%
-      </div>
-
-      <div id="entryStatus">
-        WAITING FOR ANALYSIS
-      </div>
-
     </div>
 
-    <!-- AI REPORT -->
-    <div class="section-title">
-      <h3>AI BEAST REPORT</h3>
-    </div>
 
-    <div class="report-grid">
+    <div class="account-main">
 
-      <div class="report-card">
-        <small>MARKET</small>
-        <strong id="reportMarket">—</strong>
+      <div class="account-label">
+        DATA
       </div>
 
-      <div class="report-card">
-        <small>SCORE</small>
-        <strong id="reportScore">—</strong>
+      <div class="account-value">
+        <span id="dataStatus">DERIV LIVE</span>
       </div>
-
-      <div class="report-card">
-        <small>STRENGTH</small>
-        <strong id="reportStrength">—</strong>
-      </div>
-
-      <div class="report-card">
-        <small>STABILITY</small>
-        <strong id="reportStability">—</strong>
-      </div>
-
-      <div class="report-card">
-        <small>CONCENTRATION</small>
-        <strong id="reportConcentration">—</strong>
-      </div>
-
-      <div class="report-card">
-        <small>STREAK</small>
-        <strong id="reportStreak">—</strong>
-      </div>
-
-      <div class="report-card">
-        <small>AGREEMENT</small>
-        <strong id="reportAgreement">—</strong>
-      </div>
-
-    </div>
-
-    <div id="analysisMsg" class="message-box">
-      Waiting for live market data...
-    </div>
-
-    <!-- MARKET SCANNER -->
-    <div class="section-title">
-      <h3>VOLATILITY MARKET SCANNER</h3>
-    </div>
-
-    <div id="markets" class="market-grid">
-      <div class="empty-state">
-        Waiting for market data...
-      </div>
-    </div>
-
-    <!-- DIGITS -->
-    <div class="section-title">
-      <h3>DIGIT DISTRIBUTION</h3>
-    </div>
-
-    <div id="digits" class="digit-grid">
-      <div class="empty-state">
-        Waiting for digits...
-      </div>
-    </div>
-
-    <!-- STRATEGIES -->
-    <div class="section-title">
-      <h3>STRATEGY</h3>
-    </div>
-
-    <div class="strategy-grid">
-
-      <button class="strategy-btn active" data-strategy="MATCHES">
-        MATCHES
-      </button>
-
-      <button class="strategy-btn" data-strategy="DIFFERS">
-        DIFFERS
-      </button>
-
-      <button class="strategy-btn" data-strategy="OVER">
-        OVER
-      </button>
-
-      <button class="strategy-btn" data-strategy="UNDER">
-        UNDER
-      </button>
-
-      <button class="strategy-btn" data-strategy="EVEN">
-        EVEN
-      </button>
-
-      <button class="strategy-btn" data-strategy="ODD">
-        ODD
-      </button>
 
     </div>
 
   </section>
 
 
-  <!-- ================= TRADE PAGE ================= -->
-
-  <section id="tradePage" class="page">
+  <!-- =====================================================
+       DERIV AUTH CARD
+  ====================================================== -->
+  <section class="deriv-auth-card">
 
     <div class="section-title">
-      <h2>TRADE CENTER</h2>
-      <span class="paper-badge">PAPER MODE</span>
+      🔐 DERIV ACCOUNT CONNECTION
     </div>
 
-    <!-- CURRENT SIGNAL -->
-    <div class="trade-signal-card">
+    <div class="deriv-auth-content">
 
-      <small>CURRENT AI SIGNAL</small>
+      <div class="deriv-auth-info">
 
-      <div id="tradePrediction">
-        —
-      </div>
+        <div class="deriv-auth-title">
+          KRISHWAVE WEB
+        </div>
 
-      <div class="trade-info">
+        <div class="deriv-auth-subtitle">
+          Connect your Deriv Demo account securely
+        </div>
 
-        <span>
-          MARKET:
-          <strong id="tradeMarket">—</strong>
-        </span>
-
-        <span>
-          CONFIDENCE:
-          <strong id="tradeConfidence">0%</strong>
-        </span>
+        <div id="authStatus" class="auth-status">
+          NOT CONNECTED
+        </div>
 
       </div>
 
-      <div id="tradeStatus">
-        WAITING
-      </div>
 
-    </div>
+      <button
+        id="connectDerivBtn"
+        class="primary-btn connect-btn"
+        type="button"
+      >
+        🔐 CONNECT DERIV
+      </button>
 
 
-    <!-- MARKET SELECTOR -->
-    <div class="section-title">
-
-      <div>
-        <h3>AI MARKET SELECTOR</h3>
-        <p>Scan all available volatility markets.</p>
-      </div>
-
-      <button id="scanMarketsBtn" class="primary-btn small-btn">
-        🔎 SCAN MARKETS
+      <button
+        id="disconnectDerivBtn"
+        class="secondary-btn disconnect-btn"
+        type="button"
+        style="display:none;"
+      >
+        DISCONNECT
       </button>
 
     </div>
 
-    <div id="marketScanStatus" class="scan-status">
-      Press SCAN MARKETS to analyze all markets.
-    </div>
 
-    <div id="tradeMarkets" class="trade-market-grid">
+    <div class="account-details">
 
-      <div class="empty-state">
-        Press SCAN MARKETS to begin.
+      <div class="account-detail-item">
+
+        <span>ACCOUNT</span>
+
+        <strong id="derivAccountId">
+          —
+        </strong>
+
+      </div>
+
+
+      <div class="account-detail-item">
+
+        <span>CURRENCY</span>
+
+        <strong id="derivCurrency">
+          —
+        </strong>
+
+      </div>
+
+
+      <div class="account-detail-item">
+
+        <span>CONNECTION</span>
+
+        <strong id="derivAuthConnection">
+          OFFLINE
+        </strong>
+
       </div>
 
     </div>
 
+  </section>
 
-    <!-- SELECTED MARKET -->
-    <div class="section-title">
-      <h3>SELECTED MARKET</h3>
-    </div>
 
-    <div class="trade-form">
+  <!-- =====================================================
+       MAIN APP
+  ====================================================== -->
+  <main id="app">
 
-      <label>
-        Market Symbol
-        <input
-          id="symbol"
-          type="text"
-          value=""
-          placeholder="Select market"
-          readonly
+
+    <!-- ===================================================
+         ANALYSIS PAGE
+    ==================================================== -->
+    <section
+      id="page-analysis"
+      class="page active"
+    >
+
+      <!-- HERO -->
+      <section class="hero-card">
+
+        <div class="hero-content">
+
+          <div class="hero-badge">
+            AI MARKET INTELLIGENCE
+          </div>
+
+          <h1>
+            KRISHWAVE AI BEAST
+          </h1>
+
+          <p>
+            Live Deriv market intelligence,
+            statistical analysis and AI signals.
+          </p>
+
+        </div>
+
+        <div class="live-badge">
+          <span
+            id="heroLiveDot"
+            class="status-dot offline"
+          ></span>
+
+          <span id="heroLiveText">
+            LIVE
+          </span>
+        </div>
+
+      </section>
+
+
+      <!-- AI STATUS -->
+      <section class="ai-status-grid">
+
+        <div class="status-card">
+
+          <span>AI STATUS</span>
+
+          <strong id="aiStatus">
+            STOPPED
+          </strong>
+
+        </div>
+
+
+        <div class="status-card">
+
+          <span>MARKET</span>
+
+          <strong id="aiMarket">
+            —
+          </strong>
+
+        </div>
+
+
+        <div class="status-card">
+
+          <span>PREDICTION</span>
+
+          <strong id="aiPrediction">
+            WAITING
+          </strong>
+
+        </div>
+
+
+        <div class="status-card">
+
+          <span>STRATEGY</span>
+
+          <strong id="aiType">
+            MATCHES
+          </strong>
+
+        </div>
+
+
+        <div class="status-card">
+
+          <span>CONFIDENCE</span>
+
+          <strong id="analysisConfidence">
+            0%
+          </strong>
+
+        </div>
+
+      </section>
+
+
+      <!-- =================================================
+           CIRCULAR AI
+      ================================================== -->
+      <section class="ai-circle-section">
+
+        <div
+          id="aiCircle"
+          class="ai-circle"
         >
-      </label>
 
-      <label>
-        Strategy
+          <div class="ai-circle-inner">
 
-        <select id="tradeStrategy">
+            <div
+              id="aiCircleLabel"
+              class="ai-circle-label"
+            >
+              AI ANALYSIS
+            </div>
 
-          <option value="MATCHES">MATCHES</option>
-          <option value="DIFFERS">DIFFERS</option>
-          <option value="OVER">OVER</option>
-          <option value="UNDER">UNDER</option>
-          <option value="EVEN">EVEN</option>
-          <option value="ODD">ODD</option>
+            <div
+              id="aiCirclePrediction"
+              class="ai-circle-prediction"
+            >
+              —
+            </div>
 
-        </select>
+            <div
+              id="aiCircleTimer"
+              class="ai-circle-timer"
+            >
+              10
+            </div>
 
-      </label>
+            <div
+              id="aiCircleStatus"
+              class="ai-circle-status"
+            >
+              READY
+            </div>
 
-      <!-- MANUAL DIGIT -->
-      <div id="manualNumberGroup">
+          </div>
 
-        <label>
-          Enter Number Manually
+        </div>
+
+      </section>
+
+
+      <!-- =================================================
+           AI CYCLE
+      ================================================== -->
+      <section class="cycle-card">
+
+        <div class="section-title">
+          🤖 AI CYCLE
+        </div>
+
+        <div class="cycle-grid">
+
+          <div
+            id="cycleAnalysis"
+            class="cycle-step active"
+          >
+
+            <span class="cycle-time">
+              10s
+            </span>
+
+            <span>
+              ANALYSIS
+            </span>
+
+          </div>
+
+
+          <div
+            id="cyclePrediction"
+            class="cycle-step"
+          >
+
+            <span class="cycle-time">
+              5s
+            </span>
+
+            <span>
+              PREDICTION
+            </span>
+
+          </div>
+
+
+          <div
+            id="cycleTrade"
+            class="cycle-step"
+          >
+
+            <span class="cycle-time">
+              3s
+            </span>
+
+            <span>
+              TRADE NOW
+            </span>
+
+          </div>
+
+
+          <div
+            id="cycleCooldown"
+            class="cycle-step"
+          >
+
+            <span class="cycle-time">
+              —
+            </span>
+
+            <span>
+              REPEAT
+            </span>
+
+          </div>
+
+        </div>
+
+      </section>
+
+
+      <!-- AI CONTROLS -->
+      <section class="control-card">
+
+        <button
+          id="startAI"
+          class="primary-btn"
+          type="button"
+        >
+          ▶ START AI
+        </button>
+
+        <button
+          id="stopAI"
+          class="danger-btn"
+          type="button"
+        >
+          ■ STOP AI
+        </button>
+
+      </section>
+
+
+      <!-- =================================================
+           PREDICTION
+      ================================================== -->
+      <section class="prediction-card">
+
+        <div class="prediction-header">
+          AI PREDICTION
+        </div>
+
+
+        <div
+          id="aiPredictionLarge"
+          class="prediction-value"
+        >
+          WAITING
+        </div>
+
+
+        <div class="prediction-meta">
+
+          <div>
+
+            <span>
+              CONFIDENCE
+            </span>
+
+            <strong id="predictionConfidence">
+              0%
+            </strong>
+
+          </div>
+
+
+          <div>
+
+            <span>
+              ENTRY
+            </span>
+
+            <strong id="entryStatus">
+              WAIT
+            </strong>
+
+          </div>
+
+        </div>
+
+      </section>
+
+
+      <!-- =================================================
+           AI BEAST REPORT
+      ================================================== -->
+      <section class="report-card">
+
+        <div class="section-title">
+          🧠 AI BEAST REPORT
+        </div>
+
+        <div class="report-grid">
+
+          <div class="report-item">
+            <span>MARKET</span>
+            <strong id="reportMarket">—</strong>
+          </div>
+
+          <div class="report-item">
+            <span>SCORE</span>
+            <strong id="reportScore">—</strong>
+          </div>
+
+          <div class="report-item">
+            <span>STRENGTH</span>
+            <strong id="reportStrength">—</strong>
+          </div>
+
+          <div class="report-item">
+            <span>STABILITY</span>
+            <strong id="reportStability">—</strong>
+          </div>
+
+          <div class="report-item">
+            <span>CONCENTRATION</span>
+            <strong id="reportConcentration">—</strong>
+          </div>
+
+          <div class="report-item">
+            <span>STREAK</span>
+            <strong id="reportStreak">—</strong>
+          </div>
+
+          <div class="report-item">
+            <span>AGREEMENT</span>
+            <strong id="reportAgreement">—</strong>
+          </div>
+
+        </div>
+
+      </section>
+
+
+      <!-- ANALYSIS MESSAGE -->
+      <div
+        id="analysisMsg"
+        class="analysis-message"
+      >
+        Waiting for live market data...
+      </div>
+
+
+      <!-- =================================================
+           MARKETS
+      ================================================== -->
+      <section class="section">
+
+        <div class="section-title">
+          📊 VOLATILITY MARKETS
+        </div>
+
+        <div
+          id="markets"
+          class="market-grid"
+        >
+          <div class="empty-state">
+            Waiting for market data...
+          </div>
+        </div>
+
+      </section>
+
+
+      <!-- =================================================
+           DIGIT DISTRIBUTION
+      ================================================== -->
+      <section class="section">
+
+        <div class="section-title">
+          🔢 DIGIT DISTRIBUTION
+        </div>
+
+        <div
+          id="digits"
+          class="digit-grid"
+        >
+          <div class="empty-state">
+            Waiting for digits...
+          </div>
+        </div>
+
+      </section>
+
+
+      <!-- =================================================
+           STRATEGIES
+      ================================================== -->
+      <section class="section">
+
+        <div class="section-title">
+          🎯 STRATEGIES
+        </div>
+
+        <div class="strategy-grid">
+
+          <button
+            class="strategy-btn active"
+            data-strategy="MATCHES"
+            type="button"
+          >
+            MATCHES
+          </button>
+
+          <button
+            class="strategy-btn"
+            data-strategy="DIFFERS"
+            type="button"
+          >
+            DIFFERS
+          </button>
+
+          <button
+            class="strategy-btn"
+            data-strategy="OVER"
+            type="button"
+          >
+            OVER
+          </button>
+
+          <button
+            class="strategy-btn"
+            data-strategy="UNDER"
+            type="button"
+          >
+            UNDER
+          </button>
+
+          <button
+            class="strategy-btn"
+            data-strategy="EVEN"
+            type="button"
+          >
+            EVEN
+          </button>
+
+          <button
+            class="strategy-btn"
+            data-strategy="ODD"
+            type="button"
+          >
+            ODD
+          </button>
+
+        </div>
+
+      </section>
+
+    </section>
+
+
+    <!-- ===================================================
+         TRADE PAGE
+    ==================================================== -->
+    <section
+      id="page-trade"
+      class="page"
+    >
+
+      <!-- TRADE SIGNAL -->
+      <section class="trade-signal-card">
+
+        <div class="section-title">
+          ⚡ AI TRADE SIGNAL
+        </div>
+
+        <div
+          id="tradePrediction"
+          class="trade-prediction"
+        >
+          WAITING
+        </div>
+
+        <div class="trade-signal-meta">
+
+          <div>
+
+            <span>
+              MARKET
+            </span>
+
+            <strong id="tradeMarket">
+              —
+            </strong>
+
+          </div>
+
+
+          <div>
+
+            <span>
+              CONFIDENCE
+            </span>
+
+            <strong id="tradeConfidence">
+              0%
+            </strong>
+
+          </div>
+
+
+          <div>
+
+            <span>
+              STATUS
+            </span>
+
+            <strong id="tradeStatus">
+              WAIT
+            </strong>
+
+          </div>
+
+        </div>
+
+      </section>
+
+
+      <!-- =================================================
+           AI MARKET SELECTOR
+      ================================================== -->
+      <section class="section">
+
+        <div class="section-title trade-market-title">
+
+          <span>
+            🧠 AI MARKET SELECTOR
+          </span>
+
+          <button
+            id="scanMarketsBtn"
+            class="small-btn"
+            type="button"
+          >
+            🔎 SCAN MARKETS
+          </button>
+
+        </div>
+
+
+        <div
+          id="marketScanStatus"
+          class="scan-status"
+        >
+          Press SCAN MARKETS to analyze all volatility markets.
+        </div>
+
+
+        <div
+          id="tradeMarkets"
+          class="trade-market-grid"
+        >
+
+          <div class="empty-state">
+            Press SCAN MARKETS to scan markets.
+          </div>
+
+        </div>
+
+      </section>
+
+
+      <!-- =================================================
+           SELECTED MARKET
+      ================================================== -->
+      <section class="trade-form-card">
+
+        <div class="section-title">
+          ⚙️ SELECTED MARKET
+        </div>
+
+
+        <div class="form-group">
+
+          <label for="symbol">
+            MARKET
+          </label>
+
+          <input
+            id="symbol"
+            type="text"
+            value=""
+            placeholder="Select a market"
+            readonly
+          />
+
+        </div>
+
+
+        <div class="form-group">
+
+          <label for="tradeStrategy">
+            STRATEGY
+          </label>
+
+          <select id="tradeStrategy">
+
+            <option value="MATCHES">
+              MATCHES
+            </option>
+
+            <option value="DIFFERS">
+              DIFFERS
+            </option>
+
+            <option value="OVER">
+              OVER
+            </option>
+
+            <option value="UNDER">
+              UNDER
+            </option>
+
+            <option value="EVEN">
+              EVEN
+            </option>
+
+            <option value="ODD">
+              ODD
+            </option>
+
+          </select>
+
+        </div>
+
+
+        <!-- MANUAL DIGIT -->
+        <div
+          id="manualNumberGroup"
+          class="form-group"
+        >
+
+          <label for="manualNumber">
+            MANUAL DIGIT
+          </label>
 
           <input
             id="manualNumber"
             type="number"
             min="0"
             max="9"
-            inputmode="numeric"
-            placeholder="0 - 9"
-          >
+            step="1"
+            placeholder="Enter digit manually"
+          />
 
-        </label>
+          <small class="manual-help">
+            For Matches, Differs, Over and Under,
+            enter your number manually.
+            AI will NOT fill this field.
+          </small>
 
-        <small class="manual-help">
-          For MATCHES, DIFFERS, OVER and UNDER, enter your number manually.
-          AI will NOT automatically fill this field.
-        </small>
-
-      </div>
+        </div>
 
 
-      <div class="form-row">
+        <div class="form-group">
 
-        <label>
-          Stake
+          <label for="stake">
+            STAKE
+          </label>
 
           <input
             id="stake"
@@ -422,216 +884,410 @@
             min="0"
             step="0.01"
             value="1"
-          >
+          />
 
-        </label>
-
-        <label>
-          Take Profit
-
-          <input
-            id="takeProfit"
-            type="number"
-            min="0"
-            step="0.01"
-            value="10"
-          >
-
-        </label>
-
-      </div>
+        </div>
 
 
-      <div class="form-row">
+        <div class="form-row">
 
-        <label>
-          Stop Loss
+          <div class="form-group">
 
-          <input
-            id="stopLoss"
-            type="number"
-            min="0"
-            step="0.01"
-            value="10"
-          >
+            <label for="takeProfit">
+              TAKE PROFIT
+            </label>
 
-        </label>
+            <input
+              id="takeProfit"
+              type="number"
+              min="0"
+              step="0.01"
+              value="0"
+            />
 
-        <label>
-          Martingale
+          </div>
+
+
+          <div class="form-group">
+
+            <label for="stopLoss">
+              STOP LOSS
+            </label>
+
+            <input
+              id="stopLoss"
+              type="number"
+              min="0"
+              step="0.01"
+              value="0"
+            />
+
+          </div>
+
+        </div>
+
+
+        <div class="form-group">
+
+          <label for="martingale">
+            MARTINGALE
+          </label>
 
           <select id="martingale">
 
-            <option value="OFF">OFF</option>
-            <option value="1.5">1.5x</option>
-            <option value="2">2x</option>
-            <option value="2.5">2.5x</option>
+            <option value="OFF">
+              OFF
+            </option>
+
+            <option value="1.5">
+              1.5x
+            </option>
+
+            <option value="2">
+              2x
+            </option>
+
+            <option value="2.5">
+              2.5x
+            </option>
 
           </select>
 
-        </label>
-
-      </div>
+        </div>
 
 
-      <div class="trade-buttons">
+        <!-- TRADE CONTROLS -->
+        <div class="control-card">
 
-        <button id="startTrading" class="primary-btn">
-          START PAPER TRADING
+          <button
+            id="startTrading"
+            class="primary-btn"
+            type="button"
+          >
+            ▶ START TRADING
+          </button>
+
+          <button
+            id="stopTrading"
+            class="danger-btn"
+            type="button"
+          >
+            ■ STOP
+          </button>
+
+        </div>
+
+      </section>
+
+
+      <!-- =================================================
+           TRADE STATS
+      ================================================== -->
+      <section class="stats-card">
+
+        <div class="section-title">
+          📈 TRADE STATISTICS
+        </div>
+
+        <div class="stats-grid">
+
+          <div class="stat-item">
+
+            <span>
+              TOTAL
+            </span>
+
+            <strong id="tradeTotal">
+              0
+            </strong>
+
+          </div>
+
+
+          <div class="stat-item">
+
+            <span>
+              WINS
+            </span>
+
+            <strong id="tradeWins">
+              0
+            </strong>
+
+          </div>
+
+
+          <div class="stat-item">
+
+            <span>
+              LOSSES
+            </span>
+
+            <strong id="tradeLosses">
+              0
+            </strong>
+
+          </div>
+
+
+          <div class="stat-item">
+
+            <span>
+              ACCURACY
+            </span>
+
+            <strong id="tradeAccuracy">
+              0%
+            </strong>
+
+          </div>
+
+        </div>
+
+      </section>
+
+    </section>
+
+
+    <!-- ===================================================
+         HISTORY PAGE
+    ==================================================== -->
+    <section
+      id="page-history"
+      class="page"
+    >
+
+      <section class="history-card">
+
+        <div class="section-title">
+          📜 SIGNAL HISTORY
+        </div>
+
+
+        <div class="history-stats">
+
+          <div class="stat-item">
+
+            <span>
+              TOTAL
+            </span>
+
+            <strong id="historyTotal">
+              0
+            </strong>
+
+          </div>
+
+
+          <div class="stat-item">
+
+            <span>
+              WINS
+            </span>
+
+            <strong id="historyWins">
+              0
+            </strong>
+
+          </div>
+
+
+          <div class="stat-item">
+
+            <span>
+              LOSSES
+            </span>
+
+            <strong id="historyLosses">
+              0
+            </strong>
+
+          </div>
+
+
+          <div class="stat-item">
+
+            <span>
+              PENDING
+            </span>
+
+            <strong id="historyPending">
+              0
+            </strong>
+
+          </div>
+
+
+          <div class="stat-item">
+
+            <span>
+              ACCURACY
+            </span>
+
+            <strong id="historyAccuracy">
+              0%
+            </strong>
+
+          </div>
+
+        </div>
+
+
+        <!-- HISTORY TABLE -->
+        <div class="history-table-wrap">
+
+          <table class="history-table">
+
+            <thead>
+
+              <tr>
+
+                <th>
+                  TIME
+                </th>
+
+                <th>
+                  MARKET
+                </th>
+
+                <th>
+                  STRATEGY
+                </th>
+
+                <th>
+                  PREDICTION
+                </th>
+
+                <th>
+                  CONFIDENCE
+                </th>
+
+                <th>
+                  RESULT
+                </th>
+
+              </tr>
+
+            </thead>
+
+
+            <tbody id="historyList">
+
+              <tr>
+
+                <td
+                  colspan="6"
+                  class="empty-history"
+                >
+                  No signals yet.
+                </td>
+
+              </tr>
+
+            </tbody>
+
+          </table>
+
+        </div>
+
+
+        <button
+          id="clearHistory"
+          class="danger-btn clear-history-btn"
+          type="button"
+        >
+          🗑 CLEAR HISTORY
         </button>
 
-        <button id="stopTrading" class="danger-btn">
-          STOP
-        </button>
+      </section>
 
-      </div>
+    </section>
 
+  </main>
+
+
+  <!-- =====================================================
+       BOTTOM NAVIGATION
+  ====================================================== -->
+  <nav class="bottom-nav">
+
+    <button
+      class="nav-btn active"
+      data-page="analysis"
+      type="button"
+    >
+
+      <span class="nav-icon">
+        🧠
+      </span>
+
+      <span class="nav-label">
+        Analysis
+      </span>
+
+    </button>
+
+
+    <button
+      class="nav-btn"
+      data-page="trade"
+      type="button"
+    >
+
+      <span class="nav-icon">
+        ⚡
+      </span>
+
+      <span class="nav-label">
+        Trade
+      </span>
+
+    </button>
+
+
+    <button
+      class="nav-btn"
+      data-page="history"
+      type="button"
+    >
+
+      <span class="nav-icon">
+        📜
+      </span>
+
+      <span class="nav-label">
+        History
+      </span>
+
+    </button>
+
+  </nav>
+
+
+  <!-- =====================================================
+       FOOTER
+  ====================================================== -->
+  <footer class="footer">
+
+    <div>
+      KRISHWAVE AI BEAST V5.8
     </div>
 
-
-    <!-- TRADE STATS -->
-    <div class="section-title">
-      <h3>TRADE STATISTICS</h3>
+    <div>
+      DERIV MARKET INTELLIGENCE
     </div>
 
-    <div class="stats-grid">
-
-      <div class="stat-card">
-        <small>TOTAL</small>
-        <strong id="tradeTotal">0</strong>
-      </div>
-
-      <div class="stat-card">
-        <small>WINS</small>
-        <strong id="tradeWins">0</strong>
-      </div>
-
-      <div class="stat-card">
-        <small>LOSSES</small>
-        <strong id="tradeLosses">0</strong>
-      </div>
-
-      <div class="stat-card">
-        <small>ACCURACY</small>
-        <strong id="tradeAccuracy">0%</strong>
-      </div>
-
+    <div class="footer-warning">
+      DEMO / PAPER MODE — USE AT YOUR OWN RISK
     </div>
 
-  </section>
+  </footer>
 
 
-  <!-- ================= HISTORY PAGE ================= -->
-
-  <section id="historyPage" class="page">
-
-    <div class="section-title">
-
-      <div>
-        <h2>HISTORY</h2>
-        <p>Paper signal history</p>
-      </div>
-
-      <button id="clearHistory" class="danger-btn small-btn">
-        CLEAR
-      </button>
-
-    </div>
-
-
-    <div class="stats-grid">
-
-      <div class="stat-card">
-        <small>TOTAL</small>
-        <strong id="historyTotal">0</strong>
-      </div>
-
-      <div class="stat-card">
-        <small>WINS</small>
-        <strong id="historyWins">0</strong>
-      </div>
-
-      <div class="stat-card">
-        <small>LOSSES</small>
-        <strong id="historyLosses">0</strong>
-      </div>
-
-      <div class="stat-card">
-        <small>PENDING</small>
-        <strong id="historyPending">0</strong>
-      </div>
-
-      <div class="stat-card">
-        <small>ACCURACY</small>
-        <strong id="historyAccuracy">0%</strong>
-      </div>
-
-    </div>
-
-
-    <div class="history-card">
-
-      <div class="table-wrapper">
-
-        <table>
-
-          <thead>
-
-            <tr>
-              <th>TIME</th>
-              <th>MARKET</th>
-              <th>STRATEGY</th>
-              <th>PREDICTION</th>
-              <th>RESULT</th>
-            </tr>
-
-          </thead>
-
-          <tbody id="historyList">
-
-          </tbody>
-
-        </table>
-
-      </div>
-
-    </div>
-
-  </section>
-
-</main>
-
-
-<!-- ================= BOTTOM NAVIGATION ================= -->
-
-<nav class="bottom-nav">
-
-  <button class="nav-btn active" data-page="analysis">
-    <span>📊</span>
-    <small>Analysis</small>
-  </button>
-
-  <button class="nav-btn" data-page="trade">
-    <span>⚡</span>
-    <small>Trade</small>
-  </button>
-
-  <button class="nav-btn" data-page="history">
-    <span>📜</span>
-    <small>History</small>
-  </button>
-
-</nav>
-
-
-<footer>
-  KRISHWAVE AI BEAST V5.8
-  <br>
-  Analysis & Paper Trading Engine
-</footer>
-
-
-<script src="app.js"></script>
+  <!-- =====================================================
+       APP SCRIPT
+  ====================================================== -->
+  <script src="app.js"></script>
 
 </body>
 </html>
