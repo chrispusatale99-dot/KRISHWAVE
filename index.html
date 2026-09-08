@@ -191,7 +191,7 @@
         <div class="input-field-group full-width">
           <label>STRATEGY</label>
           <div id="strategyTrigger" class="custom-select-trigger">
-            <span id="selectedStrategyLabel">Matches / Differs</span>
+            <span id="selectedStrategyLabel">Matches</span>
             <span class="dropdown-arrow">❯</span>
           </div>
         </div>
@@ -233,12 +233,12 @@
         <div class="input-field-group full-width">
           <label>STRATEGY</label>
           <div id="manualStrategyTrigger" class="custom-select-trigger">
-            <span id="manualSelectedStrategyLabel">Matches / Differs</span>
+            <span id="manualSelectedStrategyLabel">Matches</span>
             <span class="dropdown-arrow">❯</span>
           </div>
         </div>
 
-        <div class="input-field-group full-width">
+        <div id="targetDigitContainer" class="input-field-group full-width">
           <label>TARGET DIGIT</label>
           <input id="manualTargetDigitInput" type="number" min="0" max="9" value="4">
         </div>
@@ -294,16 +294,28 @@
 <!-- Strategy Selection Modal -->
 <div id="strategyModal" class="modal-overlay" style="display:none;">
   <div class="modal-content">
-    <div class="strategy-option selected" data-strategy="MATCHES" data-label="Matches / Differs">
-      <span>Matches / Differs</span>
+    <div class="strategy-option selected" data-strategy="MATCHES" data-label="Matches">
+      <span>Matches</span>
       <span class="radio-icon"></span>
     </div>
-    <div class="strategy-option" data-strategy="EVEN" data-label="Even / Odd">
-      <span>Even / Odd</span>
+    <div class="strategy-option" data-strategy="DIFFERS" data-label="Differs">
+      <span>Differs</span>
       <span class="radio-icon"></span>
     </div>
-    <div class="strategy-option" data-strategy="OVER" data-label="Over / Under">
-      <span>Over / Under</span>
+    <div class="strategy-option" data-strategy="EVEN" data-label="Even">
+      <span>Even</span>
+      <span class="radio-icon"></span>
+    </div>
+    <div class="strategy-option" data-strategy="ODD" data-label="Odd">
+      <span>Odd</span>
+      <span class="radio-icon"></span>
+    </div>
+    <div class="strategy-option" data-strategy="OVER" data-label="Over">
+      <span>Over</span>
+      <span class="radio-icon"></span>
+    </div>
+    <div class="strategy-option" data-strategy="UNDER" data-label="Under">
+      <span>Under</span>
       <span class="radio-icon"></span>
     </div>
   </div>
