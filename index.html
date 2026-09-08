@@ -218,12 +218,44 @@
 
     <!-- Manual Engine View -->
     <div id="manualContent" class="engine-content" style="display:none;">
+      <div class="engine-status-box">
+        <small>WAITING FOR CONNECTION...</small>
+        <div class="status-dash">MANUAL</div>
+        <small id="manualStatusText" class="text-accent">Manual trading active</small>
+      </div>
+
       <div class="form-grid-custom">
         <div class="input-field-group full-width">
-          <label>PREDICTED DIGIT (0-9)</label>
-          <input id="manualDigitInput" type="number" min="0" max="9" value="5">
+          <label>STAKE ($) <small>(Minimum stake 0.35)</small></label>
+          <input id="manualStakeInput" type="number" min="0.35" step="0.01" value="10">
+        </div>
+
+        <div class="input-field-group full-width">
+          <label>STRATEGY</label>
+          <div id="manualStrategyTrigger" class="custom-select-trigger">
+            <span id="manualSelectedStrategyLabel">Matches / Differs</span>
+            <span class="dropdown-arrow">❯</span>
+          </div>
+        </div>
+
+        <div class="input-field-group full-width">
+          <label>TARGET DIGIT</label>
+          <input id="manualTargetDigitInput" type="number" min="0" max="9" value="4">
+        </div>
+
+        <div class="row-two-col">
+          <div class="input-field-group">
+            <label>TAKE PROFIT ($)</label>
+            <input id="manualTakeProfitInput" type="number" value="50">
+          </div>
+          <div class="input-field-group">
+            <label>STOP LOSS ($)</label>
+            <input id="manualStopLossInput" type="number" value="100">
+          </div>
         </div>
       </div>
+
+      <button id="placeTradeBtn" class="primary-action-btn">Place Trade</button>
     </div>
   </div>
 
