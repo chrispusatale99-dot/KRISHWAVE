@@ -1,7648 +1,1419 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-  <meta charset="UTF-8">
+    <meta charset="UTF-8">
 
-  <meta
-    name="viewport"
-    content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no"
-  >
+    <meta
+        name="viewport"
+        content="width=device-width, initial-scale=1.0"
+    >
 
-  <meta name="theme-color" content="#07111f">
+    <meta
+        name="theme-color"
+        content="#07111f"
+    >
 
-  <title>KRISHWAVE AI BEAST V7.0</title>
+    <meta
+        name="description"
+        content="KRISHWAVE V7 Deriv Market Intelligence and AI Analysis"
+    >
 
-  <link rel="stylesheet" href="style.css">
+    <title>KRISHWAVE V7</title>
+
+    <link
+        rel="stylesheet"
+        href="style.css"
+    >
 </head>
 
 <body>
 
 <!-- =====================================================
-     HEADER
-===================================================== -->
+     APP
+====================================================== -->
 
-<header class="topbar">
+<div class="app-shell">
 
-  <div class="brand">
-    <div class="brand-icon">K</div>
+    <!-- =================================================
+         HEADER
+    ================================================== -->
 
-    <div>
-      <div class="brand-title">KRISHWAVE</div>
-      <div class="brand-subtitle">AI BEAST V7.0</div>
-    </div>
-  </div>
+    <header class="topbar">
 
-  <div class="connection-box">
-    <span id="connectionDot" class="connection-dot"></span>
-    <span id="connectionText">CONNECTING...</span>
-  </div>
+        <div class="brand-area">
 
-  <button id="themeToggle" class="icon-button">
-    ☀️
-  </button>
+            <div class="brand-icon">
+                KW
+            </div>
 
-</header>
+            <div>
+                <h1>KRISHWAVE</h1>
 
+                <div class="version-line">
+                    AI BEAST V7.0
+                </div>
+            </div>
 
-<!-- =====================================================
-     NAVIGATION
-===================================================== -->
-
-<nav class="bottom-nav">
-
-  <button class="nav-btn active" data-page="trade">
-    <span>⚡</span>
-    <small>Trade</small>
-  </button>
-
-  <button class="nav-btn" data-page="analysis">
-    <span>🧠</span>
-    <small>Analysis</small>
-  </button>
-
-  <button class="nav-btn" data-page="history">
-    <span>📊</span>
-    <small>History</small>
-  </button>
-
-</nav>
+        </div>
 
 
-<main>
+        <div class="top-actions">
+
+            <div class="connection-pill">
+
+                <span
+                    id="connectionDot"
+                    class="connection-dot disconnected"
+                ></span>
+
+                <span id="connectionStatus">
+                    OFFLINE
+                </span>
+
+            </div>
 
 
-<!-- =====================================================
-     TRADE PAGE
-===================================================== -->
+            <button
+                id="themeToggle"
+                class="icon-button"
+                type="button"
+                title="Toggle theme"
+            >
+                ☀️
+            </button>
 
-<section id="tradePage" class="page active">
+        </div>
 
-  <div class="page-heading">
-
-    <div>
-      <h1>Trading Engine</h1>
-      <p>AI-powered demo intelligence</p>
-    </div>
-
-    <div class="live-badge">
-      <span id="dataStatus">CONNECTING...</span>
-    </div>
-
-  </div>
+    </header>
 
 
-  <!-- ===================================================
-       ENGINE SELECTOR
-  ==================================================== -->
+    <!-- =================================================
+         ACCOUNT BAR
+    ================================================== -->
 
-  <div class="engine-tabs">
+    <section class="account-bar">
 
-    <button
-      id="tabAiBot"
-      class="engine-tab active"
-    >
-      <span>🤖</span>
-      <strong>AI BOT</strong>
-      <small>Dominant</small>
-    </button>
+        <div class="account-item">
 
-    <button
-      id="tabCircularAI"
-      class="engine-tab"
-    >
-      <span>⭕</span>
-      <strong>CIRCULAR AI</strong>
-      <small>10 → 5 → 3</small>
-    </button>
+            <span class="small-label">
+                ACCOUNT MODE
+            </span>
 
-    <button
-      id="tabManual"
-      class="engine-tab"
-    >
-      <span>🎯</span>
-      <strong>MANUAL</strong>
-      <small>Control</small>
-    </button>
+            <strong id="accountMode">
+                DEMO
+            </strong>
 
-  </div>
+        </div>
 
 
-  <!-- ===================================================
-       AI BOT
-  ==================================================== -->
+        <div class="account-item">
 
-  <div id="aiBotContent" class="engine-content">
+            <span class="small-label">
+                BALANCE
+            </span>
 
-    <div class="engine-card ai-main-card">
+            <strong id="balanceValue">
+                $1000.00
+            </strong>
 
-      <div class="card-top">
+        </div>
+
+
+        <div class="account-item">
+
+            <span class="small-label">
+                MARKET
+            </span>
+
+            <strong id="currentMarket">
+                Volatility 10 Index
+            </strong>
+
+        </div>
+
+
+        <div class="account-actions">
+
+            <button
+                id="reconnectButton"
+                class="secondary-button"
+                type="button"
+            >
+                RECONNECT
+            </button>
+
+            <button
+                id="resetDemoButton"
+                class="secondary-button"
+                type="button"
+            >
+                RESET DEMO
+            </button>
+
+        </div>
+
+    </section>
+
+
+    <!-- =================================================
+         MARKET CONTROL
+    ================================================== -->
+
+    <main class="main-content">
+
+        <section class="panel market-panel">
+
+            <div class="panel-header">
+
+                <div>
+
+                    <span class="eyebrow">
+                        LIVE MARKET
+                    </span>
+
+                    <h2>
+                        Market Intelligence
+                    </h2>
+
+                </div>
+
+                <div
+                    id="scannerStatus"
+                    class="status-badge"
+                >
+                    SCANNING
+                </div>
+
+            </div>
+
+
+            <div class="market-controls">
+
+                <div class="field-group">
+
+                    <label for="marketSelect">
+                        VOLATILITY MARKET
+                    </label>
+
+                    <select
+                        id="marketSelect"
+                    >
+                    </select>
+
+                </div>
+
+
+                <div class="live-price-card">
+
+                    <span>
+                        LIVE QUOTE
+                    </span>
+
+                    <strong id="liveQuote">
+                        --
+                    </strong>
+
+                </div>
+
+
+                <div class="live-digit-card">
+
+                    <span>
+                        LAST DIGIT
+                    </span>
+
+                    <strong id="liveDigit">
+                        --
+                    </strong>
+
+                </div>
+
+            </div>
+
+
+            <div class="live-meta">
+
+                <span>
+                    Ticks:
+                    <strong id="tickCounter">
+                        0
+                    </strong>
+                </span>
+
+                <span>
+                    Last tick:
+                    <strong id="lastTickTime">
+                        --
+                    </strong>
+                </span>
+
+                <span>
+                    Scanner:
+                    <strong id="scannerMarket">
+                        --
+                    </strong>
+                </span>
+
+                <span>
+                    AI confidence:
+                    <strong id="scannerConfidence">
+                        --
+                    </strong>
+                </span>
+
+            </div>
+
+        </section>
+
+
+        <!-- =================================================
+             AI MODE
+        ================================================== -->
+
+        <section class="panel">
+
+            <div class="panel-header">
+
+                <div>
+
+                    <span class="eyebrow">
+                        TRADING PARAMETERS
+                    </span>
+
+                    <h2>
+                        AI Control
+                    </h2>
+
+                </div>
+
+                <div class="mode-indicator">
+
+                    MODE:
+                    <strong id="selectedAIMode">
+                        CIRCULAR
+                    </strong>
+
+                </div>
+
+            </div>
+
+
+            <div class="ai-mode-grid">
+
+                <button
+                    type="button"
+                    class="ai-mode-button"
+                    data-ai-mode="MANUAL"
+                >
+
+                    <span class="mode-title">
+                        MANUAL
+                    </span>
+
+                    <span class="mode-description">
+                        You choose the trade
+                    </span>
+
+                </button>
+
+
+                <button
+                    type="button"
+                    class="ai-mode-button"
+                    data-ai-mode="AI"
+                >
+
+                    <span class="mode-title">
+                        AI BOT
+                    </span>
+
+                    <span class="mode-description">
+                        Strategy engine selects
+                    </span>
+
+                </button>
+
+
+                <button
+                    type="button"
+                    class="ai-mode-button active"
+                    data-ai-mode="CIRCULAR"
+                >
+
+                    <span class="mode-title">
+                        CIRCULAR AI
+                    </span>
+
+                    <span class="mode-description">
+                        Digit prediction engine
+                    </span>
+
+                </button>
+
+            </div>
+
+        </section>
+
+
+        <!-- =================================================
+             STRATEGY
+        ================================================== -->
+
+        <section class="panel">
+
+            <div class="panel-header">
+
+                <div>
+
+                    <span class="eyebrow">
+                        STRATEGY
+                    </span>
+
+                    <h2>
+                        Choose Strategy
+                    </h2>
+
+                </div>
+
+                <div class="chosen-strategy">
+
+                    CHOSEN:
+                    <strong id="chosenStrategy">
+                        AUTO
+                    </strong>
+
+                </div>
+
+            </div>
+
+
+            <div class="strategy-grid">
+
+                <button
+                    type="button"
+                    data-strategy="AUTO"
+                    class="strategy-button active"
+                >
+                    AUTO
+                </button>
+
+                <button
+                    type="button"
+                    data-strategy="EVEN"
+                    class="strategy-button"
+                >
+                    EVEN
+                </button>
+
+                <button
+                    type="button"
+                    data-strategy="ODD"
+                    class="strategy-button"
+                >
+                    ODD
+                </button>
+
+                <button
+                    type="button"
+                    data-strategy="HIGH"
+                    class="strategy-button"
+                >
+                    HIGH
+                </button>
+
+                <button
+                    type="button"
+                    data-strategy="LOW"
+                    class="strategy-button"
+                >
+                    LOW
+                </button>
+
+                <button
+                    type="button"
+                    data-strategy="OVER"
+                    class="strategy-button"
+                >
+                    OVER
+                </button>
+
+                <button
+                    type="button"
+                    data-strategy="UNDER"
+                    class="strategy-button"
+                >
+                    UNDER
+                </button>
+
+                <button
+                    type="button"
+                    data-strategy="MATCH"
+                    class="strategy-button"
+                >
+                    MATCHES
+                </button>
+
+                <button
+                    type="button"
+                    data-strategy="DIFFER"
+                    class="strategy-button"
+                >
+                    DIFFER
+                </button>
+
+                <button
+                    type="button"
+                    data-strategy="RISE"
+                    class="strategy-button"
+                >
+                    RISE
+                </button>
+
+                <button
+                    type="button"
+                    data-strategy="FALL"
+                    class="strategy-button"
+                >
+                    FALL
+                </button>
+
+                <button
+                    type="button"
+                    data-strategy="DIGIT"
+                    class="strategy-button"
+                >
+                    DIGIT
+                </button>
+
+            </div>
+
+        </section>
+
+
+        <!-- =================================================
+             CONTRACT
+        ================================================== -->
+
+        <section class="panel">
+
+            <div class="panel-header">
+
+                <div>
+
+                    <span class="eyebrow">
+                        CONTRACT
+                    </span>
+
+                    <h2>
+                        Contract Parameters
+                    </h2>
+
+                </div>
+
+            </div>
+
+
+            <div class="contract-grid">
+
+                <button
+                    type="button"
+                    data-contract="EVEN"
+                    class="contract-button active"
+                >
+                    EVEN
+                </button>
+
+                <button
+                    type="button"
+                    data-contract="ODD"
+                    class="contract-button"
+                >
+                    ODD
+                </button>
+
+                <button
+                    type="button"
+                    data-contract="OVER"
+                    class="contract-button"
+                >
+                    OVER
+                </button>
+
+                <button
+                    type="button"
+                    data-contract="UNDER"
+                    class="contract-button"
+                >
+                    UNDER
+                </button>
+
+                <button
+                    type="button"
+                    data-contract="MATCH"
+                    class="contract-button"
+                >
+                    MATCHES
+                </button>
+
+                <button
+                    type="button"
+                    data-contract="DIFFER"
+                    class="contract-button"
+                >
+                    DIFFER
+                </button>
+
+            </div>
+
+
+            <!-- MANUAL NUMBER -->
+            <div
+                id="contractNumberBox"
+                class="contract-number-box"
+                style="display:none;"
+            >
+
+                <div>
+
+                    <label for="contractNumber">
+                        ENTER NUMBER
+                    </label>
+
+                    <p>
+                        Enter the digit you want to use.
+                        Valid values are 0–9.
+                    </p>
+
+                </div>
+
+
+                <input
+                    id="contractNumber"
+                    type="number"
+                    min="0"
+                    max="9"
+                    step="1"
+                    inputmode="numeric"
+                    placeholder="0 - 9"
+                >
+
+            </div>
+
+        </section>
+
+
+        <!-- =================================================
+             ANALYSIS GRID
+        ================================================== -->
+
+        <section class="analysis-grid">
+
+
+            <!-- CIRCULAR AI -->
+            <article class="panel ai-card circular-card">
+
+                <div class="panel-header">
+
+                    <div>
+
+                        <span class="eyebrow">
+                            CIRCULAR AI
+                        </span>
+
+                        <h2>
+                            Digit Prediction
+                        </h2>
+
+                    </div>
+
+                    <span
+                        id="circularStatus"
+                        class="status-badge"
+                    >
+                        COLLECTING DATA
+                    </span>
+
+                </div>
+
+
+                <div class="prediction-display">
+
+                    <div class="prediction-number">
+
+                        <span>
+                            PREDICTED DIGIT
+                        </span>
+
+                        <strong id="circularPrediction">
+                            --
+                        </strong>
+
+                    </div>
+
+
+                    <div class="prediction-confidence">
+
+                        <span>
+                            CONFIDENCE
+                        </span>
+
+                        <strong id="circularConfidence">
+                            --
+                        </strong>
+
+                    </div>
+
+                </div>
+
+
+                <div class="prediction-tags">
+
+                    <span>
+                        Direction:
+                        <strong id="circularDirection">
+                            --
+                        </strong>
+                    </span>
+
+                    <span>
+                        Parity:
+                        <strong id="circularParity">
+                            --
+                        </strong>
+                    </span>
+
+                </div>
+
+
+                <div class="reason-box">
+
+                    <span>
+                        AI REASON
+                    </span>
+
+                    <p id="circularReason">
+                        Collecting live Deriv ticks for analysis...
+                    </p>
+
+                </div>
+
+            </article>
+
+
+            <!-- CHOSEN STRATEGY -->
+            <article class="panel ai-card strategy-card">
+
+                <div class="panel-header">
+
+                    <div>
+
+                        <span class="eyebrow">
+                            STRATEGY ENGINE
+                        </span>
+
+                        <h2>
+                            Selected Strategy
+                        </h2>
+
+                    </div>
+
+                </div>
+
+
+                <div class="strategy-result">
+
+                    <div>
+
+                        <span>
+                            STRATEGY
+                        </span>
+
+                        <strong id="chosenStrategy">
+                            AUTO
+                        </strong>
+
+                    </div>
+
+
+                    <div>
+
+                        <span>
+                            PREDICTION
+                        </span>
+
+                        <strong id="strategyPrediction">
+                            --
+                        </strong>
+
+                    </div>
+
+
+                    <div>
+
+                        <span>
+                            CONFIDENCE
+                        </span>
+
+                        <strong id="strategyConfidence">
+                            --
+                        </strong>
+
+                    </div>
+
+                </div>
+
+
+                <div class="reason-box">
+
+                    <span>
+                        STRATEGY REASON
+                    </span>
+
+                    <p id="strategyReason">
+                        Waiting for market data...
+                    </p>
+
+                </div>
+
+            </article>
+
+        </section>
+
+
+        <!-- =================================================
+             MAIN SIGNAL
+        ================================================== -->
+
+        <section class="panel signal-panel">
+
+            <div class="panel-header">
+
+                <div>
+
+                    <span class="eyebrow">
+                        KRISHWAVE SIGNAL
+                    </span>
+
+                    <h2>
+                        Analysis Result
+                    </h2>
+
+                </div>
+
+                <div class="countdown-box">
+
+                    <span>
+                        ENTRY
+                    </span>
+
+                    <strong id="entryCountdown">
+                        --
+                    </strong>
+
+                </div>
+
+            </div>
+
+
+            <div class="main-signal">
+
+                <div class="signal-prediction">
+
+                    <span>
+                        PREDICTION
+                    </span>
+
+                    <strong id="mainPrediction">
+                        --
+                    </strong>
+
+                </div>
+
+
+                <div class="signal-name">
+
+                    <span>
+                        SIGNAL
+                    </span>
+
+                    <strong id="mainSignal">
+                        WAITING
+                    </strong>
+
+                </div>
+
+
+                <div class="signal-confidence">
+
+                    <span>
+                        CONFIDENCE
+                    </span>
+
+                    <strong id="mainConfidence">
+                        WAIT
+                    </strong>
+
+                </div>
+
+            </div>
+
+
+            <div class="main-reason">
+
+                <span>
+                    ANALYSIS
+                </span>
+
+                <p id="mainReason">
+                    Waiting for live market analysis...
+                </p>
+
+            </div>
+
+
+            <div class="trade-controls">
+
+                <div class="field-group">
+
+                    <label for="stakeAmount">
+                        TRADE AMOUNT
+                    </label>
+
+                    <input
+                        id="stakeAmount"
+                        type="number"
+                        min="0.35"
+                        step="0.01"
+                        value="1"
+                        inputmode="decimal"
+                    >
+
+                </div>
+
+
+                <button
+                    id="analyzeButton"
+                    type="button"
+                    class="primary-button"
+                >
+                    ANALYZE NOW
+                </button>
+
+
+                <button
+                    id="tradeNowButton"
+                    type="button"
+                    class="trade-button"
+                >
+                    TRADE NOW
+                </button>
+
+            </div>
+
+        </section>
+
+
+        <!-- =================================================
+             MARKET METRICS
+        ================================================== -->
+
+        <section class="metric-grid">
+
+            <div class="metric-card">
+
+                <span>
+                    LAST DIGIT
+                </span>
+
+                <strong id="latestDigit">
+                    --
+                </strong>
+
+            </div>
+
+
+            <div class="metric-card">
+
+                <span>
+                    HOT DIGIT
+                </span>
+
+                <strong id="hotDigit">
+                    --
+                </strong>
+
+            </div>
+
+
+            <div class="metric-card">
+
+                <span>
+                    COLD DIGIT
+                </span>
+
+                <strong id="coldDigit">
+                    --
+                </strong>
+
+            </div>
+
+
+            <div class="metric-card">
+
+                <span>
+                    MOMENTUM
+                </span>
+
+                <strong id="marketMomentum">
+                    0.00
+                </strong>
+
+            </div>
+
+
+            <div class="metric-card">
+
+                <span>
+                    DIGIT VOLATILITY
+                </span>
+
+                <strong id="digitVolatility">
+                    0.00
+                </strong>
+
+            </div>
+
+
+            <div class="metric-card">
+
+                <span>
+                    ENTROPY
+                </span>
+
+                <strong id="digitEntropy">
+                    0.00
+                </strong>
+
+            </div>
+
+        </section>
+
+
+        <!-- =================================================
+             EVEN ODD / HIGH LOW
+        ================================================== -->
+
+        <section class="analysis-two-column">
+
+
+            <article class="panel">
+
+                <div class="panel-header">
+
+                    <div>
+
+                        <span class="eyebrow">
+                            PARITY
+                        </span>
+
+                        <h2>
+                            Even / Odd
+                        </h2>
+
+                    </div>
+
+                </div>
+
+
+                <div class="percentage-row">
+
+                    <div>
+
+                        <span>
+                            EVEN
+                        </span>
+
+                        <strong id="evenPercentage">
+                            0%
+                        </strong>
+
+                    </div>
+
+
+                    <div>
+
+                        <span>
+                            ODD
+                        </span>
+
+                        <strong id="oddPercentage">
+                            0%
+                        </strong>
+
+                    </div>
+
+                </div>
+
+            </article>
+
+
+            <article class="panel">
+
+                <div class="panel-header">
+
+                    <div>
+
+                        <span class="eyebrow">
+                            RANGE
+                        </span>
+
+                        <h2>
+                            High / Low
+                        </h2>
+
+                    </div>
+
+                </div>
+
+
+                <div class="percentage-row">
+
+                    <div>
+
+                        <span>
+                            HIGH 5–9
+                        </span>
+
+                        <strong id="highPercentage">
+                            0%
+                        </strong>
+
+                    </div>
+
+
+                    <div>
+
+                        <span>
+                            LOW 0–4
+                        </span>
+
+                        <strong id="lowPercentage">
+                            0%
+                        </strong>
+
+                    </div>
+
+                </div>
+
+            </article>
+
+        </section>
+
+
+        <!-- =================================================
+             DIGIT DISTRIBUTION
+        ================================================== -->
+
+        <section class="panel">
+
+            <div class="panel-header">
+
+                <div>
+
+                    <span class="eyebrow">
+                        DIGIT INTELLIGENCE
+                    </span>
+
+                    <h2>
+                        Digit Distribution
+                    </h2>
+
+                </div>
+
+                <span>
+                    Last 120 ticks
+                </span>
+
+            </div>
+
+
+            <div
+                id="digitDistribution"
+                class="digit-distribution"
+            >
+
+                <!-- JS inserts bars -->
+
+            </div>
+
+        </section>
+
+
+        <!-- =================================================
+             LAST TRADE
+        ================================================== -->
+
+        <section class="panel last-trade-panel">
+
+            <div class="panel-header">
+
+                <div>
+
+                    <span class="eyebrow">
+                        TRADE RESULT
+                    </span>
+
+                    <h2>
+                        Latest Trade
+                    </h2>
+
+                </div>
+
+                <strong id="lastTradeResult">
+                    --
+                </strong>
+
+            </div>
+
+
+            <div class="last-trade-grid">
+
+                <div>
+
+                    <span>
+                        TRADE AMOUNT
+                    </span>
+
+                    <strong id="lastTradeAmount">
+                        $0.00
+                    </strong>
+
+                </div>
+
+
+                <div>
+
+                    <span>
+                        WIN AMOUNT
+                    </span>
+
+                    <strong id="lastWinAmount">
+                        $0.00
+                    </strong>
+
+                </div>
+
+            </div>
+
+        </section>
+
+
+        <!-- =================================================
+             HISTORY
+        ================================================== -->
+
+        <section class="panel history-panel">
+
+            <div class="panel-header">
+
+                <div>
+
+                    <span class="eyebrow">
+                        TRADE HISTORY
+                    </span>
+
+                    <h2>
+                        History
+                    </h2>
+
+                </div>
+
+
+                <button
+                    id="clearHistoryButton"
+                    class="secondary-button"
+                    type="button"
+                >
+                    CLEAR HISTORY
+                </button>
+
+            </div>
+
+
+            <div class="history-summary">
+
+                <div>
+
+                    <span>
+                        WINS
+                    </span>
+
+                    <strong id="historyWins">
+                        0
+                    </strong>
+
+                </div>
+
+
+                <div>
+
+                    <span>
+                        LOSSES
+                    </span>
+
+                    <strong id="historyLosses">
+                        0
+                    </strong>
+
+                </div>
+
+
+                <div>
+
+                    <span>
+                        AMOUNT
+                    </span>
+
+                    <strong id="historyAmount">
+                        $0.00
+                    </strong>
+
+                </div>
+
+
+                <div>
+
+                    <span>
+                        WIN AMOUNT
+                    </span>
+
+                    <strong id="historyWinAmount">
+                        $0.00
+                    </strong>
+
+                </div>
+
+
+                <div>
+
+                    <span>
+                        PROFIT
+                    </span>
+
+                    <strong id="historyProfit">
+                        $0.00
+                    </strong>
+
+                </div>
+
+            </div>
+
+
+            <div class="table-wrapper">
+
+                <table>
+
+                    <thead>
+
+                        <tr>
+
+                            <th>
+                                TIME
+                            </th>
+
+                            <th>
+                                MARKET
+                            </th>
+
+                            <th>
+                                STRATEGY
+                            </th>
+
+                            <th>
+                                MODE
+                            </th>
+
+                            <th>
+                                PREDICTION
+                            </th>
+
+                            <th>
+                                NUMBER
+                            </th>
+
+                            <th>
+                                AMOUNT
+                            </th>
+
+                            <th>
+                                WIN AMOUNT
+                            </th>
+
+                            <th>
+                                PROFIT
+                            </th>
+
+                            <th>
+                                RESULT
+                            </th>
+
+                        </tr>
+
+                    </thead>
+
+
+                    <tbody
+                        id="tradeHistoryBody"
+                    >
+
+                        <tr>
+
+                            <td colspan="10">
+                                No trades yet
+                            </td>
+
+                        </tr>
+
+                    </tbody>
+
+                </table>
+
+            </div>
+
+        </section>
+
+
+    </main>
+
+
+    <!-- =================================================
+         FOOTER
+    ================================================== -->
+
+    <footer class="footer">
 
         <div>
-          <span class="eyebrow">PRIMARY ENGINE</span>
-          <h2>🤖 AI BOT</h2>
-        </div>
-
-        <div id="botStatusDash" class="status-pill">
-          READY
-        </div>
-
-      </div>
-
-
-      <div class="bot-selected-grid">
-
-        <div class="mini-card">
-          <span>MARKET</span>
-          <strong id="botSelectedMarket">Waiting...</strong>
-        </div>
-
-        <div class="mini-card">
-          <span>STRATEGY</span>
-          <strong id="botSelectedStrategy">Matches</strong>
-        </div>
-
-        <div class="mini-card">
-          <span>SCORE</span>
-          <strong id="botScore">--/100</strong>
-        </div>
-
-        <div class="mini-card">
-          <span>CONFIDENCE</span>
-          <strong id="botConfidence">--%</strong>
-        </div>
-
-      </div>
-
-
-      <div class="bot-status-line">
-        <span id="engineStatusText">
-          AI Bot Ready
-        </span>
-      </div>
-
-
-      <div class="bot-controls">
-
-        <button
-          id="botStrategyTrigger"
-          class="secondary-button"
-        >
-          ⚙️ Strategy Pool
-        </button>
-
-        <button
-          id="startBotBtn"
-          class="primary-button"
-        >
-          ▶ Start Trading Bot
-        </button>
-
-      </div>
-
-    </div>
-
-
-    <div class="compact-settings">
-
-      <div class="input-card">
-        <label>Stake</label>
-        <input
-          id="stakeInput"
-          type="number"
-          min="0.35"
-          step="0.01"
-          value="0.35"
-        >
-      </div>
-
-      <div class="input-card">
-        <label>Take Profit</label>
-        <input
-          id="takeProfitInput"
-          type="number"
-          value="50"
-        >
-      </div>
-
-      <div class="input-card">
-        <label>Stop Loss</label>
-        <input
-          id="stopLossInput"
-          type="number"
-          value="100"
-        >
-      </div>
-
-    </div>
-
-  </div>
-
-
-  <!-- ===================================================
-       CIRCULAR AI
-  ==================================================== -->
-
-  <div
-    id="circularAIContent"
-    class="engine-content"
-    style="display:none"
-  >
-
-    <div class="engine-card circular-card">
-
-      <div class="card-top">
-
-        <div>
-          <span class="eyebrow">ADVANCED ENGINE</span>
-          <h2>⭕ CIRCULAR AI</h2>
-        </div>
-
-        <div
-          id="circularStatusText"
-          class="status-pill"
-        >
-          READY
-        </div>
-
-      </div>
-
-
-      <div class="selector-row">
-
-        <button
-          id="circularMarketTrigger"
-          class="selector-button"
-        >
-          <span>Market</span>
-          <strong id="circularMarketLabel">
-            Volatility 10 Index
-          </strong>
-        </button>
-
-        <button
-          id="circularStrategyTrigger"
-          class="selector-button"
-        >
-          <span>Strategy</span>
-          <strong id="circularStrategyLabel">
-            Matches
-          </strong>
-        </button>
-
-      </div>
-
-
-      <div class="ai-circle" id="aiCircle">
-
-        <div class="circle-ring">
-
-          <span id="aiCircleLabel">
-            READY
-          </span>
-
-          <strong id="aiCirclePrediction">
-            --
-          </strong>
-
-          <small id="aiCircleTimer">
-            10
-          </small>
-
-        </div>
-
-        <div
-          id="aiCircleStatus"
-          class="circle-status"
-        >
-          READY
-        </div>
-
-      </div>
-
-
-      <div class="cycle-row">
-
-        <div id="cycleAnalysis" class="cycle-step">
-          <span>10</span>
-          <small>ANALYZE</small>
-        </div>
-
-        <div class="cycle-line"></div>
-
-        <div id="cyclePrediction" class="cycle-step">
-          <span>5</span>
-          <small>PREDICT</small>
-        </div>
-
-        <div class="cycle-line"></div>
-
-        <div id="cycleTrade" class="cycle-step">
-          <span>3</span>
-          <small>TRADE</small>
-        </div>
-
-      </div>
-
-
-      <div id="analysisMsg" class="analysis-message">
-        Circular AI Ready
-      </div>
-
-
-      <div class="circular-controls">
-
-        <button
-          id="startAI"
-          class="primary-button"
-        >
-          ▶ START CIRCULAR AI
-        </button>
-
-        <button
-          id="stopAI"
-          class="danger-button"
-        >
-          ■ STOP
-        </button>
-
-      </div>
-
-    </div>
-
-
-    <div class="compact-settings">
-
-      <div class="input-card">
-        <label>Stake</label>
-        <input
-          id="circularStakeInput"
-          type="number"
-          min="0.35"
-          step="0.01"
-          value="0.35"
-        >
-      </div>
-
-      <div class="input-card">
-        <label>Take Profit</label>
-        <input
-          id="circularTakeProfitInput"
-          type="number"
-          value="50"
-        >
-      </div>
-
-      <div class="input-card">
-        <label>Stop Loss</label>
-        <input
-          id="circularStopLossInput"
-          type="number"
-          value="100"
-        >
-      </div>
-
-    </div>
-
-  </div>
-
-
-  <!-- ===================================================
-       MANUAL
-  ==================================================== -->
-
-  <div
-    id="manualContent"
-    class="engine-content"
-    style="display:none"
-  >
-
-    <div class="engine-card manual-card">
-
-      <div class="card-top">
-
-        <div>
-          <span class="eyebrow">CONTROL ENGINE</span>
-          <h2>🎯 MANUAL</h2>
-        </div>
-
-        <div class="status-pill">
-          READY
-        </div>
-
-      </div>
-
-
-      <div class="selector-row">
-
-        <select id="manualMarketSelect">
-          <option value="R_10">
-            Volatility 10 Index
-          </option>
-        </select>
-
-        <button
-          id="manualStrategyTrigger"
-          class="selector-button"
-        >
-          <span>Strategy</span>
-          <strong id="manualSelectedStrategyLabel">
-            Matches
-          </strong>
-        </button>
-
-      </div>
-
-
-      <div
-        id="targetDigitContainer"
-        class="target-container"
-      >
-
-        <label>Target Digit</label>
-
-        <input
-          id="manualTargetDigitInput"
-          type="number"
-          min="0"
-          max="9"
-          value="4"
-        >
-
-      </div>
-
-
-      <div class="compact-settings">
-
-        <div class="input-card">
-          <label>Stake</label>
-          <input
-            id="manualStakeInput"
-            type="number"
-            min="0.35"
-            step="0.01"
-            value="0.35"
-          >
-        </div>
-
-        <div class="input-card">
-          <label>Take Profit</label>
-          <input
-            id="manualTakeProfitInput"
-            type="number"
-            value="50"
-          >
-        </div>
-
-        <div class="input-card">
-          <label>Stop Loss</label>
-          <input
-            id="manualStopLossInput"
-            type="number"
-            value="100"
-          >
-        </div>
-
-      </div>
-
-
-      <button
-        id="placeTradeBtn"
-        class="primary-button full-button"
-      >
-        ⚡ PLACE PAPER TRADE
-      </button>
-
-
-      <div
-        id="manualStatusText"
-        class="analysis-message"
-      >
-        Manual engine ready
-      </div>
-
-    </div>
-
-  </div>
-
-
-  <!-- ===================================================
-       ACCOUNT
-  ==================================================== -->
-
-  <div class="account-row">
-
-    <div class="account-card">
-      <span>ACCOUNT MODE</span>
-      <strong>DEMO / PAPER</strong>
-    </div>
-
-    <div class="account-card">
-      <span>PAPER BALANCE</span>
-      <strong id="paperBalance">$1,000.00</strong>
-    </div>
-
-    <div class="account-card">
-      <span>PROFIT</span>
-      <strong id="totalProfit">$0.00</strong>
-    </div>
-
-  </div>
-
-
-  <!-- ===================================================
-       MARKET CHART
-  ==================================================== -->
-
-  <div class="market-card">
-
-    <div class="market-card-header">
-
-      <div>
-        <span class="eyebrow">LIVE MARKET</span>
-
-        <h2 id="currentChartMarket">
-          Volatility 10 Index
-        </h2>
-      </div>
-
-      <strong id="currentLivePrice">
-        --
-      </strong>
-
-    </div>
-
-    <canvas id="priceChartCanvas"></canvas>
-
-  </div>
-
-
-  <!-- ===================================================
-       DIGIT DISTRIBUTION
-  ==================================================== -->
-
-  <div class="digit-card">
-
-    <div class="section-header">
-
-      <div>
-        <span class="eyebrow">DIGIT INTELLIGENCE</span>
-        <h2>Digit Distribution</h2>
-      </div>
-
-      <span id="digitSampleCount">
-        0 TICKS
-      </span>
-
-    </div>
-
-    <div id="digitStatsGrid" class="digit-grid"></div>
-
-  </div>
-
-
-  <!-- ===================================================
-       ACTIVE TRADES
-  ==================================================== -->
-
-  <div class="active-card">
-
-    <div class="section-header">
-
-      <div>
-        <span class="eyebrow">LIVE PAPER POSITIONS</span>
-        <h2>Active Trades</h2>
-      </div>
-
-      <span id="activeTradeCount">0</span>
-
-    </div>
-
-    <div id="activeTradesList" class="trade-list">
-      <div class="empty-state">
-        No active paper trades
-      </div>
-    </div>
-
-  </div>
-
-</section>
-
-
-<!-- =====================================================
-     ANALYSIS PAGE
-===================================================== -->
-
-<section id="analysisPage" class="page">
-
-  <div class="page-heading">
-    <div>
-      <h1>AI Analysis</h1>
-      <p>All intelligence engines in one compact view</p>
-    </div>
-  </div>
-
-
-  <!-- DOMINANT AI BOT CARD -->
-
-  <div class="analysis-grid">
-
-    <div class="analysis-engine-card dominant">
-
-      <div class="analysis-card-title">
-        <span class="engine-icon">🤖</span>
-
-        <div>
-          <span class="eyebrow">DOMINANT ENGINE</span>
-          <h2>AI BOT</h2>
-        </div>
-
-        <span
-          id="analysisBotStatus"
-          class="status-pill"
-        >
-          READY
-        </span>
-      </div>
-
-
-      <div class="analysis-values">
-
-        <div>
-          <span>Market</span>
-          <strong id="analysisBotMarket">--</strong>
+            KRISHWAVE V7.0
         </div>
 
         <div>
-          <span>Strategy</span>
-          <strong id="analysisBotStrategy">--</strong>
+            LIVE MARKET INTELLIGENCE
         </div>
 
         <div>
-          <span>Prediction</span>
-          <strong id="analysisBotPrediction">--</strong>
+            DEMO / PAPER ANALYSIS
         </div>
 
-        <div>
-          <span>Confidence</span>
-          <strong id="analysisBotConfidence">--%</strong>
-        </div>
-
-      </div>
-
-    </div>
-
-
-    <!-- CIRCULAR -->
-
-    <div class="analysis-engine-card">
-
-      <div class="analysis-card-title">
-
-        <span class="engine-icon">⭕</span>
-
-        <div>
-          <span class="eyebrow">SELECTABLE</span>
-          <h2>CIRCULAR AI</h2>
-        </div>
-
-        <span
-          id="analysisCircularStatus"
-          class="status-pill"
-        >
-          READY
-        </span>
-
-      </div>
-
-
-      <div class="analysis-values">
-
-        <div>
-          <span>Market</span>
-          <strong id="reportMarket">--</strong>
-        </div>
-
-        <div>
-          <span>Strategy</span>
-          <strong id="reportStrategy">--</strong>
-        </div>
-
-        <div>
-          <span>Prediction</span>
-          <strong id="aiPrediction">--</strong>
-        </div>
-
-        <div>
-          <span>Confidence</span>
-          <strong id="analysisConfidence">--%</strong>
-        </div>
-
-      </div>
-
-    </div>
-
-
-    <!-- CHOSEN STRATEGY -->
-
-    <div class="analysis-engine-card strategy-card">
-
-      <div class="analysis-card-title">
-
-        <span class="engine-icon">🎯</span>
-
-        <div>
-          <span class="eyebrow">CURRENT CHOICE</span>
-          <h2>STRATEGY</h2>
-        </div>
-
-      </div>
-
-
-      <div class="chosen-strategy-box">
-
-        <strong id="analysisChosenStrategy">
-          Matches
-        </strong>
-
-        <span>
-          Current selected strategy
-        </span>
-
-      </div>
-
-    </div>
-
-  </div>
-
-
-  <!-- STATISTICAL ANALYSIS -->
-
-  <div class="analysis-report">
-
-    <div class="report-title">
-      <span class="eyebrow">STATISTICAL ENGINE</span>
-      <h2>Market Intelligence</h2>
-    </div>
-
-
-    <div class="report-grid">
-
-      <div>
-        <span>Market Score</span>
-        <strong id="reportScore">--/100</strong>
-      </div>
-
-      <div>
-        <span>Strength</span>
-        <strong id="reportStrength">--</strong>
-      </div>
-
-      <div>
-        <span>Stability</span>
-        <strong id="reportStability">--%</strong>
-      </div>
-
-      <div>
-        <span>Concentration</span>
-        <strong id="reportConcentration">--%</strong>
-      </div>
-
-      <div>
-        <span>Streak</span>
-        <strong id="reportStreak">--</strong>
-      </div>
-
-      <div>
-        <span>Agreement</span>
-        <strong id="reportAgreement">--%</strong>
-      </div>
-
-    </div>
-
-  </div>
-
-</section>
-
-
-<!-- =====================================================
-     HISTORY PAGE
-===================================================== -->
-
-<section id="historyPage" class="page">
-
-  <div class="page-heading">
-
-    <div>
-      <h1>Trade History</h1>
-      <p>Paper trading performance</p>
-    </div>
-
-    <button
-      id="clearHistoryBtn"
-      class="danger-button"
-    >
-      Clear
-    </button>
-
-  </div>
-
-
-  <!-- STOP / MINIMIZE CONTROL -->
-
-  <div class="history-control">
-
-    <div>
-
-      <span class="eyebrow">TRADING CONTROL</span>
-
-      <strong id="historyTradingStatus">
-        TRADING ACTIVE
-      </strong>
-
-    </div>
-
-    <div class="history-actions">
-
-      <button
-        id="stopTradingBtn"
-        class="danger-button"
-      >
-        ■ STOP TRADING
-      </button>
-
-      <button
-        id="minimizeHistoryBtn"
-        class="secondary-button"
-      >
-        − Minimize
-      </button>
-
-    </div>
-
-  </div>
-
-
-  <!-- STATS -->
-
-  <div class="stats-grid">
-
-    <div class="stat-card">
-      <span>TRADES</span>
-      <strong id="historyTotalTrades">0</strong>
-    </div>
-
-    <div class="stat-card">
-      <span>WINS</span>
-      <strong id="historyWins">0</strong>
-    </div>
-
-    <div class="stat-card">
-      <span>LOSSES</span>
-      <strong id="historyLosses">0</strong>
-    </div>
-
-    <div class="stat-card">
-      <span>AMOUNT WON</span>
-      <strong id="historyAmountWon">$0.00</strong>
-    </div>
-
-    <div class="stat-card">
-      <span>PAYOUT</span>
-      <strong id="historyPayout">$0.00</strong>
-    </div>
-
-    <div class="stat-card">
-      <span>PROFIT / LOSS</span>
-      <strong id="historyProfit">$0.00</strong>
-    </div>
-
-  </div>
-
-
-  <div id="historyTableWrap" class="history-table-wrap">
-
-    <div class="history-table-header">
-      <span>TIME</span>
-      <span>ENGINE</span>
-      <span>MARKET</span>
-      <span>STRATEGY</span>
-      <span>PREDICT</span>
-      <span>RESULT</span>
-      <span>STAKE</span>
-      <span>PAYOUT</span>
-      <span>AMOUNT WON</span>
-      <span>P/L</span>
-    </div>
-
-    <div id="historyList"></div>
-
-  </div>
-
-</section>
-
-</main>
-
-
-<!-- =====================================================
-     STRATEGY MODAL
-===================================================== -->
-
-<div id="strategyModal" class="modal">
-
-  <div class="modal-card">
-
-    <div class="modal-header">
-
-      <div>
-        <span class="eyebrow">STRATEGY ENGINE</span>
-        <h2>Choose Strategy</h2>
-      </div>
-
-      <button
-        id="closeStrategyModal"
-        class="modal-close"
-      >
-        ×
-      </button>
-
-    </div>
-
-
-    <div class="strategy-options">
-
-      <button
-        class="strategy-option selected"
-        data-strategy="MATCHES"
-      >
-        <strong>Matches</strong>
-        <span>Digit equals target</span>
-      </button>
-
-      <button
-        class="strategy-option"
-        data-strategy="DIFFERS"
-      >
-        <strong>Differs</strong>
-        <span>Digit differs from target</span>
-      </button>
-
-      <button
-        class="strategy-option"
-        data-strategy="OVER"
-      >
-        <strong>Over</strong>
-        <span>Digit is above target</span>
-      </button>
-
-      <button
-        class="strategy-option"
-        data-strategy="UNDER"
-      >
-        <strong>Under</strong>
-        <span>Digit is below target</span>
-      </button>
-
-      <button
-        class="strategy-option"
-        data-strategy="EVEN"
-      >
-        <strong>Even</strong>
-        <span>Digit is even</span>
-      </button>
-
-      <button
-        class="strategy-option"
-        data-strategy="ODD"
-      >
-        <strong>Odd</strong>
-        <span>Digit is odd</span>
-      </button>
-
-    </div>
-
-  </div>
+    </footer>
 
 </div>
 
 
 <!-- =====================================================
-     BOT STRATEGY MODAL
-===================================================== -->
-
-<div id="botStrategyModal" class="modal">
-
-  <div class="modal-card">
-
-    <div class="modal-header">
-
-      <div>
-        <span class="eyebrow">AI BOT</span>
-        <h2>Strategy Pool</h2>
-      </div>
-
-      <button
-        id="closeBotStrategyModal"
-        class="modal-close"
-      >
-        ×
-      </button>
-
-    </div>
-
-
-    <div class="check-list">
-
-      <label>
-        <input
-          class="bot-strategy-check"
-          type="checkbox"
-          value="MATCHES"
-          checked
-        >
-        <span>Matches</span>
-      </label>
-
-      <label>
-        <input
-          class="bot-strategy-check"
-          type="checkbox"
-          value="DIFFERS"
-          checked
-        >
-        <span>Differs</span>
-      </label>
-
-      <label>
-        <input
-          class="bot-strategy-check"
-          type="checkbox"
-          value="OVER"
-        >
-        <span>Over</span>
-      </label>
-
-      <label>
-        <input
-          class="bot-strategy-check"
-          type="checkbox"
-          value="UNDER"
-        >
-        <span>Under</span>
-      </label>
-
-      <label>
-        <input
-          class="bot-strategy-check"
-          type="checkbox"
-          value="EVEN"
-        >
-        <span>Even</span>
-      </label>
-
-      <label>
-        <input
-          class="bot-strategy-check"
-          type="checkbox"
-          value="ODD"
-        >
-        <span>Odd</span>
-      </label>
-
-    </div>
-
-
-    <div class="selected-pool">
-      <span>Selected:</span>
-      <strong id="botStrategyLabel">
-        Matches / Differs
-      </strong>
-    </div>
-
-
-    <button
-      id="applyBotStrategies"
-      class="primary-button full-button"
-    >
-      ✓ APPLY STRATEGIES
-    </button>
-
-  </div>
-
-</div>
-
+     JAVASCRIPT
+====================================================== -->
 
 <script src="app.js"></script>
 
 </body>
 </html>
-
-2. "style.css"
-
-:::writing{variant="standard" id="71406" title="KRISHWAVE V7.0 — style.css"}
-
-/* =========================================================
-   KRISHWAVE AI BEAST V7.0
-   COMPLETE UI
-========================================================= */
-
-* {
-  box-sizing: border-box;
-  margin: 0;
-  padding: 0;
-}
-
-:root {
-
-  --bg: #050b14;
-  --panel: #0a1422;
-  --panel2: #0e1b2d;
-  --border: rgba(255,255,255,.08);
-
-  --text: #f4f7fb;
-  --muted: #8290a3;
-
-  --cyan: #00e5ff;
-  --blue: #4f7cff;
-  --purple: #a855f7;
-  --green: #19e68c;
-  --red: #ff4d67;
-  --yellow: #ffd166;
-
-  --radius: 18px;
-}
-
-body {
-
-  background:
-    radial-gradient(
-      circle at top right,
-      rgba(0,229,255,.08),
-      transparent 35%
-    ),
-    var(--bg);
-
-  color: var(--text);
-
-  font-family:
-    Inter,
-    system-ui,
-    -apple-system,
-    BlinkMacSystemFont,
-    "Segoe UI",
-    sans-serif;
-
-  min-height: 100vh;
-
-  padding-bottom: 90px;
-}
-
-body.light {
-
-  --bg: #f2f6fb;
-  --panel: #ffffff;
-  --panel2: #f5f8fc;
-  --border: rgba(10,20,35,.10);
-
-  --text: #101827;
-  --muted: #667085;
-}
-
-
-/* =========================================================
-   TOP BAR
-========================================================= */
-
-.topbar {
-
-  position: sticky;
-  top: 0;
-  z-index: 100;
-
-  height: 68px;
-
-  display: flex;
-  align-items: center;
-
-  padding: 10px 16px;
-
-  background:
-    rgba(5,11,20,.92);
-
-  backdrop-filter: blur(16px);
-
-  border-bottom:
-    1px solid var(--border);
-}
-
-body.light .topbar {
-  background: rgba(255,255,255,.92);
-}
-
-.brand {
-
-  display: flex;
-  align-items: center;
-  gap: 10px;
-
-  flex: 1;
-}
-
-.brand-icon {
-
-  width: 40px;
-  height: 40px;
-
-  display: grid;
-  place-items: center;
-
-  border-radius: 13px;
-
-  background:
-    linear-gradient(
-      135deg,
-      var(--cyan),
-      var(--blue)
-    );
-
-  color: #03111d;
-
-  font-weight: 1000;
-  font-size: 21px;
-
-  box-shadow:
-    0 0 25px rgba(0,229,255,.22);
-}
-
-.brand-title {
-
-  font-size: 16px;
-  font-weight: 950;
-  letter-spacing: 1px;
-}
-
-.brand-subtitle {
-
-  color: var(--cyan);
-
-  font-size: 9px;
-  font-weight: 900;
-
-  letter-spacing: 1.5px;
-}
-
-.connection-box {
-
-  display: flex;
-  align-items: center;
-  gap: 7px;
-
-  font-size: 10px;
-  font-weight: 900;
-}
-
-.connection-dot {
-
-  width: 9px;
-  height: 9px;
-
-  border-radius: 50%;
-
-  background: var(--yellow);
-
-  box-shadow:
-    0 0 10px var(--yellow);
-}
-
-.connection-dot.connected {
-
-  background: var(--green);
-
-  box-shadow:
-    0 0 12px var(--green);
-}
-
-.connection-dot.error {
-
-  background: var(--red);
-
-  box-shadow:
-    0 0 12px var(--red);
-}
-
-.icon-button {
-
-  margin-left: 14px;
-
-  border: 1px solid var(--border);
-
-  background: var(--panel);
-
-  color: var(--text);
-
-  width: 38px;
-  height: 38px;
-
-  border-radius: 12px;
-
-  cursor: pointer;
-}
-
-
-/* =========================================================
-   NAV
-========================================================= */
-
-.bottom-nav {
-
-  position: fixed;
-
-  left: 10px;
-  right: 10px;
-  bottom: 10px;
-
-  z-index: 200;
-
-  height: 64px;
-
-  display: grid;
-  grid-template-columns: repeat(3,1fr);
-
-  background:
-    rgba(10,20,34,.94);
-
-  backdrop-filter: blur(20px);
-
-  border:
-    1px solid var(--border);
-
-  border-radius: 20px;
-
-  box-shadow:
-    0 12px 35px rgba(0,0,0,.35);
-}
-
-body.light .bottom-nav {
-  background: rgba(255,255,255,.95);
-}
-
-.nav-btn {
-
-  border: 0;
-
-  background: transparent;
-
-  color: var(--muted);
-
-  display: flex;
-  flex-direction: column;
-
-  align-items: center;
-  justify-content: center;
-
-  gap: 3px;
-
-  cursor: pointer;
-}
-
-.nav-btn span {
-  font-size: 19px;
-}
-
-.nav-btn small {
-  font-size: 9px;
-  font-weight: 900;
-}
-
-.nav-btn.active {
-  color: var(--cyan);
-}
-
-
-/* =========================================================
-   GENERAL
-========================================================= */
-
-main {
-
-  width: 100%;
-  max-width: 1200px;
-
-  margin: auto;
-
-  padding: 18px 14px;
-}
-
-.page {
-  display: none;
-}
-
-.page.active {
-  display: block;
-}
-
-.page-heading {
-
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-
-  margin-bottom: 15px;
-}
-
-.page-heading h1 {
-
-  font-size: 23px;
-  font-weight: 950;
-}
-
-.page-heading p {
-
-  color: var(--muted);
-
-  font-size: 11px;
-
-  margin-top: 3px;
-}
-
-.live-badge {
-
-  padding: 7px 10px;
-
-  border-radius: 999px;
-
-  background:
-    rgba(25,230,140,.08);
-
-  color: var(--green);
-
-  border:
-    1px solid rgba(25,230,140,.15);
-
-  font-size: 9px;
-  font-weight: 900;
-}
-
-
-/* =========================================================
-   ENGINE TABS
-========================================================= */
-
-.engine-tabs {
-
-  display: grid;
-
-  grid-template-columns:
-    repeat(3,minmax(0,1fr));
-
-  gap: 8px;
-
-  margin-bottom: 12px;
-}
-
-.engine-tab {
-
-  min-width: 0;
-
-  padding: 12px 7px;
-
-  border-radius: 16px;
-
-  border:
-    1px solid var(--border);
-
-  background: var(--panel);
-
-  color: var(--muted);
-
-  cursor: pointer;
-
-  display: flex;
-  flex-direction: column;
-
-  align-items: center;
-
-  gap: 3px;
-
-  transition: .2s;
-}
-
-.engine-tab span {
-  font-size: 19px;
-}
-
-.engine-tab strong {
-
-  font-size: 10px;
-
-  white-space: nowrap;
-}
-
-.engine-tab small {
-
-  font-size: 8px;
-
-  opacity: .7;
-}
-
-.engine-tab.active {
-
-  color: var(--cyan);
-
-  border-color:
-    rgba(0,229,255,.35);
-
-  background:
-    linear-gradient(
-      145deg,
-      rgba(0,229,255,.09),
-      var(--panel)
-    );
-
-  box-shadow:
-    0 0 20px rgba(0,229,255,.07);
-}
-
-
-/* =========================================================
-   CARDS
-========================================================= */
-
-.engine-card,
-.market-card,
-.digit-card,
-.active-card,
-.analysis-report,
-.analysis-engine-card,
-.history-control {
-
-  background:
-    linear-gradient(
-      145deg,
-      rgba(255,255,255,.025),
-      rgba(255,255,255,.008)
-    ),
-    var(--panel);
-
-  border:
-    1px solid var(--border);
-
-  border-radius: var(--radius);
-
-  box-shadow:
-    0 12px 35px rgba(0,0,0,.14);
-}
-
-.engine-card {
-
-  padding: 15px;
-
-  overflow: hidden;
-}
-
-.card-top,
-.section-header,
-.market-card-header {
-
-  display: flex;
-
-  align-items: center;
-
-  justify-content: space-between;
-
-  gap: 10px;
-}
-
-.card-top h2,
-.section-header h2,
-.market-card-header h2 {
-
-  font-size: 17px;
-  font-weight: 950;
-}
-
-.eyebrow {
-
-  display: block;
-
-  color: var(--muted);
-
-  font-size: 8px;
-
-  font-weight: 950;
-
-  letter-spacing: 1.3px;
-
-  margin-bottom: 3px;
-}
-
-.status-pill {
-
-  padding: 6px 9px;
-
-  border-radius: 999px;
-
-  background:
-    rgba(0,229,255,.08);
-
-  color: var(--cyan);
-
-  border:
-    1px solid rgba(0,229,255,.15);
-
-  font-size: 8px;
-
-  font-weight: 950;
-
-  white-space: nowrap;
-}
-
-
-/* =========================================================
-   BOT
-========================================================= */
-
-.bot-selected-grid {
-
-  display: grid;
-
-  grid-template-columns:
-    repeat(4,minmax(0,1fr));
-
-  gap: 7px;
-
-  margin-top: 14px;
-}
-
-.mini-card {
-
-  min-width: 0;
-
-  padding: 10px;
-
-  border-radius: 13px;
-
-  background: var(--panel2);
-
-  border:
-    1px solid var(--border);
-}
-
-.mini-card span {
-
-  display: block;
-
-  color: var(--muted);
-
-  font-size: 7px;
-
-  font-weight: 900;
-
-  margin-bottom: 4px;
-}
-
-.mini-card strong {
-
-  display: block;
-
-  font-size: 10px;
-
-  overflow: hidden;
-
-  text-overflow: ellipsis;
-
-  white-space: nowrap;
-}
-
-.bot-status-line {
-
-  margin-top: 10px;
-
-  padding: 9px 11px;
-
-  background:
-    rgba(0,229,255,.045);
-
-  border-radius: 11px;
-
-  color: var(--cyan);
-
-  font-size: 10px;
-
-  font-weight: 800;
-}
-
-.bot-controls {
-
-  display: grid;
-
-  grid-template-columns:
-    1fr 1.4fr;
-
-  gap: 8px;
-
-  margin-top: 10px;
-}
-
-
-/* =========================================================
-   BUTTONS
-========================================================= */
-
-button,
-select,
-input {
-  font: inherit;
-}
-
-button {
-  cursor: pointer;
-}
-
-.primary-button,
-.secondary-button,
-.danger-button {
-
-  border: 0;
-
-  min-height: 40px;
-
-  border-radius: 12px;
-
-  font-size: 10px;
-
-  font-weight: 950;
-
-  padding: 9px 12px;
-
-  transition: .2s;
-}
-
-.primary-button {
-
-  background:
-    linear-gradient(
-      135deg,
-      var(--cyan),
-      var(--blue)
-    );
-
-  color: #02101a;
-
-  box-shadow:
-    0 7px 20px rgba(0,229,255,.14);
-}
-
-.secondary-button {
-
-  background: var(--panel2);
-
-  color: var(--text);
-
-  border:
-    1px solid var(--border);
-}
-
-.danger-button {
-
-  background:
-    rgba(255,77,103,.10);
-
-  color: var(--red);
-
-  border:
-    1px solid rgba(255,77,103,.2);
-}
-
-.full-button {
-  width: 100%;
-}
-
-
-/* =========================================================
-   SETTINGS
-========================================================= */
-
-.compact-settings {
-
-  display: grid;
-
-  grid-template-columns:
-    repeat(3,minmax(0,1fr));
-
-  gap: 8px;
-
-  margin-top: 10px;
-}
-
-.input-card {
-
-  min-width: 0;
-
-  background: var(--panel2);
-
-  border:
-    1px solid var(--border);
-
-  border-radius: 13px;
-
-  padding: 9px;
-}
-
-.input-card label {
-
-  display: block;
-
-  color: var(--muted);
-
-  font-size: 8px;
-
-  font-weight: 900;
-
-  margin-bottom: 5px;
-}
-
-.input-card input,
-.target-container input,
-.selector-row select {
-
-  width: 100%;
-
-  border: 0;
-
-  outline: 0;
-
-  background: transparent;
-
-  color: var(--text);
-
-  font-size: 12px;
-
-  font-weight: 900;
-}
-
-
-/* =========================================================
-   SELECTORS
-========================================================= */
-
-.selector-row {
-
-  display: grid;
-
-  grid-template-columns:
-    repeat(2,minmax(0,1fr));
-
-  gap: 8px;
-
-  margin-top: 13px;
-}
-
-.selector-button,
-.selector-row select {
-
-  min-height: 52px;
-
-  padding: 8px 10px;
-
-  border-radius: 13px;
-
-  border:
-    1px solid var(--border);
-
-  background: var(--panel2);
-
-  color: var(--text);
-
-  text-align: left;
-}
-
-.selector-button span {
-
-  display: block;
-
-  color: var(--muted);
-
-  font-size: 8px;
-
-  margin-bottom: 4px;
-}
-
-.selector-button strong {
-
-  display: block;
-
-  font-size: 10px;
-}
-
-
-/* =========================================================
-   ACCOUNT
-========================================================= */
-
-.account-row {
-
-  display: grid;
-
-  grid-template-columns:
-    repeat(3,minmax(0,1fr));
-
-  gap: 8px;
-
-  margin-top: 10px;
-}
-
-.account-card {
-
-  background: var(--panel);
-
-  border:
-    1px solid var(--border);
-
-  border-radius: 14px;
-
-  padding: 10px;
-}
-
-.account-card span {
-
-  display: block;
-
-  color: var(--muted);
-
-  font-size: 7px;
-
-  font-weight: 900;
-}
-
-.account-card strong {
-
-  display: block;
-
-  margin-top: 4px;
-
-  font-size: 11px;
-}
-
-
-/* =========================================================
-   CHART
-========================================================= */
-
-.market-card {
-
-  margin-top: 10px;
-
-  padding: 14px;
-}
-
-.market-card-header strong {
-
-  color: var(--cyan);
-
-  font-size: 16px;
-}
-
-#priceChartCanvas {
-
-  width: 100%;
-  height: 190px;
-
-  display: block;
-
-  margin-top: 10px;
-}
-
-
-/* =========================================================
-   DIGITS
-========================================================= */
-
-.digit-card,
-.active-card {
-
-  margin-top: 10px;
-
-  padding: 14px;
-}
-
-.section-header > span {
-
-  color: var(--muted);
-
-  font-size: 8px;
-
-  font-weight: 900;
-}
-
-.digit-grid {
-
-  display: grid;
-
-  grid-template-columns:
-    repeat(10,minmax(0,1fr));
-
-  gap: 6px;
-
-  margin-top: 12px;
-}
-
-.digit-stat-circle {
-
-  min-width: 0;
-
-  aspect-ratio: 1;
-
-  border-radius: 50%;
-
-  display: flex;
-  flex-direction: column;
-
-  justify-content: center;
-  align-items: center;
-
-  background: var(--panel2);
-
-  border:
-    1px solid var(--border);
-}
-
-.digit-num {
-
-  font-size: 12px;
-  font-weight: 950;
-}
-
-.digit-pct {
-
-  color: var(--muted);
-
-  font-size: 7px;
-
-  margin-top: 2px;
-}
-
-.digit-stat-circle.highest {
-
-  border-color: var(--cyan);
-
-  box-shadow:
-    0 0 14px rgba(0,229,255,.15);
-}
-
-.digit-stat-circle.lowest {
-
-  border-color: var(--red);
-}
-
-
-/* =========================================================
-   ACTIVE TRADES
-========================================================= */
-
-.trade-list {
-
-  display: grid;
-
-  gap: 7px;
-
-  margin-top: 10px;
-}
-
-.active-trade {
-
-  display: grid;
-
-  grid-template-columns:
-    1.2fr 1fr 1fr .8fr;
-
-  gap: 8px;
-
-  align-items: center;
-
-  padding: 10px;
-
-  border-radius: 12px;
-
-  background: var(--panel2);
-
-  border:
-    1px solid var(--border);
-}
-
-.active-trade span {
-
-  display: block;
-
-  color: var(--muted);
-
-  font-size: 7px;
-}
-
-.active-trade strong {
-
-  display: block;
-
-  margin-top: 3px;
-
-  font-size: 9px;
-}
-
-.empty-state {
-
-  text-align: center;
-
-  padding: 22px;
-
-  color: var(--muted);
-
-  font-size: 10px;
-}
-
-
-/* =========================================================
-   CIRCULAR
-========================================================= */
-
-.circular-card {
-  text-align: center;
-}
-
-.circular-card .card-top {
-  text-align: left;
-}
-
-.ai-circle {
-
-  width: 180px;
-  height: 180px;
-
-  margin: 16px auto 12px;
-
-  border-radius: 50%;
-
-  display: grid;
-  place-items: center;
-
-  position: relative;
-
-  background:
-    radial-gradient(
-      circle,
-      rgba(168,85,247,.18),
-      transparent 62%
-    );
-
-  border:
-    1px solid rgba(168,85,247,.25);
-
-  box-shadow:
-    0 0 40px rgba(168,85,247,.08);
-}
-
-.circle-ring {
-
-  width: 130px;
-  height: 130px;
-
-  border-radius: 50%;
-
-  border:
-    2px solid var(--purple);
-
-  display: flex;
-
-  flex-direction: column;
-
-  justify-content: center;
-  align-items: center;
-}
-
-.circle-ring span {
-
-  font-size: 8px;
-
-  color: var(--muted);
-
-  font-weight: 900;
-}
-
-.circle-ring strong {
-
-  font-size: 38px;
-
-  color: var(--purple);
-
-  line-height: 1.1;
-}
-
-.circle-ring small {
-
-  color: var(--yellow);
-
-  font-size: 12px;
-
-  font-weight: 950;
-}
-
-.circle-status {
-
-  position: absolute;
-
-  bottom: 4px;
-
-  font-size: 8px;
-
-  font-weight: 950;
-
-  color: var(--purple);
-}
-
-.ai-circle.trade-now {
-
-  border-color: var(--green);
-
-  box-shadow:
-    0 0 45px rgba(25,230,140,.18);
-}
-
-.cycle-row {
-
-  display: flex;
-
-  align-items: center;
-
-  justify-content: center;
-
-  gap: 5px;
-}
-
-.cycle-step {
-
-  width: 70px;
-
-  padding: 8px 3px;
-
-  border-radius: 11px;
-
-  background: var(--panel2);
-
-  border:
-    1px solid var(--border);
-}
-
-.cycle-step span {
-
-  display: block;
-
-  font-size: 15px;
-
-  font-weight: 950;
-}
-
-.cycle-step small {
-
-  display: block;
-
-  color: var(--muted);
-
-  font-size: 6px;
-
-  font-weight: 900;
-}
-
-.cycle-step.active {
-
-  border-color: var(--purple);
-
-  color: var(--purple);
-
-  box-shadow:
-    0 0 16px rgba(168,85,247,.12);
-}
-
-.cycle-line {
-
-  width: 20px;
-
-  height: 1px;
-
-  background: var(--border);
-}
-
-.analysis-message {
-
-  margin-top: 10px;
-
-  padding: 9px;
-
-  border-radius: 10px;
-
-  background: var(--panel2);
-
-  color: var(--muted);
-
-  font-size: 9px;
-
-  line-height: 1.4;
-}
-
-.circular-controls {
-
-  display: grid;
-
-  grid-template-columns: 1fr .5fr;
-
-  gap: 8px;
-
-  margin-top: 10px;
-}
-
-
-/* =========================================================
-   MANUAL
-========================================================= */
-
-.target-container {
-
-  display: flex;
-
-  align-items: center;
-
-  justify-content: space-between;
-
-  margin-top: 10px;
-
-  padding: 11px;
-
-  background: var(--panel2);
-
-  border:
-    1px solid var(--border);
-
-  border-radius: 13px;
-}
-
-.target-container label {
-
-  color: var(--muted);
-
-  font-size: 9px;
-
-  font-weight: 900;
-}
-
-.target-container input {
-
-  width: 65px;
-
-  text-align: center;
-
-  padding: 7px;
-
-  border-radius: 8px;
-
-  background: var(--panel);
-
-  border:
-    1px solid var(--border);
-}
-
-
-/* =========================================================
-   ANALYSIS PAGE
-========================================================= */
-
-.analysis-grid {
-
-  display: grid;
-
-  grid-template-columns:
-    repeat(3,minmax(0,1fr));
-
-  gap: 10px;
-}
-
-.analysis-engine-card {
-
-  padding: 13px;
-
-  min-width: 0;
-}
-
-.analysis-engine-card.dominant {
-
-  border-color:
-    rgba(0,229,255,.25);
-
-  background:
-    linear-gradient(
-      145deg,
-      rgba(0,229,255,.08),
-      var(--panel)
-    );
-}
-
-.analysis-card-title {
-
-  display: flex;
-
-  align-items: center;
-
-  gap: 8px;
-
-  margin-bottom: 13px;
-}
-
-.analysis-card-title > div {
-
-  flex: 1;
-  min-width: 0;
-}
-
-.analysis-card-title h2 {
-
-  font-size: 14px;
-}
-
-.engine-icon {
-
-  width: 32px;
-  height: 32px;
-
-  display: grid;
-  place-items: center;
-
-  border-radius: 10px;
-
-  background: var(--panel2);
-}
-
-.analysis-values {
-
-  display: grid;
-
-  grid-template-columns:
-    repeat(2,minmax(0,1fr));
-
-  gap: 7px;
-}
-
-.analysis-values div {
-
-  min-width: 0;
-
-  padding: 8px;
-
-  border-radius: 10px;
-
-  background: var(--panel2);
-}
-
-.analysis-values span {
-
-  display: block;
-
-  color: var(--muted);
-
-  font-size: 7px;
-}
-
-.analysis-values strong {
-
-  display: block;
-
-  margin-top: 3px;
-
-  font-size: 9px;
-
-  white-space: nowrap;
-
-  overflow: hidden;
-
-  text-overflow: ellipsis;
-}
-
-.chosen-strategy-box {
-
-  min-height: 80px;
-
-  padding: 12px;
-
-  border-radius: 12px;
-
-  background: var(--panel2);
-
-  display: flex;
-
-  flex-direction: column;
-
-  justify-content: center;
-}
-
-.chosen-strategy-box strong {
-
-  color: var(--cyan);
-
-  font-size: 18px;
-}
-
-.chosen-strategy-box span {
-
-  color: var(--muted);
-
-  font-size: 8px;
-
-  margin-top: 4px;
-}
-
-.analysis-report {
-
-  margin-top: 10px;
-
-  padding: 14px;
-}
-
-.report-title h2 {
-
-  font-size: 17px;
-}
-
-.report-grid {
-
-  display: grid;
-
-  grid-template-columns:
-    repeat(6,minmax(0,1fr));
-
-  gap: 7px;
-
-  margin-top: 12px;
-}
-
-.report-grid div {
-
-  min-width: 0;
-
-  padding: 10px;
-
-  border-radius: 11px;
-
-  background: var(--panel2);
-}
-
-.report-grid span {
-
-  display: block;
-
-  color: var(--muted);
-
-  font-size: 7px;
-}
-
-.report-grid strong {
-
-  display: block;
-
-  margin-top: 4px;
-
-  font-size: 11px;
-}
-
-
-/* =========================================================
-   HISTORY
-========================================================= */
-
-.history-control {
-
-  padding: 12px;
-
-  display: flex;
-
-  align-items: center;
-
-  justify-content: space-between;
-
-  gap: 10px;
-
-  margin-bottom: 10px;
-}
-
-.history-control strong {
-
-  display: block;
-
-  color: var(--green);
-
-  font-size: 11px;
-}
-
-.history-actions {
-
-  display: flex;
-
-  gap: 6px;
-}
-
-.history-actions button {
-
-  min-height: 34px;
-
-  padding: 7px 9px;
-
-  font-size: 8px;
-}
-
-.stats-grid {
-
-  display: grid;
-
-  grid-template-columns:
-    repeat(6,minmax(0,1fr));
-
-  gap: 7px;
-
-  margin-bottom: 10px;
-}
-
-.stat-card {
-
-  min-width: 0;
-
-  padding: 10px;
-
-  border-radius: 12px;
-
-  background: var(--panel);
-
-  border:
-    1px solid var(--border);
-}
-
-.stat-card span {
-
-  display: block;
-
-  color: var(--muted);
-
-  font-size: 7px;
-
-  font-weight: 900;
-}
-
-.stat-card strong {
-
-  display: block;
-
-  margin-top: 5px;
-
-  font-size: 12px;
-}
-
-.history-table-wrap {
-
-  overflow-x: auto;
-
-  border:
-    1px solid var(--border);
-
-  border-radius: 16px;
-
-  background: var(--panel);
-}
-
-.history-table-header,
-.history-row {
-
-  min-width: 850px;
-
-  display: grid;
-
-  grid-template-columns:
-    80px
-    85px
-    130px
-    75px
-    55px
-    55px
-    65px
-    75px
-    90px
-    75px;
-
-  gap: 5px;
-
-  align-items: center;
-
-  padding: 9px 10px;
-}
-
-.history-table-header {
-
-  color: var(--muted);
-
-  font-size: 7px;
-
-  font-weight: 950;
-
-  border-bottom:
-    1px solid var(--border);
-}
-
-.history-row {
-
-  font-size: 8px;
-
-  border-bottom:
-    1px solid var(--border);
-}
-
-.history-row:last-child {
-  border-bottom: 0;
-}
-
-.win {
-  color: var(--green);
-}
-
-.loss {
-  color: var(--red);
-}
-
-
-/* =========================================================
-   MODALS
-========================================================= */
-
-.modal {
-
-  display: none;
-
-  position: fixed;
-
-  inset: 0;
-
-  z-index: 500;
-
-  background:
-    rgba(0,0,0,.72);
-
-  backdrop-filter: blur(8px);
-
-  align-items: center;
-
-  justify-content: center;
-
-  padding: 15px;
-}
-
-.modal-card {
-
-  width: 100%;
-  max-width: 430px;
-
-  max-height: 90vh;
-
-  overflow-y: auto;
-
-  padding: 17px;
-
-  border-radius: 20px;
-
-  background: var(--panel);
-
-  border:
-    1px solid var(--border);
-
-  box-shadow:
-    0 25px 80px rgba(0,0,0,.5);
-}
-
-.modal-header {
-
-  display: flex;
-
-  justify-content: space-between;
-
-  align-items: center;
-
-  margin-bottom: 13px;
-}
-
-.modal-header h2 {
-  font-size: 18px;
-}
-
-.modal-close {
-
-  width: 34px;
-  height: 34px;
-
-  border: 0;
-
-  border-radius: 10px;
-
-  background: var(--panel2);
-
-  color: var(--text);
-
-  font-size: 22px;
-}
-
-.strategy-options {
-
-  display: grid;
-
-  grid-template-columns:
-    repeat(2,minmax(0,1fr));
-
-  gap: 7px;
-}
-
-.strategy-option {
-
-  text-align: left;
-
-  padding: 12px;
-
-  border-radius: 12px;
-
-  border:
-    1px solid var(--border);
-
-  background: var(--panel2);
-
-  color: var(--text);
-}
-
-.strategy-option strong {
-
-  display: block;
-
-  font-size: 11px;
-}
-
-.strategy-option span {
-
-  display: block;
-
-  color: var(--muted);
-
-  font-size: 7px;
-
-  margin-top: 3px;
-}
-
-.strategy-option.selected {
-
-  border-color: var(--cyan);
-
-  background:
-    rgba(0,229,255,.07);
-}
-
-.check-list {
-
-  display: grid;
-
-  gap: 7px;
-}
-
-.check-list label {
-
-  display: flex;
-
-  align-items: center;
-
-  gap: 10px;
-
-  padding: 12px;
-
-  border-radius: 12px;
-
-  background: var(--panel2);
-
-  border:
-    1px solid var(--border);
-
-  font-size: 10px;
-
-  font-weight: 900;
-}
-
-.check-list input {
-
-  accent-color: var(--cyan);
-}
-
-.selected-pool {
-
-  padding: 10px;
-
-  margin: 10px 0;
-
-  background: var(--panel2);
-
-  border-radius: 10px;
-
-  font-size: 8px;
-}
-
-.selected-pool strong {
-  color: var(--cyan);
-}
-
-
-/* =========================================================
-   RESPONSIVE
-========================================================= */
-
-@media (max-width: 800px) {
-
-  .analysis-grid {
-    grid-template-columns: 1fr;
-  }
-
-  .report-grid {
-    grid-template-columns:
-      repeat(3,minmax(0,1fr));
-  }
-
-  .stats-grid {
-    grid-template-columns:
-      repeat(3,minmax(0,1fr));
-  }
-
-}
-
-@media (max-width: 600px) {
-
-  main {
-    padding: 13px 10px;
-  }
-
-  .topbar {
-    padding: 9px 11px;
-  }
-
-  .connection-box {
-    font-size: 8px;
-  }
-
-  .brand-title {
-    font-size: 14px;
-  }
-
-  .brand-icon {
-    width: 36px;
-    height: 36px;
-  }
-
-  .bot-selected-grid {
-    grid-template-columns:
-      repeat(2,minmax(0,1fr));
-  }
-
-  .account-row {
-    grid-template-columns: 1fr;
-  }
-
-  .digit-grid {
-    gap: 3px;
-  }
-
-  .digit-num {
-    font-size: 10px;
-  }
-
-  .digit-pct {
-    font-size: 6px;
-  }
-
-  .history-control {
-    align-items: flex-start;
-    flex-direction: column;
-  }
-
-  .history-actions {
-    width: 100%;
-  }
-
-  .history-actions button {
-    flex: 1;
-  }
-
-  .report-grid {
-    grid-template-columns:
-      repeat(2,minmax(0,1fr));
-  }
-
-}
-
-@media (max-width: 390px) {
-
-  .engine-tab {
-    padding: 10px 3px;
-  }
-
-  .engine-tab strong {
-    font-size: 8px;
-  }
-
-  .engine-tab small {
-    font-size: 6px;
-  }
-
-  .compact-settings {
-    grid-template-columns: 1fr;
-  }
-
-  .selector-row {
-    grid-template-columns: 1fr;
-  }
-
-}
-
-3. "app.js"
-
-:::writing{variant="standard" id="92647" title="KRISHWAVE V7.0 — app.js"}
-
-/* =========================================================
-   KRISHWAVE AI BEAST V7.0
-   ---------------------------------------------------------
-   LIVE DERIV PUBLIC MARKET DATA
-   DEMO / PAPER TRADING ENGINE
-
-   IMPORTANT:
-   ---------------------------------------------------------
-   NO REAL TRADES ARE EXECUTED.
-========================================================= */
-
-"use strict";
-
-
-/* =========================================================
-   CONFIG
-========================================================= */
-
-const DERIV_CLIENT_ID =
-  "34khasPjsT0PCRR8X3Z70";
-
-const REDIRECT_URI =
-  "https://chrispusatale99-dot.github.io/KRISHWAVE/";
-
-const OAUTH_BACKEND =
-  "https://krishwave-oauth.chrispusatale99.workers.dev";
-
-const PUBLIC_WS =
-  "wss://api.derivws.com/trading/v1/options/ws/public";
-
-
-const MARKETS = [
-
-  "R_10",
-  "R_25",
-  "R_50",
-  "R_75",
-  "R_100",
-
-  "1HZ10V",
-  "1HZ25V",
-  "1HZ30V",
-  "1HZ50V",
-  "1HZ75V",
-  "1HZ90V",
-  "1HZ100V",
-  "1HZ150V",
-  "1HZ250V",
-  "1HZ1000V"
-
-];
-
-
-const STRATEGIES = [
-
-  "MATCHES",
-  "DIFFERS",
-  "OVER",
-  "UNDER",
-  "EVEN",
-  "ODD"
-
-];
-
-
-const STRATEGY_LABELS = {
-
-  MATCHES: "Matches",
-  DIFFERS: "Differs",
-  OVER: "Over",
-  UNDER: "Under",
-  EVEN: "Even",
-  ODD: "Odd"
-
-};
-
-
-/* =========================================================
-   STATE
-========================================================= */
-
-const state = {
-
-  connected: false,
-
-  accessToken: null,
-
-  accountId: null,
-
-  currency: "USD",
-
-  paperBalance: 1000,
-
-  engineMode: "ai",
-
-  selectedMarket: "R_10",
-
-  selectedStrategy: "MATCHES",
-
-  botStrategyPool: [
-    "MATCHES",
-    "DIFFERS"
-  ],
-
-  markets: {},
-
-  priceHistory: [],
-
-  history: [],
-
-  activeTrades: [],
-
-  totalProfit: 0,
-
-  totalAmountWon: 0,
-
-  totalPayout: 0,
-
-  totalStake: 0,
-
-  aiRunning: false,
-
-  aiCycleToken: 0,
-
-  circularRunning: false,
-
-  circularToken: 0,
-
-  publicWS: null,
-
-  botTimer: null,
-
-  lastBotDecision: null,
-
-  lastCircularPrediction: null,
-
-  tradingStopped: false,
-
-  historyMinimized: false
-
-};
-
-
-/* =========================================================
-   DOM
-========================================================= */
-
-const $ = id =>
-  document.getElementById(id);
-
-
-/* =========================================================
-   HELPERS
-========================================================= */
-
-function setText(id, value) {
-
-  const element = $(id);
-
-  if (element) {
-    element.textContent = value;
-  }
-
-}
-
-
-function sleep(ms) {
-
-  return new Promise(
-    resolve => setTimeout(resolve, ms)
-  );
-
-}
-
-
-function clamp(value, min, max) {
-
-  return Math.max(
-    min,
-    Math.min(max, value)
-  );
-
-}
-
-
-function money(value) {
-
-  return `$${Number(value || 0).toFixed(2)}`;
-
-}
-
-
-function esc(value) {
-
-  return String(value ?? "")
-    .replaceAll("&", "&amp;")
-    .replaceAll("<", "&lt;")
-    .replaceAll(">", "&gt;")
-    .replaceAll('"', "&quot;")
-    .replaceAll("'", "&#039;");
-
-}
-
-
-function strategyLabel(strategy) {
-
-  return STRATEGY_LABELS[strategy] ||
-    strategy ||
-    "--";
-
-}
-
-
-function formatMarketName(symbol) {
-
-  if (!symbol) {
-    return "--";
-  }
-
-  if (symbol.startsWith("R_")) {
-
-    return (
-      "Volatility " +
-      symbol.replace("R_", "") +
-      " Index"
-    );
-
-  }
-
-  if (symbol.startsWith("1HZ")) {
-
-    return (
-      "Volatility " +
-      symbol.replace("1HZ", "") +
-      " Index"
-    );
-
-  }
-
-  return symbol;
-
-}
-
-
-/* =========================================================
-   INITIAL MARKETS
-========================================================= */
-
-function buildInitialMarkets() {
-
-  MARKETS.forEach(symbol => {
-
-    state.markets[symbol] = {
-
-      symbol,
-
-      price: null,
-
-      lastDigit: null,
-
-      pipSize: null,
-
-      digits: Array(10).fill(0),
-
-      ticks: [],
-
-      prices: [],
-
-      updated: 0,
-
-      received: 0
-
-    };
-
-  });
-
-}
-
-
-/* =========================================================
-   DOM READY
-========================================================= */
-
-document.addEventListener(
-  "DOMContentLoaded",
-  initialize
-);
-
-
-function initialize() {
-
-  loadTheme();
-
-  loadHistory();
-
-  buildInitialMarkets();
-
-  populateMarketSelectors();
-
-  bindNavigation();
-
-  bindTheme();
-
-  bindEngineTabs();
-
-  bindBotControls();
-
-  bindManualControls();
-
-  bindCircularControls();
-
-  bindStrategyModal();
-
-  bindBotStrategyModal();
-
-  bindHistoryControls();
-
-  connectPublicMarket();
-
-  checkOAuthCallback();
-
-  renderHistory();
-
-  renderActiveTrades();
-
-  updateStats();
-
-  updateBalance();
-
-  updateAnalysisUI();
-
-  updateConnectionUI();
-
-  updateTargetDigitVisibility();
-
-  updateEngineVisibility();
-
-}
-
-
-/* =========================================================
-   NAVIGATION
-========================================================= */
-
-function bindNavigation() {
-
-  document
-    .querySelectorAll(".nav-btn")
-    .forEach(button => {
-
-      button.addEventListener(
-        "click",
-        () => {
-
-          const page =
-            button.dataset.page;
-
-          document
-            .querySelectorAll(".page")
-            .forEach(
-              pageElement =>
-                pageElement.classList.remove(
-                  "active"
-                )
-            );
-
-          const target =
-            $(page + "Page");
-
-          target?.classList.add("active");
-
-          document
-            .querySelectorAll(".nav-btn")
-            .forEach(
-              b =>
-                b.classList.remove("active")
-            );
-
-          button.classList.add("active");
-
-          if (page === "trade") {
-
-            updateChart();
-
-            renderDigitStats();
-
-            renderActiveTrades();
-
-          }
-
-          if (page === "analysis") {
-
-            updateAnalysisUI();
-
-          }
-
-          if (page === "history") {
-
-            renderHistory();
-
-            updateStats();
-
-          }
-
-          window.scrollTo({
-            top: 0,
-            behavior: "smooth"
-          });
-
-        }
-      );
-
-    });
-
-}
-
-
-/* =========================================================
-   THEME
-========================================================= */
-
-function bindTheme() {
-
-  $("themeToggle")?.addEventListener(
-    "click",
-    () => {
-
-      document.body.classList.toggle("light");
-
-      localStorage.setItem(
-        "krishwave_theme",
-        document.body.classList.contains("light")
-          ? "light"
-          : "dark"
-      );
-
-      updateChart();
-
-    }
-  );
-
-}
-
-
-function loadTheme() {
-
-  if (
-    localStorage.getItem(
-      "krishwave_theme"
-    ) === "light"
-  ) {
-
-    document.body.classList.add("light");
-
-  }
-
-}
-
-
-/* =========================================================
-   ENGINE TABS
-========================================================= */
-
-function bindEngineTabs() {
-
-  const tabs = {
-
-    ai: $("tabAiBot"),
-
-    circular: $("tabCircularAI"),
-
-    manual: $("tabManual")
-
-  };
-
-
-  const contents = {
-
-    ai: $("aiBotContent"),
-
-    circular: $("circularAIContent"),
-
-    manual: $("manualContent")
-
-  };
-
-
-  Object.entries(tabs)
-    .forEach(([mode, tab]) => {
-
-      tab?.addEventListener(
-        "click",
-        () => {
-
-          state.engineMode = mode;
-
-          Object.values(tabs)
-            .forEach(t =>
-              t?.classList.remove("active")
-            );
-
-          Object.values(contents)
-            .forEach(content => {
-
-              if (content) {
-                content.style.display = "none";
-              }
-
-            });
-
-          tab.classList.add("active");
-
-          if (contents[mode]) {
-            contents[mode].style.display =
-              "block";
-          }
-
-          /*
-            Only the selected engine is shown.
-          */
-
-          updateEngineVisibility();
-
-          updateAnalysisUI();
-
-        }
-      );
-
-    });
-
-}
-
-
-function updateEngineVisibility() {
-
-  const ai = $("aiBotContent");
-  const circular = $("circularAIContent");
-  const manual = $("manualContent");
-
-  if (!ai || !circular || !manual) {
-    return;
-  }
-
-  ai.style.display = "none";
-  circular.style.display = "none";
-  manual.style.display = "none";
-
-  if (state.engineMode === "ai") {
-    ai.style.display = "block";
-  }
-
-  if (state.engineMode === "circular") {
-    circular.style.display = "block";
-  }
-
-  if (state.engineMode === "manual") {
-    manual.style.display = "block";
-  }
-
-}
-
-
-/* =========================================================
-   MARKET SELECTORS
-========================================================= */
-
-function populateMarketSelectors() {
-
-  const manual =
-    $("manualMarketSelect");
-
-  if (manual) {
-
-    manual.innerHTML =
-      MARKETS.map(
-        symbol =>
-          `<option value="${esc(symbol)}">
-             ${esc(formatMarketName(symbol))}
-           </option>`
-      ).join("");
-
-    manual.value =
-      state.selectedMarket;
-
-  }
-
-}
-
-
-/* =========================================================
-   DERIV PUBLIC MARKET
-========================================================= */
-
-function connectPublicMarket() {
-
-  setConnectionState("connecting");
-
-  try {
-
-    state.publicWS =
-      new WebSocket(PUBLIC_WS);
-
-  } catch (error) {
-
-    handlePublicConnectionError();
-
-    return;
-
-  }
-
-
-  state.publicWS.onopen = () => {
-
-    setConnectionState("connected");
-
-    MARKETS.forEach(symbol => {
-
-      try {
-
-        state.publicWS.send(
-          JSON.stringify({
-
-            ticks: symbol,
-
-            subscribe: 1
-
-          })
-        );
-
-      } catch (error) {}
-
-    });
-
-  };
-
-
-  state.publicWS.onmessage =
-    event => {
-
-      try {
-
-        const message =
-          JSON.parse(event.data);
-
-        if (message.tick) {
-
-          processTick(
-            message.tick
-          );
-
-        }
-
-      } catch (error) {}
-
-    };
-
-
-  state.publicWS.onerror = () => {
-
-    setConnectionState("error");
-
-  };
-
-
-  state.publicWS.onclose = () => {
-
-    setConnectionState("error");
-
-    setText(
-      "dataStatus",
-      "RECONNECTING..."
-    );
-
-    setTimeout(
-      () => {
-
-        if (
-          !state.publicWS ||
-          state.publicWS.readyState ===
-            WebSocket.CLOSED
-        ) {
-
-          connectPublicMarket();
-
-        }
-
-      },
-      3000
-    );
-
-  };
-
-}
-
-
-function handlePublicConnectionError() {
-
-  setConnectionState("error");
-
-}
-
-
-function setConnectionState(status) {
-
-  const dot =
-    $("connectionDot");
-
-  if (dot) {
-
-    dot.classList.remove(
-      "connected",
-      "error"
-    );
-
-  }
-
-
-  if (status === "connected") {
-
-    dot?.classList.add(
-      "connected"
-    );
-
-    setText(
-      "connectionText",
-      "LIVE"
-    );
-
-    setText(
-      "dataStatus",
-      "DERIV LIVE"
-    );
-
-    state.connected = true;
-
-    return;
-
-  }
-
-
-  if (status === "error") {
-
-    dot?.classList.add(
-      "error"
-    );
-
-    setText(
-      "connectionText",
-      "OFFLINE"
-    );
-
-    setText(
-      "dataStatus",
-      "OFFLINE"
-    );
-
-    state.connected = false;
-
-    return;
-
-  }
-
-
-  setText(
-    "connectionText",
-    "CONNECTING..."
-  );
-
-  setText(
-    "dataStatus",
-    "CONNECTING..."
-  );
-
-}
-
-
-/* =========================================================
-   DIGIT EXTRACTION
-========================================================= */
-
-function getLastDigitFromTick(tick) {
-
-  const quote =
-    Number(tick.quote);
-
-  if (!Number.isFinite(quote)) {
-    return null;
-  }
-
-
-  let pipSize =
-    Number(tick.pip_size);
-
-
-  if (
-    !Number.isFinite(pipSize) ||
-    pipSize <= 0
-  ) {
-
-    const stringQuote =
-      String(tick.quote);
-
-    const decimals =
-      stringQuote.includes(".")
-        ? stringQuote.split(".")[1].length
-        : 0;
-
-    pipSize =
-      Math.pow(10, -decimals);
-
-  }
-
-
-  const scaled =
-    Math.round(
-      quote / pipSize
-    );
-
-
-  return Math.abs(scaled) % 10;
-
-}
-
-
-/* =========================================================
-   PROCESS TICK
-========================================================= */
-
-function processTick(tick) {
-
-  const symbol =
-    tick.symbol;
-
-  const market =
-    state.markets[symbol];
-
-  if (!market) {
-    return;
-  }
-
-
-  const price =
-    Number(tick.quote);
-
-  if (!Number.isFinite(price)) {
-    return;
-  }
-
-
-  const digit =
-    getLastDigitFromTick(tick);
-
-  if (digit === null) {
-    return;
-  }
-
-
-  market.price =
-    price;
-
-  market.lastDigit =
-    digit;
-
-  market.pipSize =
-    Number(tick.pip_size) ||
-    market.pipSize;
-
-  market.digits[digit]++;
-
-  market.ticks.push(digit);
-
-  market.prices.push(price);
-
-  market.received++;
-
-  market.updated =
-    Date.now();
-
-
-  if (market.ticks.length > 250) {
-    market.ticks.shift();
-  }
-
-  if (market.prices.length > 100) {
-    market.prices.shift();
-  }
-
-
-  if (symbol === state.selectedMarket) {
-
-    state.priceHistory.push(price);
-
-    if (state.priceHistory.length > 60) {
-      state.priceHistory.shift();
-    }
-
-    setText(
-      "currentChartMarket",
-      formatMarketName(symbol)
-    );
-
-    setText(
-      "currentLivePrice",
-      price.toFixed(
-        getPriceDecimals(market)
-      )
-    );
-
-    updateChart();
-
-    renderDigitStats();
-
-  }
-
-
-  evaluateActiveTrades(
-    symbol,
-    digit
-  );
-
-  renderActiveTrades();
-
-  updateAnalysisUI();
-
-}
-
-
-/* =========================================================
-   PRICE DECIMALS
-========================================================= */
-
-function getPriceDecimals(market) {
-
-  if (
-    market &&
-    Number.isFinite(market.pipSize)
-  ) {
-
-    const value =
-      String(market.pipSize);
-
-    if (value.includes("e-")) {
-
-      return Number(
-        value.split("e-")[1]
-      );
-
-    }
-
-    if (value.includes(".")) {
-
-      return value
-        .split(".")[1]
-        .replace(/0+$/, "")
-        .length;
-
-    }
-
-  }
-
-  return 2;
-
-}
-
-
-/* =========================================================
-   CHART
-========================================================= */
-
-function updateChart() {
-
-  const canvas =
-    $("priceChartCanvas");
-
-  if (
-    !canvas ||
-    !state.priceHistory.length
-  ) {
-    return;
-  }
-
-
-  const rect =
-    canvas.getBoundingClientRect();
-
-  const width =
-    Math.max(
-      300,
-      Math.floor(rect.width)
-    );
-
-  const height =
-    Math.max(
-      150,
-      Math.floor(rect.height)
-    );
-
-  const ratio =
-    window.devicePixelRatio || 1;
-
-
-  canvas.width =
-    width * ratio;
-
-  canvas.height =
-    height * ratio;
-
-
-  const ctx =
-    canvas.getContext("2d");
-
-
-  ctx.setTransform(
-    ratio,
-    0,
-    0,
-    ratio,
-    0,
-    0
-  );
-
-  ctx.clearRect(
-    0,
-    0,
-    width,
-    height
-  );
-
-
-  const prices =
-    state.priceHistory;
-
-  if (prices.length < 2) {
-    return;
-  }
-
-
-  const min =
-    Math.min(...prices);
-
-  const max =
-    Math.max(...prices);
-
-  const range =
-    max - min || 1;
-
-
-  const light =
-    document.body.classList.contains(
-      "light"
-    );
-
-
-  ctx.strokeStyle =
-    light
-      ? "#4f46e5"
-      : "#00e5ff";
-
-  ctx.lineWidth = 2.5;
-
-  ctx.lineJoin =
-    "round";
-
-  ctx.lineCap =
-    "round";
-
-
-  ctx.beginPath();
-
-
-  prices.forEach(
-    (price, index) => {
-
-      const x =
-        index /
-        (prices.length - 1) *
-        width;
-
-      const y =
-        height -
-        (
-          (price - min) /
-          range
-        ) *
-        (height - 25) -
-        12;
-
-
-      if (index === 0) {
-
-        ctx.moveTo(x, y);
-
-      } else {
-
-        ctx.lineTo(x, y);
-
-      }
-
-    }
-  );
-
-
-  ctx.stroke();
-
-}
-
-
-/* =========================================================
-   DIGIT STATS
-========================================================= */
-
-function renderDigitStats() {
-
-  const box =
-    $("digitStatsGrid");
-
-  const market =
-    state.markets[
-      state.selectedMarket
-    ];
-
-  if (!box || !market) {
-    return;
-  }
-
-
-  const total =
-    market.digits.reduce(
-      (a, b) => a + b,
-      0
-    );
-
-
-  setText(
-    "digitSampleCount",
-    `${total} TICKS`
-  );
-
-
-  const percentages =
-    market.digits.map(
-      count =>
-        total
-          ? count / total * 100
-          : 0
-    );
-
-
-  const maxPct =
-    Math.max(...percentages);
-
-  const minPct =
-    Math.min(...percentages);
-
-
-  box.innerHTML =
-    percentages
-      .map(
-        (pct, digit) => {
-
-          let status = "";
-
-          if (
-            total >= 20 &&
-            pct === maxPct
-          ) {
-            status = "highest";
-          }
-
-          if (
-            total >= 20 &&
-            pct === minPct
-          ) {
-            status = "lowest";
-          }
-
-          return `
-            <div class="digit-stat-circle ${status}">
-              <span class="digit-num">
-                ${digit}
-              </span>
-
-              <span class="digit-pct">
-                ${pct.toFixed(1)}%
-              </span>
-            </div>
-          `;
-
-        }
-      )
-      .join("");
-
-}
-
-
-/* =========================================================
-   MARKET ANALYSIS
-========================================================= */
-
-function analyzeMarket(symbol) {
-
-  const market =
-    state.markets[symbol];
-
-  if (
-    !market ||
-    market.ticks.length < 20
-  ) {
-    return null;
-  }
-
-
-  const recent =
-    market.ticks.slice(-30);
-
-  const counts =
-    Array(10).fill(0);
-
-
-  recent.forEach(
-    digit =>
-      counts[digit]++
-  );
-
-
-  const total =
-    recent.length;
-
-
-  const percentages =
-    counts.map(
-      count =>
-        count / total
-    );
-
-
-  const hottestDigit =
-    percentages.indexOf(
-      Math.max(...percentages)
-    );
-
-
-  const coldestDigit =
-    percentages.indexOf(
-      Math.min(...percentages)
-    );
-
-
-  const last =
-    recent[recent.length - 1];
-
-
-  let streak = 1;
-
-
-  for (
-    let i = recent.length - 2;
-    i >= 0;
-    i--
-  ) {
-
-    if (recent[i] === last) {
-      streak++;
-    } else {
-      break;
-    }
-
-  }
-
-
-  const evenRate =
-    recent.filter(
-      d => d % 2 === 0
-    ).length / total;
-
-
-  const overRate =
-    recent.filter(
-      d => d > 5
-    ).length / total;
-
-
-  const underRate =
-    recent.filter(
-      d => d < 5
-    ).length / total;
-
-
-  const concentration =
-    Math.max(...percentages);
-
-
-  const entropy =
-    calculateEntropy(
-      percentages
-    );
-
-
-  const stability =
-    clamp(
-      entropy * 100,
-      0,
-      100
-    );
-
-
-  let score = 50;
-
-
-  score +=
-    Math.abs(
-      evenRate - .5
-    ) * 30;
-
-
-  score +=
-    Math.abs(
-      overRate - .5
-    ) * 25;
-
-
-  score +=
-    Math.min(
-      streak * 2,
-      12
-    );
-
-
-  score +=
-    Math.abs(
-      concentration - .10
-    ) * 30;
-
-
-  score =
-    clamp(
-      score,
-      0,
-      100
-    );
-
-
-  const strength =
-    score >= 75
-      ? "STRONG"
-      : score >= 62
-        ? "GOOD"
-        : score >= 52
-          ? "MODERATE"
-          : "WEAK";
-
-
-  return {
-
-    symbol,
-
-    score,
-
-    strength,
-
-    stability,
-
-    concentration:
-      concentration * 100,
-
-    streak,
-
-    agreement:
-      calculateAgreement(recent),
-
-    hottestDigit,
-
-    coldestDigit,
-
-    evenRate,
-
-    overRate,
-
-    underRate,
-
-    lastDigit: last,
-
-    sampleSize: total
-
-  };
-
-}
-
-
-function calculateEntropy(probabilities) {
-
-  let entropy = 0;
-
-
-  probabilities.forEach(
-    p => {
-
-      if (p > 0) {
-
-        entropy -=
-          p * Math.log2(p);
-
-      }
-
-    }
-  );
-
-
-  return entropy /
-    Math.log2(10);
-
-}
-
-
-function calculateAgreement(ticks) {
-
-  if (ticks.length < 8) {
-    return 0;
-  }
-
-
-  const recent =
-    ticks.slice(-12);
-
-
-  const even =
-    recent.filter(
-      d => d % 2 === 0
-    ).length;
-
-
-  const over =
-    recent.filter(
-      d => d > 5
-    ).length;
-
-
-  const under =
-    recent.filter(
-      d => d < 5
-    ).length;
-
-
-  const evenBias =
-    Math.abs(
-      even / recent.length - .5
-    );
-
-
-  const directionBias =
-    Math.max(
-      over,
-      under
-    ) /
-    recent.length;
-
-
-  return clamp(
-    (
-      evenBias * 100 +
-      directionBias * 100
-    ) / 2,
-    0,
-    100
-  );
-
-}
-
-
-/* =========================================================
-   BEST MARKET
-========================================================= */
-
-function chooseBestMarket() {
-
-  const candidates = [];
-
-
-  MARKETS.forEach(symbol => {
-
-    const analysis =
-      analyzeMarket(symbol);
-
-    if (analysis) {
-      candidates.push(analysis);
-    }
-
-  });
-
-
-  if (!candidates.length) {
-    return null;
-  }
-
-
-  candidates.sort(
-    (a, b) =>
-      b.score - a.score
-  );
-
-
-  /*
-    AI chooses from the strongest
-    three markets rather than locking
-    permanently onto one.
-  */
-
-  const top =
-    candidates.slice(
-      0,
-      Math.min(3, candidates.length)
-    );
-
-
-  return top[
-    Math.floor(
-      Math.random() * top.length
-    )
-  ];
-
-}
-
-
-/* =========================================================
-   AI STRATEGY
-========================================================= */
-
-function chooseBotStrategy(
-  analysis
-) {
-
-  const pool =
-    state.botStrategyPool.filter(
-      strategy =>
-        STRATEGIES.includes(strategy)
-    );
-
-
-  if (!pool.length) {
-    return "MATCHES";
-  }
-
-
-  const candidates = [];
-
-
-  pool.forEach(strategy => {
-
-    let score = 50;
-
-
-    switch (strategy) {
-
-      case "MATCHES":
-
-        score +=
-          analysis.concentration *
-          1.5;
-
-        break;
-
-
-      case "DIFFERS":
-
-        score +=
-          (20 -
-            analysis.concentration) *
-          1.2;
-
-        break;
-
-
-      case "EVEN":
-      case "ODD":
-
-        score +=
-          Math.abs(
-            analysis.evenRate -
-            .5
-          ) *
-          100;
-
-        break;
-
-
-      case "OVER":
-
-        score +=
-          Math.abs(
-            analysis.overRate -
-            .5
-          ) *
-          100;
-
-        break;
-
-
-      case "UNDER":
-
-        score +=
-          Math.abs(
-            analysis.underRate -
-            .5
-          ) *
-          100;
-
-        break;
-
-    }
-
-
-    score +=
-      Math.random() * 10;
-
-
-    candidates.push({
-      strategy,
-      score
-    });
-
-  });
-
-
-  candidates.sort(
-    (a, b) =>
-      b.score - a.score
-  );
-
-
-  return candidates[0].strategy;
-
-}
-
-
-/* =========================================================
-   PREDICTION
-========================================================= */
-
-function createPrediction(
-  analysis,
-  strategy
-) {
-
-  if (!analysis) {
-    return null;
-  }
-
-
-  let prediction =
-    analysis.hottestDigit;
-
-
-  switch (strategy) {
-
-    case "MATCHES":
-    case "DIFFERS":
-
-      prediction =
-        analysis.hottestDigit;
-
-      break;
-
-
-    case "OVER":
-
-      prediction =
-        analysis.hottestDigit > 5
-          ? analysis.hottestDigit
-          : 6;
-
-      break;
-
-
-    case "UNDER":
-
-      prediction =
-        analysis.hottestDigit < 5
-          ? analysis.hottestDigit
-          : 4;
-
-      break;
-
-
-    case "EVEN":
-
-      prediction =
-        findBestParityDigit(
-          analysis,
-          true
-        );
-
-      break;
-
-
-    case "ODD":
-
-      prediction =
-        findBestParityDigit(
-          analysis,
-          false
-        );
-
-      break;
-
-  }
-
-
-  let confidence = 50;
-
-
-  confidence +=
-    Math.abs(
-      analysis.concentration -
-      10
-    ) * 1.5;
-
-
-  confidence +=
-    analysis.score * .25;
-
-
-  confidence +=
-    Math.min(
-      analysis.streak * 2,
-      10
-    );
-
-
-  confidence =
-    clamp(
-      confidence,
-      50,
-      95
-    );
-
-
-  return {
-
-    market:
-      analysis.symbol,
-
-    strategy,
-
-    prediction,
-
-    confidence:
-      Math.round(confidence),
-
-    analysis
-
-  };
-
-}
-
-
-function findBestParityDigit(
-  analysis,
-  even
-) {
-
-  const market =
-    state.markets[
-      analysis.symbol
-    ];
-
-
-  const allowed =
-    [0,1,2,3,4,5,6,7,8,9]
-      .filter(
-        digit =>
-          (digit % 2 === 0) === even
-      );
-
-
-  let best =
-    allowed[0];
-
-  let bestCount = -1;
-
-
-  allowed.forEach(
-    digit => {
-
-      if (
-        market.digits[digit] >
-        bestCount
-      ) {
-
-        best =
-          digit;
-
-        bestCount =
-          market.digits[digit];
-
-      }
-
-    }
-  );
-
-
-  return best;
-
-}
-
-
-/* =========================================================
-   AI BOT CONTROLS
-========================================================= */
-
-function bindBotControls() {
-
-  $("startBotBtn")?.addEventListener(
-    "click",
-    () => {
-
-      if (state.aiRunning) {
-
-        stopAIBot();
-
-      } else {
-
-        startAIBot();
-
-      }
-
-    }
-  );
-
-
-  $("botStrategyTrigger")
-    ?.addEventListener(
-      "click",
-      () => {
-
-        const modal =
-          $("botStrategyModal");
-
-        if (modal) {
-          modal.style.display =
-            "flex";
-        }
-
-      }
-    );
-
-}
-
-
-/* =========================================================
-   START AI BOT
-========================================================= */
-
-function startAIBot() {
-
-  if (state.aiRunning) {
-    return;
-  }
-
-
-  /*
-    If trading was manually stopped,
-    starting the bot resumes trading.
-  */
-
-  state.tradingStopped = false;
-
-
-  state.aiRunning = true;
-
-  state.aiCycleToken++;
-
-
-  setText(
-    "startBotBtn",
-    "■ Stop Trading Bot"
-  );
-
-
-  setText(
-    "engineStatusText",
-    "AI Bot analyzing for 3 seconds..."
-  );
-
-
-  setText(
-    "botStatusDash",
-    "ANALYZING"
-  );
-
-
-  updateHistoryTradingStatus();
-
-
-  runAIBotLoop(
-    state.aiCycleToken
-  );
-
-}
-
-
-/* =========================================================
-   AI BOT LOOP
-   3 SECONDS ANALYSIS
-   THEN PAPER TRADE
-========================================================= */
-
-async function runAIBotLoop(token) {
-
-  while (
-    state.aiRunning &&
-    token === state.aiCycleToken
-  ) {
-
-    /*
-      Wait for enough market data.
-    */
-
-    const initial =
-      chooseBestMarket();
-
-
-    if (!initial) {
-
-      setText(
-        "engineStatusText",
-        "Collecting tick data..."
-      );
-
-      setText(
-        "botStatusDash",
-        "WAIT"
-      );
-
-      await sleep(1000);
-
-      continue;
-
-    }
-
-
-    /*
-      3 SECOND ANALYSIS.
-      This is independent from Circular AI.
-    */
-
-    setText(
-      "engineStatusText",
-      "AI Bot analyzing market..."
-    );
-
-    setText(
-      "botStatusDash",
-      "ANALYZING"
-    );
-
-
-    const startTime =
-      Date.now();
-
-
-    while (
-      Date.now() - startTime < 3000
-    ) {
-
-      if (
-        !state.aiRunning ||
-        token !== state.aiCycleToken
-      ) {
-        return;
-      }
-
-      await sleep(250);
-
-    }
-
-
-    /*
-      Fresh decision after
-      the 3 second analysis.
-    */
-
-    const decision =
-      chooseBotDecision();
-
-
-    if (!decision) {
-      continue;
-    }
-
-
-    state.lastBotDecision =
-      decision;
-
-
-    updateBotDisplay(
-      decision
-    );
-
-
-    updateAnalysisUI();
-
-
-    /*
-      Stop button can prevent
-      new trades.
-    */
-
-    if (
-      state.tradingStopped
-    ) {
-
-      await sleep(1000);
-
-      continue;
-
-    }
-
-
-    const stake =
-      Number(
-        $("stakeInput")?.value ||
-        .35
-      );
-
-
-    if (
-      Number.isFinite(stake) &&
-      stake >= .35
-    ) {
-
-      createPaperTrade({
-
-        engine: "AI BOT",
-
-        market:
-          decision.market,
-
-        strategy:
-          decision.strategy,
-
-        prediction:
-          decision.prediction,
-
-        stake,
-
-        takeProfit:
-          Number(
-            $("takeProfitInput")?.value ||
-            50
-          ),
-
-        stopLoss:
-          Number(
-            $("stopLossInput")?.value ||
-            100
-          )
-
-      });
-
-    }
-
-
-    /*
-      Short pause before
-      beginning another 3-second scan.
-    */
-
-    await sleep(1000);
-
-  }
-
-}
-
-
-function chooseBotDecision() {
-
-  const analysis =
-    chooseBestMarket();
-
-
-  if (!analysis) {
-    return null;
-  }
-
-
-  const strategy =
-    chooseBotStrategy(
-      analysis
-    );
-
-
-  return createPrediction(
-    analysis,
-    strategy
-  );
-
-}
-
-
-/* =========================================================
-   BOT DISPLAY
-========================================================= */
-
-function updateBotDisplay(
-  decision
-) {
-
-  setText(
-    "botStatusDash",
-    "TRADING"
-  );
-
-  setText(
-    "engineStatusText",
-    `AI selected ${formatMarketName(decision.market)}`
-  );
-
-  setText(
-    "botSelectedMarket",
-    formatMarketName(
-      decision.market
-    )
-  );
-
-  setText(
-    "botSelectedStrategy",
-    strategyLabel(
-      decision.strategy
-    )
-  );
-
-  setText(
-    "botScore",
-    `${decision.analysis.score.toFixed(0)}/100`
-  );
-
-  setText(
-    "botConfidence",
-    `${decision.confidence}%`
-  );
-
-}
-
-
-/* =========================================================
-   STOP AI BOT
-========================================================= */
-
-function stopAIBot() {
-
-  state.aiRunning = false;
-
-  state.aiCycleToken++;
-
-
-  setText(
-    "startBotBtn",
-    "▶ Start Trading Bot"
-  );
-
-  setText(
-    "engineStatusText",
-    "AI Bot Ready"
-  );
-
-  setText(
-    "botStatusDash",
-    "READY"
-  );
-
-}
-
-
-/* =========================================================
-   CIRCULAR AI CONTROLS
-========================================================= */
-
-function bindCircularControls() {
-
-  $("startAI")?.addEventListener(
-    "click",
-    () => {
-
-      if (state.circularRunning) {
-
-        stopCircularAI();
-
-      } else {
-
-        startCircularAI();
-
-      }
-
-    }
-  );
-
-
-  $("stopAI")?.addEventListener(
-    "click",
-    stopCircularAI
-  );
-
-
-  $("circularMarketTrigger")
-    ?.addEventListener(
-      "click",
-      () => {
-
-        /*
-          Simple market cycling selector.
-        */
-
-        const current =
-          MARKETS.indexOf(
-            state.selectedMarket
-          );
-
-        const next =
-          MARKETS[
-            (current + 1) %
-            MARKETS.length
-          ];
-
-        state.selectedMarket =
-          next;
-
-        setText(
-          "circularMarketLabel",
-          formatMarketName(next)
-        );
-
-      }
-    );
-
-
-  $("circularStrategyTrigger")
-    ?.addEventListener(
-      "click",
-      () => {
-
-        const modal =
-          $("strategyModal");
-
-        if (modal) {
-          modal.style.display =
-            "flex";
-        }
-
-      }
-    );
-
-}
-
-
-/* =========================================================
-   START CIRCULAR AI
-========================================================= */
-
-function startCircularAI() {
-
-  if (state.circularRunning) {
-    return;
-  }
-
-
-  state.tradingStopped = false;
-
-  state.circularRunning = true;
-
-  state.circularToken++;
-
-
-  setText(
-    "startAI",
-    "■ STOP CIRCULAR AI"
-  );
-
-
-  setText(
-    "circularStatusText",
-    "RUNNING"
-  );
-
-
-  updateHistoryTradingStatus();
-
-
-  circularCycle(
-    state.circularToken
-  );
-
-}
-
-
-/* =========================================================
-   STOP CIRCULAR
-========================================================= */
-
-function stopCircularAI() {
-
-  state.circularRunning = false;
-
-  state.circularToken++;
-
-
-  setText(
-    "startAI",
-    "▶ START CIRCULAR AI"
-  );
-
-
-  setText(
-    "circularStatusText",
-    "READY"
-  );
-
-
-  setText(
-    "analysisMsg",
-    "Circular AI Ready"
-  );
-
-
-  resetCycleUI();
-
-
-  $("aiCircle")
-    ?.classList.remove(
-      "active",
-      "trade-now"
-    );
-
-
-  updateAnalysisUI();
-
-}
-
-
-/* =========================================================
-   CIRCULAR CYCLE
-========================================================= */
-
-async function circularCycle(token) {
-
-  while (
-    state.circularRunning &&
-    token === state.circularToken
-  ) {
-
-    const market =
-      state.selectedMarket;
-
-
-    /*
-      PHASE 1
-      10 seconds
-    */
-
-    activateCycle(
-      "cycleAnalysis"
-    );
-
-
-    setText(
-      "aiCircleLabel",
-      "ANALYZING"
-    );
-
-
-    setText(
-      "aiCirclePrediction",
-      "--"
-    );
-
-
-    setText(
-      "aiCircleTimer",
-      "10"
-    );
-
-
-    setText(
-      "aiCircleStatus",
-      "RUNNING"
-    );
-
-
-    const analysisReady =
-      await countdown(
-        10,
-        token,
-        value => {
-
-          setText(
-            "aiCircleTimer",
-            value
-          );
-
-        }
-      );
-
-
-    if (!analysisReady) {
-      break;
-    }
-
-
-    /*
-      PHASE 2
-      Prediction
-    */
-
-    activateCycle(
-      "cyclePrediction"
-    );
-
-
-    const analysis =
-      analyzeMarket(market);
-
-
-    if (!analysis) {
-
-      setText(
-        "analysisMsg",
-        "Waiting for at least 20 ticks..."
-      );
-
-      await sleep(1500);
-
-      continue;
-
-    }
-
-
-    const prediction =
-      createPrediction(
-        analysis,
-        state.selectedStrategy
-      );
-
-
-    if (!prediction) {
-      continue;
-    }
-
-
-    state.lastCircularPrediction =
-      prediction;
-
-
-    updateCircularReport(
-      prediction
-    );
-
-
-    setText(
-      "aiCircleLabel",
-      "PREDICTION"
-    );
-
-    setText(
-      "aiCirclePrediction",
-      prediction.prediction
-    );
-
-    setText(
-      "aiCircleTimer",
-      "5"
-    );
-
-
-    const predictionReady =
-      await countdown(
-        5,
-        token,
-        value => {
-
-          setText(
-            "aiCircleTimer",
-            value
-          );
-
-        }
-      );
-
-
-    if (!predictionReady) {
-      break;
-    }
-
-
-    /*
-      PHASE 3
-      Trade Now
-    */
-
-    activateCycle(
-      "cycleTrade"
-    );
-
-
-    setText(
-      "aiCircleLabel",
-      "TRADE NOW"
-    );
-
-
-    setText(
-      "aiCircleTimer",
-      "3"
-    );
-
-
-    $("aiCircle")
-      ?.classList.add(
-        "trade-now"
-      );
-
-
-    if (!state.tradingStopped) {
-
-      const stake =
-        Number(
-          $("circularStakeInput")
-            ?.value ||
-          .35
-        );
-
-
-      createPaperTrade({
-
-        engine: "CIRCULAR AI",
-
-        market,
-
-        strategy:
-          prediction.strategy,
-
-        prediction:
-          prediction.prediction,
-
-        stake,
-
-        takeProfit:
-          Number(
-            $("circularTakeProfitInput")
-              ?.value ||
-            50
-          ),
-
-        stopLoss:
-          Number(
-            $("circularStopLossInput")
-              ?.value ||
-            100
-          )
-
-      });
-
-    }
-
-
-    await countdown(
-      3,
-      token,
-      value => {
-
-        setText(
-          "aiCircleTimer",
-          value
-        );
-
-      }
-    );
-
-
-    $("aiCircle")
-      ?.classList.remove(
-        "trade-now"
-      );
-
-
-    /*
-      Cooldown
-    */
-
-    activateCycle(
-      "cycleCooldown"
-    );
-
-
-    await sleep(800);
-
-  }
-
-}
-
-
-/* =========================================================
-   COUNTDOWN
-========================================================= */
-
-async function countdown(
-  seconds,
-  token,
-  callback
-) {
-
-  for (
-    let value = seconds;
-    value >= 1;
-    value--
-  ) {
-
-    if (
-      !state.circularRunning ||
-      token !== state.circularToken
-    ) {
-
-      return false;
-
-    }
-
-    callback(value);
-
-    await sleep(1000);
-
-  }
-
-
-  return true;
-
-}
-
-
-/* =========================================================
-   CIRCULAR REPORT
-========================================================= */
-
-function updateCircularReport(
-  prediction
-) {
-
-  const analysis =
-    prediction.analysis;
-
-
-  setText(
-    "reportMarket",
-    formatMarketName(
-      prediction.market
-    )
-  );
-
-
-  setText(
-    "reportStrategy",
-    strategyLabel(
-      prediction.strategy
-    )
-  );
-
-
-  setText(
-    "reportScore",
-    `${analysis.score.toFixed(0)}/100`
-  );
-
-
-  setText(
-    "reportStrength",
-    analysis.strength
-  );
-
-
-  setText(
-    "reportStability",
-    `${analysis.stability.toFixed(0)}%`
-  );
-
-
-  setText(
-    "reportConcentration",
-    `${analysis.concentration.toFixed(1)}%`
-  );
-
-
-  setText(
-    "reportStreak",
-    `${analysis.streak} ticks`
-  );
-
-
-  setText(
-    "reportAgreement",
-    `${analysis.agreement.toFixed(0)}%`
-  );
-
-
-  setText(
-    "aiPrediction",
-    prediction.prediction
-  );
-
-
-  setText(
-    "analysisConfidence",
-    `${prediction.confidence}%`
-  );
-
-
-  setText(
-    "analysisMsg",
-    `${strategyLabel(prediction.strategy)} selected • ${prediction.confidence}% statistical confidence`
-  );
-
-
-  updateAnalysisUI();
-
-}
-
-
-/* =========================================================
-   CYCLE UI
-========================================================= */
-
-function activateCycle(id) {
-
-  document
-    .querySelectorAll(".cycle-step")
-    .forEach(
-      element =>
-        element.classList.remove("active")
-    );
-
-
-  $(id)?.classList.add("active");
-
-}
-
-
-function resetCycleUI() {
-
-  document
-    .querySelectorAll(".cycle-step")
-    .forEach(
-      element =>
-        element.classList.remove("active")
-    );
-
-}
-
-
-/* =========================================================
-   MANUAL
-========================================================= */
-
-function bindManualControls() {
-
-  $("placeTradeBtn")
-    ?.addEventListener(
-      "click",
-      executeManualTrade
-    );
-
-
-  $("manualMarketSelect")
-    ?.addEventListener(
-      "change",
-      event => {
-
-        state.selectedMarket =
-          event.target.value;
-
-        resetSelectedMarketView();
-
-      }
-    );
-
-}
-
-
-function executeManualTrade() {
-
-  if (state.tradingStopped) {
-
-    setText(
-      "manualStatusText",
-      "Trading is stopped. Press START BOT or start another engine."
-    );
-
-    return;
-
-  }
-
-
-  const market =
-    $("manualMarketSelect")?.value ||
-    state.selectedMarket;
-
-
-  const strategy =
-    state.selectedStrategy;
-
-
-  let prediction =
-    Number(
-      $("manualTargetDigitInput")?.value
-    );
-
-
-  if (
-    !Number.isInteger(prediction) ||
-    prediction < 0 ||
-    prediction > 9
-  ) {
-
-    prediction = 4;
-
-  }
-
-
-  const stake =
-    Number(
-      $("manualStakeInput")?.value ||
-      .35
-    );
-
-
-  if (
-    !Number.isFinite(stake) ||
-    stake < .35
-  ) {
-
-    setText(
-      "manualStatusText",
-      "Minimum stake is $0.35"
-    );
-
-    return;
-
-  }
-
-
-  createPaperTrade({
-
-    engine: "MANUAL",
-
-    market,
-
-    strategy,
-
-    prediction,
-
-    stake,
-
-    takeProfit:
-      Number(
-        $("manualTakeProfitInput")
-          ?.value ||
-        50
-      ),
-
-    stopLoss:
-      Number(
-        $("manualStopLossInput")
-          ?.value ||
-        100
-      )
-
-  });
-
-
-  setText(
-    "manualStatusText",
-    `${strategyLabel(strategy)} paper trade placed`
-  );
-
-}
-
-
-/* =========================================================
-   STRATEGY MODAL
-========================================================= */
-
-function bindStrategyModal() {
-
-  const modal =
-    $("strategyModal");
-
-
-  document
-    .querySelectorAll(
-      "#strategyModal .strategy-option"
-    )
-    .forEach(option => {
-
-      option.addEventListener(
-        "click",
-        () => {
-
-          const strategy =
-            option.dataset.strategy;
-
-
-          state.selectedStrategy =
-            strategy;
-
-
-          document
-            .querySelectorAll(
-              "#strategyModal .strategy-option"
-            )
-            .forEach(
-              item =>
-                item.classList.remove(
-                  "selected"
-                )
-            );
-
-
-          option.classList.add(
-            "selected"
-          );
-
-
-          setText(
-            "manualSelectedStrategyLabel",
-            strategyLabel(strategy)
-          );
-
-
-          setText(
-            "circularStrategyLabel",
-            strategyLabel(strategy)
-          );
-
-
-          updateTargetDigitVisibility();
-
-          updateAnalysisUI();
-
-
-          if (modal) {
-            modal.style.display =
-              "none";
-          }
-
-        }
-      );
-
-    });
-
-
-  $("manualStrategyTrigger")
-    ?.addEventListener(
-      "click",
-      () => {
-
-        if (modal) {
-          modal.style.display =
-            "flex";
-        }
-
-      }
-    );
-
-
-  $("closeStrategyModal")
-    ?.addEventListener(
-      "click",
-      () => {
-
-        if (modal) {
-          modal.style.display =
-            "none";
-        }
-
-      }
-    );
-
-
-  modal?.addEventListener(
-    "click",
-    event => {
-
-      if (event.target === modal) {
-
-        modal.style.display =
-          "none";
-
-      }
-
-    }
-  );
-
-}
-
-
-/* =========================================================
-   BOT STRATEGY MODAL
-========================================================= */
-
-function bindBotStrategyModal() {
-
-  const modal =
-    $("botStrategyModal");
-
-
-  $("closeBotStrategyModal")
-    ?.addEventListener(
-      "click",
-      () => {
-
-        if (modal) {
-          modal.style.display =
-            "none";
-        }
-
-      }
-    );
-
-
-  $("applyBotStrategies")
-    ?.addEventListener(
-      "click",
-      applyBotStrategyPool
-    );
-
-
-  modal?.addEventListener(
-    "click",
-    event => {
-
-      if (event.target === modal) {
-
-        modal.style.display =
-          "none";
-
-      }
-
-    }
-  );
-
-
-  updateBotStrategyLabel();
-
-}
-
-
-function applyBotStrategyPool() {
-
-  const checked =
-    Array.from(
-      document.querySelectorAll(
-        ".bot-strategy-check:checked"
-      )
-    ).map(
-      input =>
-        input.value
-    );
-
-
-  if (!checked.length) {
-
-    setText(
-      "botStrategyLabel",
-      "Select at least 1"
-    );
-
-    return;
-
-  }
-
-
-  state.botStrategyPool =
-    checked;
-
-
-  updateBotStrategyLabel();
-
-
-  const modal =
-    $("botStrategyModal");
-
-  if (modal) {
-    modal.style.display =
-      "none";
-  }
-
-}
-
-
-function updateBotStrategyLabel() {
-
-  setText(
-    "botStrategyLabel",
-
-    state.botStrategyPool
-      .map(strategyLabel)
-      .join(" / ")
-
-  );
-
-}
-
-
-/* =========================================================
-   TARGET DIGIT
-========================================================= */
-
-function updateTargetDigitVisibility() {
-
-  const container =
-    $("targetDigitContainer");
-
-  if (!container) {
-    return;
-  }
-
-
-  if (
-    state.selectedStrategy === "EVEN" ||
-    state.selectedStrategy === "ODD"
-  ) {
-
-    container.style.display =
-      "none";
-
-  } else {
-
-    container.style.display =
-      "flex";
-
-  }
-
-}
-
-
-/* =========================================================
-   PAPER TRADE
-========================================================= */
-
-function createPaperTrade(config) {
-
-  const stake =
-    Number(config.stake);
-
-
-  if (
-    !Number.isFinite(stake) ||
-    stake < .35
-  ) {
-
-    return null;
-
-  }
-
-
-  if (
-    state.paperBalance <
-    stake
-  ) {
-
-    setText(
-      "engineStatusText",
-      "Insufficient paper balance"
-    );
-
-    return null;
-
-  }
-
-
-  state.paperBalance -=
-    stake;
-
-
-  const trade = {
-
-    id:
-      `${Date.now()}-${Math.random()
-        .toString(36)
-        .slice(2,8)}`,
-
-    time:
-      new Date()
-        .toLocaleTimeString(),
-
-    timestamp:
-      Date.now(),
-
-    engine:
-      config.engine ||
-      "MANUAL",
-
-    market:
-      config.market,
-
-    strategy:
-      config.strategy,
-
-    prediction:
-      Number.isInteger(
-        config.prediction
-      )
-        ? config.prediction
-        : 5,
-
-    stake,
-
-    takeProfit:
-      Number(
-        config.takeProfit ||
-        50
-      ),
-
-    stopLoss:
-      Number(
-        config.stopLoss ||
-        100
-      ),
-
-    result: null,
-
-    status: "PENDING",
-
-    amountWon: 0,
-
-    payout: 0,
-
-    profit: 0,
-
-    martingaleLevel: 0
-
-  };
-
-
-  state.activeTrades.push(
-    trade
-  );
-
-
-  renderActiveTrades();
-
-  updateBalance();
-
-
-  return trade;
-
-}
-
-
-/* =========================================================
-   EVALUATE ACTIVE TRADES
-========================================================= */
-
-function evaluateActiveTrades(
-  symbol,
-  digit
-) {
-
-  const trades =
-    state.activeTrades.filter(
-      trade =>
-        trade.market === symbol &&
-        trade.status === "PENDING"
-    );
-
-
-  trades.forEach(
-    trade => {
-
-      const win =
-        evaluateStrategy(
-          trade.strategy,
-          digit,
-          trade.prediction
-        );
-
-
-      settlePaperTrade(
-        trade,
-        win,
-        digit
-      );
-
-    }
-  );
-
-}
-
-
-/* =========================================================
-   STRATEGY RESULT
-========================================================= */
-
-function evaluateStrategy(
-  strategy,
-  digit,
-  prediction
-) {
-
-  switch (strategy) {
-
-    case "MATCHES":
-      return digit === prediction;
-
-    case "DIFFERS":
-      return digit !== prediction;
-
-    case "EVEN":
-      return digit % 2 === 0;
-
-    case "ODD":
-      return digit % 2 !== 0;
-
-    case "OVER":
-      return digit > prediction;
-
-    case "UNDER":
-      return digit < prediction;
-
-    default:
-      return digit === prediction;
-
-  }
-
-}
-
-
-/* =========================================================
-   DEMO PAYOUT MODEL
-========================================================= */
-
-function getPayoutMultiplier(
-  strategy
-) {
-
-  switch (strategy) {
-
-    case "MATCHES":
-      return 8.5;
-
-    case "DIFFERS":
-      return 1.09;
-
-    case "EVEN":
-    case "ODD":
-    case "OVER":
-    case "UNDER":
-      return 1.95;
-
-    default:
-      return 1.95;
-
-  }
-
-}
-
-
-/* =========================================================
-   SETTLE PAPER TRADE
-========================================================= */
-
-function settlePaperTrade(
-  trade,
-  win,
-  digit
-) {
-
-  if (
-    trade.status !== "PENDING"
-  ) {
-    return;
-  }
-
-
-  trade.result =
-    digit;
-
-
-  const multiplier =
-    getPayoutMultiplier(
-      trade.strategy
-    );
-
-
-  if (win) {
-
-    trade.payout =
-      trade.stake *
-      multiplier;
-
-    trade.profit =
-      trade.payout -
-      trade.stake;
-
-    trade.amountWon =
-      trade.profit;
-
-    trade.status =
-      "WON";
-
-    state.paperBalance +=
-      trade.payout;
-
-    state.totalProfit +=
-      trade.profit;
-
-    state.totalAmountWon +=
-      trade.amountWon;
-
-    state.totalPayout +=
-      trade.payout;
-
-  } else {
-
-    trade.payout = 0;
-
-    trade.profit =
-      -trade.stake;
-
-    trade.amountWon = 0;
-
-    trade.status =
-      "LOST";
-
-    state.totalProfit +=
-      trade.profit;
-
-  }
-
-
-  state.totalStake +=
-    trade.stake;
-
-
-  state.activeTrades =
-    state.activeTrades.filter(
-      item =>
-        item.id !== trade.id
-    );
-
-
-  state.history.unshift({
-    ...trade
-  });
-
-
-  saveHistory();
-
-  updateBalance();
-
-  updateStats();
-
-  renderHistory();
-
-  renderActiveTrades();
-
-  checkTradingLimits();
-
-}
-
-
-/* =========================================================
-   TAKE PROFIT / STOP LOSS
-========================================================= */
-
-function checkTradingLimits() {
-
-  if (
-    state.totalProfit >=
-    Number(
-      $("takeProfitInput")?.value ||
-      50
-    )
-  ) {
-
-    stopAllTrading(
-      "Take profit reached"
-    );
-
-  }
-
-
-  if (
-    state.totalProfit <=
-    -Math.abs(
-      Number(
-        $("stopLossInput")?.value ||
-        100
-      )
-    )
-  ) {
-
-    stopAllTrading(
-      "Stop loss reached"
-    );
-
-  }
-
-}
-
-
-/* =========================================================
-   STOP ALL TRADING
-========================================================= */
-
-function stopAllTrading(reason) {
-
-  state.tradingStopped =
-    true;
-
-
-  state.aiRunning = false;
-
-  state.circularRunning = false;
-
-  state.aiCycleToken++;
-
-  state.circularToken++;
-
-
-  setText(
-    "startBotBtn",
-    "▶ Start Trading Bot"
-  );
-
-
-  setText(
-    "startAI",
-    "▶ START CIRCULAR AI"
-  );
-
-
-  setText(
-    "circularStatusText",
-    "STOPPED"
-  );
-
-
-  setText(
-    "botStatusDash",
-    "STOPPED"
-  );
-
-
-  setText(
-    "engineStatusText",
-    reason
-  );
-
-
-  updateHistoryTradingStatus();
-
-  updateAnalysisUI();
-
-}
-
-
-/* =========================================================
-   HISTORY CONTROLS
-========================================================= */
-
-function bindHistoryControls() {
-
-  $("stopTradingBtn")
-    ?.addEventListener(
-      "click",
-      () => {
-
-        if (
-          state.aiRunning ||
-          state.circularRunning
-        ) {
-
-          stopAllTrading(
-            "Trading manually stopped"
-          );
-
-        } else {
-
-          state.tradingStopped =
-            !state.tradingStopped;
-
-          updateHistoryTradingStatus();
-
-        }
-
-      }
-    );
-
-
-  $("minimizeHistoryBtn")
-    ?.addEventListener(
-      "click",
-      () => {
-
-        state.historyMinimized =
-          !state.historyMinimized;
-
-        const wrap =
-          $("historyTableWrap");
-
-        if (wrap) {
-
-          wrap.style.display =
-            state.historyMinimized
-              ? "none"
-              : "block";
-
-        }
-
-        setText(
-          "minimizeHistoryBtn",
-          state.historyMinimized
-            ? "+ Expand"
-            : "− Minimize"
-        );
-
-      }
-    );
-
-
-  $("clearHistoryBtn")
-    ?.addEventListener(
-      "click",
-      () => {
-
-        if (
-          !confirm(
-            "Clear all paper trade history?"
-          )
-        ) {
-          return;
-        }
-
-        state.history = [];
-
-        state.totalProfit = 0;
-
-        state.totalAmountWon = 0;
-
-        state.totalPayout = 0;
-
-        state.totalStake = 0;
-
-        saveHistory();
-
-        renderHistory();
-
-        updateStats();
-
-      }
-    );
-
-}
-
-
-/* =========================================================
-   HISTORY STATUS
-========================================================= */
-
-function updateHistoryTradingStatus() {
-
-  const running =
-    state.aiRunning ||
-    state.circularRunning;
-
-
-  if (state.tradingStopped) {
-
-    setText(
-      "historyTradingStatus",
-      "TRADING STOPPED"
-    );
-
-    return;
-
-  }
-
-
-  setText(
-    "historyTradingStatus",
-    running
-      ? "TRADING ACTIVE"
-      : "TRADING READY"
-  );
-
-}
-
-
-/* =========================================================
-   ACTIVE TRADES RENDER
-========================================================= */
-
-function renderActiveTrades() {
-
-  const list =
-    $("activeTradesList");
-
-  if (!list) {
-    return;
-  }
-
-
-  setText(
-    "activeTradeCount",
-    String(
-      state.activeTrades.length
-    )
-  );
-
-
-  if (!state.activeTrades.length) {
-
-    list.innerHTML = `
-      <div class="empty-state">
-        No active paper trades
-      </div>
-    `;
-
-    return;
-
-  }
-
-
-  list.innerHTML =
-    state.activeTrades
-      .map(
-        trade => `
-          <div class="active-trade">
-
-            <div>
-              <span>ENGINE</span>
-              <strong>${esc(trade.engine)}</strong>
-            </div>
-
-            <div>
-              <span>MARKET</span>
-              <strong>
-                ${esc(formatMarketName(trade.market))}
-              </strong>
-            </div>
-
-            <div>
-              <span>STRATEGY</span>
-              <strong>
-                ${esc(strategyLabel(trade.strategy))}
-              </strong>
-            </div>
-
-            <div>
-              <span>STAKE</span>
-              <strong>
-                ${money(trade.stake)}
-              </strong>
-            </div>
-
-          </div>
-        `
-      )
-      .join("");
-
-}
-
-
-/* =========================================================
-   HISTORY RENDER
-========================================================= */
-
-function renderHistory() {
-
-  const list =
-    $("historyList");
-
-  if (!list) {
-    return;
-  }
-
-
-  if (!state.history.length) {
-
-    list.innerHTML = `
-      <div class="empty-state">
-        No completed paper trades
-      </div>
-    `;
-
-    return;
-
-  }
-
-
-  list.innerHTML =
-    state.history
-      .map(
-        trade => {
-
-          const resultClass =
-            trade.status === "WON"
-              ? "win"
-              : "loss";
-
-
-          return `
-            <div class="history-row">
-
-              <span>
-                ${esc(trade.time)}
-              </span>
-
-              <span>
-                ${esc(trade.engine)}
-              </span>
-
-              <span>
-                ${esc(formatMarketName(trade.market))}
-              </span>
-
-              <span>
-                ${esc(strategyLabel(trade.strategy))}
-              </span>
-
-              <span>
-                ${esc(trade.prediction)}
-              </span>
-
-              <strong class="${resultClass}">
-                ${esc(trade.result)}
-              </strong>
-
-              <span>
-                ${money(trade.stake)}
-              </span>
-
-              <span>
-                ${money(trade.payout)}
-              </span>
-
-              <span class="${resultClass}">
-                ${money(trade.amountWon)}
-              </span>
-
-              <strong class="${resultClass}">
-                ${money(trade.profit)}
-              </strong>
-
-            </div>
-          `;
-
-        }
-      )
-      .join("");
-
-}
-
-
-/* =========================================================
-   STATS
-========================================================= */
-
-function updateStats() {
-
-  const total =
-    state.history.length;
-
-
-  const wins =
-    state.history.filter(
-      trade =>
-        trade.status === "WON"
-    ).length;
-
-
-  const losses =
-    state.history.filter(
-      trade =>
-        trade.status === "LOST"
-    ).length;
-
-
-  const amountWon =
-    state.history.reduce(
-      (sum, trade) =>
-        sum +
-        Number(trade.amountWon || 0),
-      0
-    );
-
-
-  const payout =
-    state.history.reduce(
-      (sum, trade) =>
-        sum +
-        Number(trade.payout || 0),
-      0
-    );
-
-
-  const profit =
-    state.history.reduce(
-      (sum, trade) =>
-        sum +
-        Number(trade.profit || 0),
-      0
-    );
-
-
-  setText(
-    "historyTotalTrades",
-    total
-  );
-
-  setText(
-    "historyWins",
-    wins
-  );
-
-  setText(
-    "historyLosses",
-    losses
-  );
-
-  setText(
-    "historyAmountWon",
-    money(amountWon)
-  );
-
-  setText(
-    "historyPayout",
-    money(payout)
-  );
-
-  setText(
-    "historyProfit",
-    money(profit)
-  );
-
-}
-
-
-/* =========================================================
-   BALANCE
-========================================================= */
-
-function updateBalance() {
-
-  setText(
-    "paperBalance",
-    money(state.paperBalance)
-  );
-
-
-  setText(
-    "totalProfit",
-    money(state.totalProfit)
-  );
-
-}
-
-
-/* =========================================================
-   LOCAL STORAGE
-========================================================= */
-
-function saveHistory() {
-
-  try {
-
-    localStorage.setItem(
-      "krishwave_v7_history",
-      JSON.stringify(
-        state.history
-      )
-    );
-
-  } catch (error) {}
-
-}
-
-
-function loadHistory() {
-
-  try {
-
-    const saved =
-      localStorage.getItem(
-        "krishwave_v7_history"
-      );
-
-
-    if (!saved) {
-      return;
-    }
-
-
-    const history =
-      JSON.parse(saved);
-
-
-    if (!Array.isArray(history)) {
-      return;
-    }
-
-
-    state.history =
-      history;
-
-
-    state.totalProfit =
-      history.reduce(
-        (sum, trade) =>
-          sum +
-          Number(trade.profit || 0),
-        0
-      );
-
-
-    state.totalAmountWon =
-      history.reduce(
-        (sum, trade) =>
-          sum +
-          Number(trade.amountWon || 0),
-        0
-      );
-
-
-    state.totalPayout =
-      history.reduce(
-        (sum, trade) =>
-          sum +
-          Number(trade.payout || 0),
-        0
-      );
-
-
-    state.totalStake =
-      history.reduce(
-        (sum, trade) =>
-          sum +
-          Number(trade.stake || 0),
-        0
-      );
-
-  } catch (error) {}
-
-}
-
-
-/* =========================================================
-   RESET MARKET VIEW
-========================================================= */
-
-function resetSelectedMarketView() {
-
-  state.priceHistory = [];
-
-
-  const market =
-    state.markets[
-      state.selectedMarket
-    ];
-
-
-  if (market) {
-
-    state.priceHistory =
-      market.prices.slice(-60);
-
-  }
-
-
-  setText(
-    "currentChartMarket",
-    formatMarketName(
-      state.selectedMarket
-    )
-  );
-
-
-  renderDigitStats();
-
-  updateChart();
-
-}
-
-
-/* =========================================================
-   ANALYSIS PAGE
-========================================================= */
-
-function updateAnalysisUI() {
-
-  /*
-    AI BOT
-  */
-
-  const bot =
-    state.lastBotDecision;
-
-
-  if (bot) {
-
-    setText(
-      "analysisBotStatus",
-      state.aiRunning
-        ? "ACTIVE"
-        : "READY"
-    );
-
-
-    setText(
-      "analysisBotMarket",
-      formatMarketName(
-        bot.market
-      )
-    );
-
-
-    setText(
-      "analysisBotStrategy",
-      strategyLabel(
-        bot.strategy
-      )
-    );
-
-
-    setText(
-      "analysisBotPrediction",
-      bot.prediction
-    );
-
-
-    setText(
-      "analysisBotConfidence",
-      `${bot.confidence}%`
-    );
-
-  } else {
-
-    setText(
-      "analysisBotMarket",
-      "--"
-    );
-
-    setText(
-      "analysisBotStrategy",
-      "--"
-    );
-
-    setText(
-      "analysisBotPrediction",
-      "--"
-    );
-
-    setText(
-      "analysisBotConfidence",
-      "--%"
-    );
-
-  }
-
-
-  /*
-    CIRCULAR AI
-  */
-
-  const circular =
-    state.lastCircularPrediction;
-
-
-  if (circular) {
-
-    setText(
-      "analysisCircularStatus",
-      state.circularRunning
-        ? "ACTIVE"
-        : "READY"
-    );
-
-  } else {
-
-    setText(
-      "analysisCircularStatus",
-      state.circularRunning
-        ? "ANALYZING"
-        : "READY"
-    );
-
-  }
-
-
-  /*
-    Current strategy is always visible.
-  */
-
-  setText(
-    "analysisChosenStrategy",
-    strategyLabel(
-      state.selectedStrategy
-    )
-  );
-
-
-  if (circular) {
-
-    setText(
-      "reportStrategy",
-      strategyLabel(
-        circular.strategy
-      )
-    );
-
-  } else {
-
-    setText(
-      "reportStrategy",
-      strategyLabel(
-        state.selectedStrategy
-      )
-    );
-
-  }
-
-
-  /*
-    If there is no Circular prediction,
-    use the selected market for statistics.
-  */
-
-  const market =
-    circular?.market ||
-    bot?.market ||
-    state.selectedMarket;
-
-
-  const analysis =
-    analyzeMarket(market);
-
-
-  if (analysis) {
-
-    setText(
-      "reportMarket",
-      formatMarketName(
-        analysis.symbol
-      )
-    );
-
-    setText(
-      "reportScore",
-      `${analysis.score.toFixed(0)}/100`
-    );
-
-    setText(
-      "reportStrength",
-      analysis.strength
-    );
-
-    setText(
-      "reportStability",
-      `${analysis.stability.toFixed(0)}%`
-    );
-
-    setText(
-      "reportConcentration",
-      `${analysis.concentration.toFixed(1)}%`
-    );
-
-    setText(
-      "reportStreak",
-      `${analysis.streak} ticks`
-    );
-
-    setText(
-      "reportAgreement",
-      `${analysis.agreement.toFixed(0)}%`
-    );
-
-  }
-
-}
-
-
-/* =========================================================
-   OAUTH
-========================================================= */
-
-function checkOAuthCallback() {
-
-  const params =
-    new URLSearchParams(
-      window.location.search
-    );
-
-
-  const code =
-    params.get("code");
-
-
-  if (!code) {
-    return;
-  }
-
-
-  const verifier =
-    localStorage.getItem(
-      "krishwave_pkce_verifier"
-    );
-
-
-  if (!verifier) {
-
-    console.warn(
-      "Missing PKCE verifier"
-    );
-
-    return;
-
-  }
-
-
-  exchangeOAuthCode(
-    code,
-    verifier
-  );
-
-}
-
-
-async function exchangeOAuthCode(
-  code,
-  verifier
-) {
-
-  try {
-
-    const response =
-      await fetch(
-        OAUTH_BACKEND,
-        {
-          method: "POST",
-
-          headers: {
-            "Content-Type":
-              "application/json"
-          },
-
-          body:
-            JSON.stringify({
-
-              code,
-
-              code_verifier:
-                verifier
-
-            })
-
-        }
-      );
-
-
-    const data =
-      await response.json();
-
-
-    if (
-      data.success &&
-      data.access_token
-    ) {
-
-      state.accessToken =
-        data.access_token;
-
-
-      localStorage.setItem(
-        "krishwave_access_token",
-        data.access_token
-      );
-
-
-      setText(
-        "connectionText",
-        "ACCOUNT CONNECTED"
-      );
-
-    }
-
-  } catch (error) {
-
-    console.warn(
-      "OAuth exchange failed",
-      error
-    );
-
-  }
-
-}
-
-
-/* =========================================================
-   PKCE LOGIN
-========================================================= */
-
-async function connectDerivAccount() {
-
-  try {
-
-    const verifier =
-      generatePKCEVerifier();
-
-
-    const challenge =
-      await generatePKCEChallenge(
-        verifier
-      );
-
-
-    localStorage.setItem(
-      "krishwave_pkce_verifier",
-      verifier
-    );
-
-
-    const url =
-      new URL(
-        "https://auth.deriv.com/oauth2/authorize"
-      );
-
-
-    url.searchParams.set(
-      "response_type",
-      "code"
-    );
-
-
-    url.searchParams.set(
-      "client_id",
-      DERIV_CLIENT_ID
-    );
-
-
-    url.searchParams.set(
-      "redirect_uri",
-      REDIRECT_URI
-    );
-
-
-    url.searchParams.set(
-      "code_challenge",
-      challenge
-    );
-
-
-    url.searchParams.set(
-      "code_challenge_method",
-      "S256"
-    );
-
-
-    window.location.href =
-      url.toString();
-
-  } catch (error) {
-
-    console.error(
-      "OAuth start failed",
-      error
-    );
-
-  }
-
-}
-
-
-function generatePKCEVerifier() {
-
-  const array =
-    new Uint8Array(32);
-
-
-  crypto.getRandomValues(array);
-
-
-  return btoa(
-    String.fromCharCode(...array)
-  )
-    .replace(/\+/g, "-")
-    .replace(/\//g, "_")
-    .replace(/=/g, "");
-
-}
-
-
-async function generatePKCEChallenge(
-  verifier
-) {
-
-  const data =
-    new TextEncoder()
-      .encode(verifier);
-
-
-  const digest =
-    await crypto.subtle.digest(
-      "SHA-256",
-      data
-    );
-
-
-  return btoa(
-    String.fromCharCode(
-      ...new Uint8Array(digest)
-    )
-  )
-    .replace(/\+/g, "-")
-    .replace(/\//g, "_")
-    .replace(/=/g, "");
-
-}
-
-
-/* =========================================================
-   ACCOUNT TOKEN RESTORE
-========================================================= */
-
-function restoreAccessToken() {
-
-  const token =
-    localStorage.getItem(
-      "krishwave_access_token"
-    );
-
-
-  if (token) {
-
-    state.accessToken =
-      token;
-
-  }
-
-}
-
-
-restoreAccessToken();
-
-
-/* =========================================================
-   WINDOW RESIZE
-========================================================= */
-
-window.addEventListener(
-  "resize",
-  () => {
-
-    updateChart();
-
-  }
-);
-
-
-/* =========================================================
-   SAFETY MESSAGE
-========================================================= */
-
-console.log(
-  "KRISHWAVE AI BEAST V7.0 loaded."
-);
-
-console.log(
-  "DEMO / PAPER MODE ONLY — NO REAL TRADES."
-);
-
-Important: this version makes the AI BOT the default dominant engine, and the engine tabs are mutually exclusive—so when you tap Circular AI, the AI BOT and Manual panels disappear; when you tap Manual, the other two disappear.
-
-One thing to check after pasting: reload the GitHub Pages site and allow it to collect at least 20 live ticks. The AI needs that sample before it can make its first statistical decision.
