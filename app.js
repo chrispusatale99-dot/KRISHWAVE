@@ -1,17 +1,25 @@
 /* =========================================================
    KRISHWAVE AI BEAST V7.0
-   DEMO / PAPER TRADING ENGINE
+   APP.JS
    ---------------------------------------------------------
-   - Public Deriv tick data
-   - AI autonomous market selection
-   - AI autonomous strategy selection
-   - AI BOT = 3-second analysis
-   - Circular AI = 10 -> 5 -> 3
-   - Manual engine
-   - Paper trades only
-   - History
+   - Deriv OAuth / demo connection
+   - Live Volatility Index tick data
+   - AI BOT autonomous analysis
+   - CIRCULAR AI 10 → 5 → 3 cycle
+   - MANUAL trading
+   - Strategy chosen shown in Analysis
+   - Circular AI shown in Analysis
+   - Paper/demo trading engine
+   - Trade history
+   - Amount won / profit
    - Take Profit / Stop Loss
-   - Martingale simulation
+   - Martingale
+   ========================================================= */
+
+"use strict";
+
+/* =========================================================
+   CONFIG
    ========================================================= */
 
 const DERIV_CLIENT_ID = "34khasPjsT0PCRR8X3Z70";
@@ -26,12 +34,32 @@ const PUBLIC_WS =
   "wss://api.derivws.com/trading/v1/options/ws/public";
 
 
+/* =========================================================
+   MARKETS
+   ========================================================= */
+
 const MARKETS = [
-  "R_10","R_25","R_50","R_75","R_100",
-  "1HZ10V","1HZ25V","1HZ30V","1HZ50V",
-  "1HZ75V","1HZ90V","1HZ100V",
-  "1HZ150V","1HZ250V","1HZ1000V"
+  "R_10",
+  "R_25",
+  "R_50",
+  "R_75",
+  "R_100",
+  "1HZ10V",
+  "1HZ25V",
+  "1HZ30V",
+  "1HZ50V",
+  "1HZ75V",
+  "1HZ90V",
+  "1HZ100V",
+  "1HZ150V",
+  "1HZ250V",
+  "1HZ1000V"
 ];
+
+
+/* =========================================================
+   STRATEGIES
+   ========================================================= */
 
 const STRATEGIES = [
   "MATCHES",
@@ -43,13 +71,18 @@ const STRATEGIES = [
 ];
 
 const STRATEGY_LABELS = {
-  MATCHES:"Matches",
-  DIFFERS:"Differs",
-  OVER:"Over",
-  UNDER:"Under",
-  EVEN:"Even",
-  ODD:"Odd"
+  MATCHES: "Matches",
+  DIFFERS: "Differs",
+  OVER: "Over",
+  UNDER: "Under",
+  EVEN: "Even",
+  ODD: "Odd"
 };
+
+
+/* =========================================================
+   STORAGE
+   ========================================================= */
 
 const HISTORY_KEY = "krishwave_v7_history";
 const BALANCE_KEY = "krishwave_v7_balance";
@@ -57,250 +90,204 @@ const THEME_KEY = "krishwave_theme";
 const SETTINGS_KEY = "krishwave_v7_settings";
 
 
+/* =========================================================
+   STATE
+   ========================================================= */
+
 const state = {
 
-  connected:false,
-  accessToken:null,
-  accountId:null,
-  currency:"USD",
+  connected: false,
 
-  paperBalance:1000,
+  accessToken: null,
+  accountId: null,
+  currency: "USD",
 
-  engineMode:"ai",
+  paperBalance: 1000,
 
-  selectedMarket:"R_10",
-  selectedStrategy:"MATCHES",
+  engineMode: "ai",
 
-  botStrategyPool:[
+  selectedMarket: "R_10",
+  selectedStrategy: "MATCHES",
+
+  botStrategyPool: [
     "MATCHES",
     "DIFFERS"
   ],
 
-  markets:{},
+  markets: {},
 
-  priceHistory:[],
+  priceHistory: [],
 
-  history:[],
-  activeTrades:[],
+  history: [],
 
-  totalProfit:0,
-  totalAmountWon:0,
-  totalStake:0,
+  activeTrades: [],
 
-  wins:0,
-  losses:0,
+  totalProfit: 0,
+  totalAmountWon: 0,
+  totalStake: 0,
 
-  aiRunning:false,
-  aiCycleToken:0,
+  wins: 0,
+  losses: 0,
 
-  circularRunning:false,
-  circularToken:0,
+  aiRunning: false,
+  aiCycleToken: 0,
 
-  publicWS:null,
-  publicReconnectTimer:null,
+  circularRunning: false,
+  circularToken: 0,
 
-  botTimer:null,
-  circularTimer:null,
+  publicWS: null,
+  publicReconnectTimer: null,
 
-  lastBotDecision:null,
-  lastCircularPrediction:null,
+  botTimer: null,
+  circularTimer: null,
 
-  botBaseStake:10,
-  botCurrentStake:10,
-  botMartingaleLevel:0,
+  lastBotDecision: null,
+  lastCircularPrediction: null,
 
-  botTakeProfit:50,
-  botStopLoss:100,
-  botSessionStartProfit:0,
+  botBaseStake: 10,
+  botCurrentStake: 10,
+  botMartingaleLevel: 0,
 
-  circularTakeProfit:50,
-  circularStopLoss:100,
-  circularSessionStartProfit:0,
+  botTakeProfit: 50,
+  botStopLoss: 100,
+  botSessionStartProfit: 0,
 
-  tradingStopped:false,
-  sessionStartProfit:0
+  circularTakeProfit: 50,
+  circularStopLoss: 100,
+  circularSessionStartProfit: 0,
+
+  tradingStopped: false,
+
+  sessionStartProfit: 0
 };
 
 
 /* =========================================================
-   DOM
+   DOM HELPERS
    ========================================================= */
 
-const $ = id => document.getElementById(id);
-
-function setText(id,value){
-
-  const el = $(id);
-
-  if(el){
-    el.textContent =
-      value === undefined || value === null
-        ? "—"
-        : value;
-  }
+function $(id) {
+  return document.getElementById(id);
 }
+
+function setText(id, value) {
+  const el = $(id);
+  if (el) el.textContent = value;
+}
+
+function show(id) {
+  const el = $(id);
+  if (el) el.classList.remove("hidden");
+}
+
+function hide(id) {
+  const el = $(id);
+  if (el) el.classList.add("hidden");
+}
+
+function sleep(ms) {
+  return new Promise(resolve => setTimeout(resolve, ms));
+}
+
+
+/* =========================================================
+   INITIALIZATION
+   ========================================================= */
+
+document.addEventListener("DOMContentLoaded", () => {
+
+  loadStorage();
+
+  bindNavigation();
+
+  bindEngineTabs();
+
+  bindTradingControls();
+
+  bindStrategyControls();
+
+  bindHistoryControls();
+
+  bindTheme();
+
+  handleOAuthCallback();
+
+  updateAllUI();
+
+  connectPublicMarketData();
+
+});
 
 
 /* =========================================================
    STORAGE
    ========================================================= */
 
-function loadState(){
+function loadStorage() {
 
-  try{
+  try {
 
     const history =
-      JSON.parse(
-        localStorage.getItem(HISTORY_KEY) || "[]"
-      );
+      JSON.parse(localStorage.getItem(HISTORY_KEY));
 
-    if(Array.isArray(history))
+    if (Array.isArray(history)) {
       state.history = history;
+    }
 
-    const balance =
-      Number(
-        localStorage.getItem(BALANCE_KEY)
-      );
+  } catch {}
 
-    if(Number.isFinite(balance))
-      state.paperBalance = balance;
+  const balance =
+    Number(localStorage.getItem(BALANCE_KEY));
 
-    const settings =
-      JSON.parse(
-        localStorage.getItem(SETTINGS_KEY) || "{}"
-      );
-
-    if(settings.selectedMarket)
-      state.selectedMarket =
-        settings.selectedMarket;
-
-    if(settings.selectedStrategy)
-      state.selectedStrategy =
-        settings.selectedStrategy;
-
-    if(Array.isArray(settings.botStrategyPool))
-      state.botStrategyPool =
-        settings.botStrategyPool;
-
-  }catch(error){
-
-    console.warn(
-      "Storage load error",
-      error
-    );
-
+  if (Number.isFinite(balance)) {
+    state.paperBalance = balance;
   }
 
-  calculateTotals();
+  try {
+
+    const settings =
+      JSON.parse(localStorage.getItem(SETTINGS_KEY));
+
+    if (settings) {
+
+      if (Array.isArray(settings.botStrategyPool)) {
+        state.botStrategyPool =
+          settings.botStrategyPool;
+      }
+
+      if (settings.botBaseStake != null) {
+        state.botBaseStake =
+          Number(settings.botBaseStake);
+      }
+
+    }
+
+  } catch {}
+
+  rebuildStatistics();
 }
 
-
-function saveState(){
+function saveStorage() {
 
   localStorage.setItem(
     HISTORY_KEY,
-    JSON.stringify(
-      state.history.slice(0,500)
-    )
+    JSON.stringify(state.history.slice(0, 300))
   );
 
   localStorage.setItem(
     BALANCE_KEY,
-    state.paperBalance.toFixed(2)
+    String(state.paperBalance)
   );
 
   localStorage.setItem(
     SETTINGS_KEY,
     JSON.stringify({
-      selectedMarket:state.selectedMarket,
-      selectedStrategy:state.selectedStrategy,
-      botStrategyPool:state.botStrategyPool
+      botStrategyPool:
+        state.botStrategyPool,
+      botBaseStake:
+        state.botBaseStake
     })
   );
-}
-
-
-/* =========================================================
-   THEME
-   ========================================================= */
-
-function loadTheme(){
-
-  const theme =
-    localStorage.getItem(THEME_KEY);
-
-  if(theme === "light")
-    document.body.classList.add("light");
-}
-
-
-function toggleTheme(){
-
-  document.body.classList.toggle("light");
-
-  localStorage.setItem(
-    THEME_KEY,
-    document.body.classList.contains("light")
-      ? "light"
-      : "dark"
-  );
-}
-
-
-/* =========================================================
-   TOAST
-   ========================================================= */
-
-function toast(message){
-
-  setText(
-    "toastMessage",
-    message
-  );
-
-  const box = $("toast");
-
-  if(!box) return;
-
-  box.classList.add("show");
-
-  setTimeout(
-    ()=>box.classList.remove("show"),
-    2500
-  );
-}
-
-
-/* =========================================================
-   SELECTS
-   ========================================================= */
-
-function populateMarkets(){
-
-  [
-    $("circularMarketSelect"),
-    $("manualMarketSelect")
-  ].forEach(select=>{
-
-    if(!select) return;
-
-    select.innerHTML = "";
-
-    MARKETS.forEach(symbol=>{
-
-      const option =
-        document.createElement("option");
-
-      option.value = symbol;
-      option.textContent = symbol;
-
-      if(symbol === state.selectedMarket)
-        option.selected = true;
-
-      select.appendChild(option);
-    });
-
-  });
 }
 
 
@@ -308,283 +295,943 @@ function populateMarkets(){
    NAVIGATION
    ========================================================= */
 
-function setupNavigation(){
+function bindNavigation() {
 
-  document.querySelectorAll(".nav-btn")
-    .forEach(button=>{
+  document.querySelectorAll(".nav-btn").forEach(btn => {
 
-      button.addEventListener(
-        "click",
-        ()=>{
+    btn.addEventListener("click", () => {
 
-          const page =
-            button.dataset.page;
+      const page =
+        btn.dataset.page;
 
-          document.querySelectorAll(".page")
-            .forEach(p=>
-              p.classList.remove("active")
-            );
+      document.querySelectorAll(".page")
+        .forEach(p => p.classList.remove("active"));
 
-          const target =
-            $(
-              page === "analysis"
-                ? "analysisPage"
-                : page === "trade"
-                ? "tradePage"
-                : "historyPage"
-            );
+      const target =
+        $(page + "Page");
 
-          if(target)
-            target.classList.add("active");
+      if (target) {
+        target.classList.add("active");
+      }
 
-          document.querySelectorAll(".nav-btn")
-            .forEach(b=>
-              b.classList.remove("active")
-            );
+      document.querySelectorAll(".nav-btn")
+        .forEach(b => b.classList.remove("active"));
 
-          button.classList.add("active");
-
-          if(page === "history")
-            renderHistory();
-        }
-      );
+      btn.classList.add("active");
 
     });
+
+  });
+
 }
 
 
 /* =========================================================
-   ENGINE SELECTION
+   ENGINE TABS
    ========================================================= */
 
-function selectEngine(mode){
+function bindEngineTabs() {
 
-  if(mode === "ai"){
+  const ai = $("tabAiBot");
+  const circular = $("tabCircularAI");
+  const manual = $("tabManual");
 
-    stopCircular(false);
+  if (ai) {
+    ai.addEventListener("click", () => {
+      selectEngine("ai");
+    });
+  }
+
+  if (circular) {
+    circular.addEventListener("click", () => {
+      selectEngine("circular");
+    });
+  }
+
+  if (manual) {
+    manual.addEventListener("click", () => {
+      selectEngine("manual");
+    });
+  }
+
+}
+
+function selectEngine(engine) {
+
+  if (engine === "ai") {
 
     state.engineMode = "ai";
 
-    $("aiBotPanel")?.classList.remove("hidden");
-    $("circularPanel")?.classList.add("hidden");
-    $("manualPanel")?.classList.add("hidden");
+    stopCircularAI(false);
 
-    $("tabAiBot")?.classList.add("active");
-    $("tabCircularAI")?.classList.remove("active");
-    $("tabManual")?.classList.remove("active");
+    hide("circularPanel");
+    hide("manualPanel");
+    show("aiBotPanel");
 
     setText(
-      "tradingStatusLabel",
-      state.aiRunning ? "RUNNING" : "READY"
+      "engineStatusText",
+      "AI BOT SELECTED"
     );
 
   }
 
-  if(mode === "circular"){
-
-    stopAI(false);
+  else if (engine === "circular") {
 
     state.engineMode = "circular";
 
-    $("aiBotPanel")?.classList.add("hidden");
-    $("circularPanel")?.classList.remove("hidden");
-    $("manualPanel")?.classList.add("hidden");
+    stopAIBot(false);
 
-    $("tabAiBot")?.classList.remove("active");
-    $("tabCircularAI")?.classList.add("active");
-    $("tabManual")?.classList.remove("active");
+    hide("aiBotPanel");
+    hide("manualPanel");
+    show("circularPanel");
 
     setText(
-      "tradingStatusLabel",
-      state.circularRunning
-        ? "RUNNING"
-        : "READY"
+      "engineStatusText",
+      "CIRCULAR AI SELECTED"
     );
 
   }
 
-  if(mode === "manual"){
-
-    stopAI(false);
-    stopCircular(false);
+  else {
 
     state.engineMode = "manual";
 
-    $("aiBotPanel")?.classList.add("hidden");
-    $("circularPanel")?.classList.add("hidden");
-    $("manualPanel")?.classList.remove("hidden");
+    stopAIBot(false);
+    stopCircularAI(false);
 
-    $("tabAiBot")?.classList.remove("active");
-    $("tabCircularAI")?.classList.remove("active");
-    $("tabManual")?.classList.add("active");
+    hide("aiBotPanel");
+    hide("circularPanel");
+    show("manualPanel");
 
     setText(
-      "tradingStatusLabel",
-      "MANUAL"
-    );
-  }
-
-  updateAnalysisEngine();
-}
-
-
-function updateAnalysisEngine(){
-
-  if(state.engineMode === "ai"){
-
-    setText("aiCircleLabel","AI BOT");
-    setText(
-      "aiCircleStatus",
-      state.aiRunning
-        ? "ANALYZING"
-        : "STANDBY"
+      "engineStatusText",
+      "MANUAL SELECTED"
     );
 
   }
 
-  if(state.engineMode === "circular"){
-
-    setText(
-      "aiCircleLabel",
-      state.circularRunning
-        ? "RUNNING"
-        : "CIRCULAR AI"
-    );
-
-    setText(
-      "aiCircleStatus",
-      state.circularRunning
-        ? "ACTIVE"
-        : "STANDBY"
-    );
-
-  }
-
-  if(state.engineMode === "manual"){
-
-    setText(
-      "aiCircleLabel",
-      "MANUAL"
-    );
-
-    setText(
-      "aiCircleStatus",
-      "MANUAL CONTROL"
-    );
-  }
+  updateAnalysisColumn();
 }
 
 
 /* =========================================================
-   WEBSOCKET
+   TRADING CONTROLS
    ========================================================= */
 
-function connectPublicWS(){
+function bindTradingControls() {
 
-  if(state.publicWS){
+  const startBot =
+    $("startBotBtn") || $("startAI");
 
-    try{
-      state.publicWS.close();
-    }catch{}
+  if (startBot) {
+    startBot.addEventListener(
+      "click",
+      startAIBot
+    );
   }
+
+  const stopBot =
+    $("stopAI");
+
+  if (stopBot) {
+    stopBot.addEventListener(
+      "click",
+      () => stopAIBot(true)
+    );
+  }
+
+  const circularStart =
+    $("startCircularTradeBtn");
+
+  if (circularStart) {
+    circularStart.addEventListener(
+      "click",
+      startCircularAI
+    );
+  }
+
+  const manualTrade =
+    $("placeTradeBtn");
+
+  if (manualTrade) {
+    manualTrade.addEventListener(
+      "click",
+      executeManualTrade
+    );
+  }
+
+  const stopAll =
+    $("stopTradingBtn");
+
+  if (stopAll) {
+    stopAll.addEventListener(
+      "click",
+      stopAllTrading
+    );
+  }
+
+}
+
+
+/* =========================================================
+   STRATEGY CONTROLS
+   ========================================================= */
+
+function bindStrategyControls() {
+
+  document.querySelectorAll(".strategy-option")
+    .forEach(option => {
+
+      option.addEventListener("click", () => {
+
+        const strategy =
+          option.dataset.strategy;
+
+        if (!strategy) return;
+
+        state.selectedStrategy =
+          strategy;
+
+        updateStrategyLabels();
+
+        updateAnalysisColumn();
+
+      });
+
+    });
+
+
+  document.querySelectorAll(".bot-strategy-check")
+    .forEach(check => {
+
+      check.addEventListener("change", () => {
+
+        const strategy =
+          check.value ||
+          check.dataset.strategy;
+
+        if (!strategy) return;
+
+        if (check.checked) {
+
+          if (!state.botStrategyPool.includes(strategy)) {
+            state.botStrategyPool.push(strategy);
+          }
+
+        } else {
+
+          state.botStrategyPool =
+            state.botStrategyPool.filter(
+              s => s !== strategy
+            );
+
+        }
+
+        if (
+          state.botStrategyPool.length === 0
+        ) {
+          state.botStrategyPool = [
+            "MATCHES"
+          ];
+        }
+
+        saveStorage();
+
+      });
+
+    });
+
+
+  const apply =
+    $("applyBotStrategies");
+
+  if (apply) {
+
+    apply.addEventListener("click", () => {
+
+      hide("botStrategyModal");
+
+      setText(
+        "botStrategyLabel",
+        state.botStrategyPool
+          .map(s => STRATEGY_LABELS[s])
+          .join(" • ")
+      );
+
+      updateAnalysisColumn();
+
+    });
+
+  }
+
+
+  const close =
+    $("closeStrategyModal");
+
+  if (close) {
+    close.addEventListener(
+      "click",
+      () => hide("strategyModal")
+    );
+  }
+
+
+  const closeBot =
+    $("closeBotStrategyModal");
+
+  if (closeBot) {
+    closeBot.addEventListener(
+      "click",
+      () => hide("botStrategyModal")
+    );
+  }
+
+}
+
+
+function updateStrategyLabels() {
+
+  setText(
+    "botStrategyLabel",
+    state.botStrategyPool
+      .map(s => STRATEGY_LABELS[s])
+      .join(" • ")
+  );
+
+  setText(
+    "manualSelectedStrategyLabel",
+    STRATEGY_LABELS[state.selectedStrategy] ||
+    state.selectedStrategy
+  );
+
+  setText(
+    "circularStrategyLabel",
+    STRATEGY_LABELS[state.selectedStrategy] ||
+    state.selectedStrategy
+  );
+
+}
+
+
+/* =========================================================
+   HISTORY CONTROLS
+   ========================================================= */
+
+function bindHistoryControls() {
+
+  const clear =
+    $("clearLogsBtn");
+
+  if (clear) {
+
+    clear.addEventListener("click", () => {
+
+      if (
+        !confirm(
+          "Clear KRISHWAVE trade history?"
+        )
+      ) return;
+
+      state.history = [];
+
+      rebuildStatistics();
+
+      saveStorage();
+
+      renderHistory();
+
+      updateAllUI();
+
+    });
+
+  }
+
+}
+
+
+/* =========================================================
+   THEME
+   ========================================================= */
+
+function bindTheme() {
+
+  const saved =
+    localStorage.getItem(THEME_KEY);
+
+  if (saved === "light") {
+    document.body.classList.add("light");
+  }
+
+  document.querySelectorAll(
+    "[data-theme], #themeToggle, #themeBtn"
+  ).forEach(btn => {
+
+    btn.addEventListener("click", () => {
+
+      document.body.classList.toggle("light");
+
+      localStorage.setItem(
+        THEME_KEY,
+        document.body.classList.contains("light")
+          ? "light"
+          : "dark"
+      );
+
+    });
+
+  });
+
+}
+
+
+/* =========================================================
+   OAUTH
+   ========================================================= */
+
+function randomString(length = 64) {
+
+  const chars =
+    "ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789-._~";
+
+  let result = "";
+
+  const array =
+    new Uint8Array(length);
+
+  crypto.getRandomValues(array);
+
+  for (let i = 0; i < length; i++) {
+    result += chars[
+      array[i] % chars.length
+    ];
+  }
+
+  return result;
+}
+
+
+async function sha256Base64Url(text) {
+
+  const data =
+    new TextEncoder().encode(text);
+
+  const hash =
+    await crypto.subtle.digest(
+      "SHA-256",
+      data
+    );
+
+  const bytes =
+    new Uint8Array(hash);
+
+  let binary = "";
+
+  bytes.forEach(
+    b => binary += String.fromCharCode(b)
+  );
+
+  return btoa(binary)
+    .replace(/\+/g, "-")
+    .replace(/\//g, "_")
+    .replace(/=+$/, "");
+}
+
+
+async function connectDeriv() {
+
+  const verifier =
+    randomString();
+
+  const challenge =
+    await sha256Base64Url(verifier);
+
+  const stateValue =
+    randomString(32);
+
+  sessionStorage.setItem(
+    "krishwave_code_verifier",
+    verifier
+  );
+
+  sessionStorage.setItem(
+    "krishwave_oauth_state",
+    stateValue
+  );
+
+  const url =
+    new URL(
+      "https://auth.deriv.com/oauth2/auth"
+    );
+
+  url.searchParams.set(
+    "response_type",
+    "code"
+  );
+
+  url.searchParams.set(
+    "client_id",
+    DERIV_CLIENT_ID
+  );
+
+  url.searchParams.set(
+    "redirect_uri",
+    REDIRECT_URI
+  );
+
+  url.searchParams.set(
+    "scope",
+    "trade"
+  );
+
+  url.searchParams.set(
+    "state",
+    stateValue
+  );
+
+  url.searchParams.set(
+    "code_challenge",
+    challenge
+  );
+
+  url.searchParams.set(
+    "code_challenge_method",
+    "S256"
+  );
+
+  window.location.href =
+    url.toString();
+}
+
+
+async function handleOAuthCallback() {
+
+  const params =
+    new URLSearchParams(
+      window.location.search
+    );
+
+  const code =
+    params.get("code");
+
+  const returnedState =
+    params.get("state");
+
+  if (!code) return;
+
+  const savedState =
+    sessionStorage.getItem(
+      "krishwave_oauth_state"
+    );
+
+  if (
+    savedState &&
+    returnedState &&
+    savedState !== returnedState
+  ) {
+
+    console.error(
+      "OAuth state mismatch"
+    );
+
+    return;
+  }
+
+  const verifier =
+    sessionStorage.getItem(
+      "krishwave_code_verifier"
+    );
+
+  if (!verifier) {
+    console.error(
+      "Missing PKCE verifier"
+    );
+    return;
+  }
+
+  setConnectionStatus(
+    "CONNECTING",
+    false
+  );
+
+  try {
+
+    const response =
+      await fetch(
+        OAUTH_BACKEND,
+        {
+          method: "POST",
+
+          headers: {
+            "Content-Type":
+              "application/json"
+          },
+
+          body: JSON.stringify({
+            code,
+            code_verifier:
+              verifier
+          })
+        }
+      );
+
+    const data =
+      await response.json();
+
+    if (!data.success) {
+      throw new Error(
+        data.error ||
+        "OAuth connection failed"
+      );
+    }
+
+    state.accessToken =
+      data.access_token;
+
+    state.connected = true;
+
+    sessionStorage.removeItem(
+      "krishwave_code_verifier"
+    );
+
+    sessionStorage.removeItem(
+      "krishwave_oauth_state"
+    );
+
+    window.history.replaceState(
+      {},
+      document.title,
+      REDIRECT_URI
+    );
+
+    await loadDerivAccount();
+
+    setConnectionStatus(
+      "CONNECTED",
+      true
+    );
+
+  } catch (error) {
+
+    console.error(error);
+
+    state.connected = false;
+
+    setConnectionStatus(
+      "CONNECTION FAILED",
+      false
+    );
+
+  }
+
+}
+
+
+async function loadDerivAccount() {
+
+  if (!state.accessToken) return;
+
+  try {
+
+    const response =
+      await fetch(
+        "https://api.derivws.com/trading/v1/options/accounts",
+        {
+          headers: {
+            Authorization:
+              `Bearer ${state.accessToken}`
+          }
+        }
+      );
+
+    if (!response.ok) {
+      throw new Error(
+        "Account request failed"
+      );
+    }
+
+    const data =
+      await response.json();
+
+    const accounts =
+      data.data ||
+      data.accounts ||
+      [];
+
+    if (!Array.isArray(accounts)) {
+      return;
+    }
+
+    /*
+     * Prefer DEMO account.
+     */
+
+    let demo =
+      accounts.find(
+        account =>
+          String(
+            account.account_type ||
+            account.type ||
+            ""
+          ).toLowerCase() === "demo"
+      );
+
+    if (!demo) {
+
+      demo =
+        accounts.find(
+          account =>
+            String(
+              account.id ||
+              account.account_id ||
+              ""
+            ).startsWith("VRTC")
+        );
+
+    }
+
+    const selected =
+      demo || accounts[0];
+
+    if (selected) {
+
+      state.accountId =
+        selected.id ||
+        selected.account_id ||
+        null;
+
+      state.currency =
+        selected.currency ||
+        state.currency;
+
+    }
+
+    setText(
+      "accountId",
+      state.accountId ||
+      "DEMO"
+    );
+
+    setText(
+      "currency",
+      state.currency
+    );
+
+    await getAuthenticatedSocket();
+
+  } catch (error) {
+
+    console.error(
+      "Account load error:",
+      error
+    );
+
+    /*
+     * Public data continues even if
+     * authenticated account data fails.
+     */
+
+  }
+
+}
+
+
+async function getAuthenticatedSocket() {
+
+  if (
+    !state.accessToken ||
+    !state.accountId
+  ) {
+    return;
+  }
+
+  try {
+
+    const response =
+      await fetch(
+        `https://api.derivws.com/trading/v1/options/accounts/${encodeURIComponent(state.accountId)}/otp`,
+        {
+          method: "POST",
+
+          headers: {
+            Authorization:
+              `Bearer ${state.accessToken}`,
+
+            "Content-Type":
+              "application/json"
+          }
+        }
+      );
+
+    if (!response.ok) {
+      throw new Error(
+        "Authenticated OTP request failed"
+      );
+    }
+
+    const data =
+      await response.json();
+
+    const websocketUrl =
+      data.data?.ws_url ||
+      data.ws_url ||
+      data.data?.websocket_url;
+
+    if (websocketUrl) {
+      console.log(
+        "Authenticated demo WebSocket ready"
+      );
+    }
+
+  } catch (error) {
+
+    console.warn(
+      "Authenticated WebSocket:",
+      error
+    );
+
+  }
+
+}
+
+
+/* =========================================================
+   CONNECTION UI
+   ========================================================= */
+
+function setConnectionStatus(
+  text,
+  connected
+) {
 
   setText(
     "connectionText",
-    "CONNECTING"
+    text
   );
 
-  $("connectionDot")
-    ?.classList.remove(
+  const dot =
+    $("connectionDot");
+
+  if (dot) {
+
+    dot.classList.toggle(
       "connected",
-      "offline"
+      connected
     );
+
+  }
+
+  const btn =
+    $("connectDerivBtn");
+
+  if (btn) {
+
+    btn.textContent =
+      connected
+        ? "DERIV CONNECTED"
+        : "CONNECT DERIV";
+
+    if (connected) {
+      btn.classList.add("connected");
+    } else {
+      btn.classList.remove("connected");
+    }
+
+  }
+
+}
+
+
+/* =========================================================
+   PUBLIC LIVE DATA
+   ========================================================= */
+
+function connectPublicMarketData() {
+
+  if (state.publicWS) {
+
+    try {
+      state.publicWS.close();
+    } catch {}
+
+  }
+
+  setText(
+    "dataStatus",
+    "CONNECTING LIVE DATA..."
+  );
 
   const ws =
     new WebSocket(PUBLIC_WS);
 
   state.publicWS = ws;
 
-  ws.onopen = ()=>{
-
-    state.connected = true;
-
-    $("connectionDot")
-      ?.classList.add("connected");
-
-    setText(
-      "connectionText",
-      "LIVE"
-    );
+  ws.onopen = () => {
 
     setText(
       "dataStatus",
-      "Deriv public market data connected."
+      "LIVE DERIV DATA"
     );
 
-    MARKETS.forEach(symbol=>{
+    MARKETS.forEach(symbol => {
 
-      try{
+      try {
 
         ws.send(
           JSON.stringify({
-            ticks:symbol,
-            subscribe:1
+            ticks: symbol,
+            subscribe: 1
           })
         );
 
-      }catch{}
+      } catch {}
 
     });
+
   };
 
 
-  ws.onmessage = event=>{
+  ws.onmessage = event => {
 
-    try{
+    try {
 
       const msg =
         JSON.parse(event.data);
 
-      if(msg.tick)
-        processTick(msg.tick);
+      if (msg.tick) {
 
-    }catch(error){
+        processTick(
+          msg.tick
+        );
+
+      }
+
+    } catch (error) {
 
       console.warn(
-        "Tick error",
+        "Tick parse error",
         error
       );
+
     }
+
   };
 
 
-  ws.onerror = ()=>{
-
-    state.connected = false;
-
-    $("connectionDot")
-      ?.classList.add("offline");
+  ws.onerror = () => {
 
     setText(
-      "connectionText",
-      "OFFLINE"
+      "dataStatus",
+      "DATA ERROR"
     );
+
   };
 
 
-  ws.onclose = ()=>{
-
-    state.connected = false;
-
-    $("connectionDot")
-      ?.classList.remove("connected");
-
-    $("connectionDot")
-      ?.classList.add("offline");
+  ws.onclose = () => {
 
     setText(
-      "connectionText",
-      "RECONNECTING"
+      "dataStatus",
+      "RECONNECTING..."
     );
 
     clearTimeout(
@@ -593,32 +1240,101 @@ function connectPublicWS(){
 
     state.publicReconnectTimer =
       setTimeout(
-        connectPublicWS,
+        connectPublicMarketData,
         3000
       );
+
   };
+
 }
 
 
-/* =========================================================
-   DIGIT
-   ========================================================= */
+function processTick(tick) {
 
-function getLastDigitFromTick(tick){
+  const symbol =
+    tick.symbol;
+
+  if (!symbol) return;
+
+  if (!state.markets[symbol]) {
+
+    state.markets[symbol] = {
+      ticks: [],
+      prices: [],
+      lastTick: null
+    };
+
+  }
+
+  const market =
+    state.markets[symbol];
+
+  const digit =
+    getLastDigitFromTick(tick);
 
   const quote =
     Number(tick.quote);
 
-  if(!Number.isFinite(quote))
+  market.lastTick = tick;
+
+  if (Number.isFinite(quote)) {
+
+    market.prices.push(quote);
+
+    if (market.prices.length > 100) {
+      market.prices.shift();
+    }
+
+  }
+
+  if (digit !== null) {
+
+    market.ticks.push(digit);
+
+    if (market.ticks.length > 100) {
+      market.ticks.shift();
+    }
+
+  }
+
+  if (
+    symbol === state.selectedMarket
+  ) {
+
+    updateSelectedMarketUI();
+
+  }
+
+  settlePendingTrades(
+    symbol,
+    digit
+  );
+
+  updateAnalysisColumn();
+
+}
+
+
+/* =========================================================
+   LAST DIGIT
+   ========================================================= */
+
+function getLastDigitFromTick(tick) {
+
+  const quote =
+    Number(tick.quote);
+
+  if (!Number.isFinite(quote)) {
     return null;
+  }
 
   let pipSize =
     Number(tick.pip_size);
 
-  if(
+  if (
     !Number.isFinite(pipSize) ||
     pipSize <= 0
-  ){
+  ) {
 
     const quoteString =
       String(tick.quote);
@@ -633,6 +1349,7 @@ function getLastDigitFromTick(tick){
         10,
         -decimals
       );
+
   }
 
   const scaled =
@@ -645,121 +1362,45 @@ function getLastDigitFromTick(tick){
 
 
 /* =========================================================
-   PROCESS TICK
+   MARKET ANALYSIS
    ========================================================= */
 
-function processTick(tick){
+function calculateEntropy(counts, total) {
 
-  const symbol =
-    tick.symbol;
-
-  if(!symbol)
-    return;
-
-  const digit =
-    getLastDigitFromTick(tick);
-
-  if(digit === null)
-    return;
-
-  if(!state.markets[symbol]){
-
-    state.markets[symbol] = {
-      ticks:[],
-      prices:[]
-    };
-  }
-
-  const market =
-    state.markets[symbol];
-
-  market.ticks.push(digit);
-
-  market.prices.push(
-    Number(tick.quote)
-  );
-
-  if(market.ticks.length > 100)
-    market.ticks.shift();
-
-  if(market.prices.length > 100)
-    market.prices.shift();
-
-  if(symbol === state.selectedMarket){
-
-    state.priceHistory =
-      market.prices.slice(-40);
-
-    setText(
-      "currentChartMarket",
-      symbol
-    );
-
-    setText(
-      "currentLivePrice",
-      Number(tick.quote).toFixed(5)
-    );
-
-    renderDigitStats(symbol);
-    drawChart();
-  }
-
-  settlePendingTrades(
-    symbol,
-    digit
-  );
-
-  updateAnalysis();
-
-}
-
-
-/* =========================================================
-   ENTROPY
-   ========================================================= */
-
-function calculateEntropy(
-  counts,
-  total
-){
-
-  if(!total)
-    return 0;
+  if (!total) return 1;
 
   let entropy = 0;
 
-  Object.values(counts)
-    .forEach(count=>{
+  counts.forEach(count => {
 
-      if(count <= 0)
-        return;
+    if (!count) return;
 
-      const p =
-        count / total;
+    const p =
+      count / total;
 
-      entropy -=
-        p * Math.log2(p);
-    });
+    entropy -=
+      p * Math.log2(p);
+
+  });
 
   return entropy /
     Math.log2(10);
 }
 
 
-/* =========================================================
-   MARKET ANALYSIS
-   ========================================================= */
-
-function analyzeMarket(symbol){
+function analyzeMarket(symbol) {
 
   const market =
     state.markets[symbol];
 
-  if(
+  if (
     !market ||
     market.ticks.length < 20
-  )
+  ) {
+
     return null;
+
+  }
 
   const ticks =
     market.ticks.slice(-30);
@@ -767,94 +1408,106 @@ function analyzeMarket(symbol){
   const counts =
     Array(10).fill(0);
 
-  ticks.forEach(d=>{
-    counts[d]++;
-  });
+  ticks.forEach(
+    d => counts[d]++
+  );
 
   const total =
     ticks.length;
 
   const percentages =
     counts.map(
-      n => n / total
+      c => (c / total) * 100
     );
 
-  let hottest = 0;
-  let coldest = 0;
+  let hottestDigit = 0;
+  let coldestDigit = 0;
 
-  for(let i=1;i<10;i++){
+  for (let i = 1; i < 10; i++) {
 
-    if(counts[i] > counts[hottest])
-      hottest = i;
+    if (
+      counts[i] >
+      counts[hottestDigit]
+    ) {
+      hottestDigit = i;
+    }
 
-    if(counts[i] < counts[coldest])
-      coldest = i;
+    if (
+      counts[i] <
+      counts[coldestDigit]
+    ) {
+      coldestDigit = i;
+    }
+
   }
 
-  const lastDigit =
-    ticks[ticks.length-1];
+  const evenCount =
+    ticks.filter(
+      d => d % 2 === 0
+    ).length;
+
+  const overCount =
+    ticks.filter(
+      d => d > 5
+    ).length;
+
+  const underCount =
+    ticks.filter(
+      d => d < 5
+    ).length;
+
+  const evenRate =
+    evenCount / total;
+
+  const overRate =
+    overCount / total;
+
+  const underRate =
+    underCount / total;
+
+  const concentration =
+    Math.max(
+      ...percentages
+    ) / 100;
 
   let streak = 1;
 
-  for(
-    let i=ticks.length-2;
-    i>=0;
+  const last =
+    ticks[ticks.length - 1];
+
+  for (
+    let i = ticks.length - 2;
+    i >= 0;
     i--
-  ){
+  ) {
 
-    if(ticks[i] === lastDigit)
+    if (ticks[i] === last) {
       streak++;
-    else
+    } else {
       break;
+    }
+
   }
-
-  const evenRate =
-    ticks.filter(
-      d=>d % 2 === 0
-    ).length / total;
-
-  const overRate =
-    ticks.filter(
-      d=>d > 5
-    ).length / total;
-
-  const underRate =
-    ticks.filter(
-      d=>d < 5
-    ).length / total;
-
-  const concentration =
-    Math.max(...percentages);
 
   const entropy =
     calculateEntropy(
-      Object.fromEntries(
-        counts.map(
-          (v,i)=>[i,v]
-        )
-      ),
+      counts,
       total
     );
 
   const stability =
-    Math.max(
-      0,
-      Math.min(
-        100,
-        100 - entropy * 100
-      )
-    );
+    1 - entropy;
 
   let score = 50;
 
   score +=
     Math.abs(
-      evenRate - .5
+      evenRate - 0.5
     ) * 30;
 
   score +=
     Math.abs(
-      overRate - .5
+      overRate - 0.5
     ) * 25;
 
   score +=
@@ -864,9 +1517,12 @@ function analyzeMarket(symbol){
     );
 
   score +=
-    Math.abs(
-      concentration - .10
-    ) * 30;
+    Math.min(
+      Math.abs(
+        concentration - 0.10
+      ) * 30,
+      15
+    );
 
   score =
     Math.max(
@@ -877,64 +1533,96 @@ function analyzeMarket(symbol){
       )
     );
 
+  const agreement =
+    calculateAgreement(
+      ticks
+    );
+
   let strength =
     "WEAK";
 
-  if(score >= 75)
+  if (score >= 75) {
     strength = "STRONG";
-  else if(score >= 62)
+  } else if (score >= 62) {
     strength = "GOOD";
-  else if(score >= 52)
+  } else if (score >= 52) {
     strength = "MODERATE";
+  }
 
+  return {
+
+    symbol,
+
+    ticks,
+
+    counts,
+
+    percentages,
+
+    total,
+
+    lastDigit: last,
+
+    hottestDigit,
+
+    coldestDigit,
+
+    evenRate,
+
+    overRate,
+
+    underRate,
+
+    concentration,
+
+    streak,
+
+    entropy,
+
+    stability,
+
+    score,
+
+    strength,
+
+    agreement
+
+  };
+
+}
+
+
+function calculateAgreement(ticks) {
 
   const recent =
     ticks.slice(-12);
 
-  const recentEven =
+  if (!recent.length) {
+    return 0.5;
+  }
+
+  const even =
     recent.filter(
-      d=>d % 2 === 0
-    ).length;
+      d => d % 2 === 0
+    ).length /
+    recent.length;
 
   const directional =
     Math.max(
-      recent.filter(d=>d>5).length,
-      recent.filter(d=>d<5).length
-    );
+      recent.filter(d => d > 5).length,
+      recent.filter(d => d < 5).length
+    ) /
+    recent.length;
 
-  const agreement =
+  return Math.min(
+    1,
     (
-      (
-        Math.abs(
-          recentEven / recent.length - .5
-        ) +
-        Math.abs(
-          directional / recent.length - .5
-        )
-      ) / 1
-    ) * 100;
+      Math.abs(even - 0.5) +
+      Math.abs(directional - 0.5)
+    ) / 1.5 +
+    0.5
+  );
 
-
-  return {
-    symbol,
-    ticks,
-    counts,
-    percentages,
-    total,
-    hottest,
-    coldest,
-    lastDigit,
-    streak,
-    evenRate,
-    overRate,
-    underRate,
-    concentration,
-    entropy,
-    stability,
-    score,
-    strength,
-    agreement
-  };
 }
 
 
@@ -942,99 +1630,116 @@ function analyzeMarket(symbol){
    BEST MARKET
    ========================================================= */
 
-function chooseBestMarket(){
+function chooseBestMarket() {
 
-  const results =
+  const analyses =
     MARKETS
       .map(analyzeMarket)
       .filter(Boolean);
 
-  if(!results.length)
+  if (!analyses.length) {
     return null;
+  }
 
-  results.sort(
-    (a,b)=>
+  analyses.sort(
+    (a, b) =>
       (
         b.score +
-        b.agreement * .20
+        b.agreement * 20
       ) -
       (
         a.score +
-        a.agreement * .20
+        a.agreement * 20
       )
   );
 
-  return results[0];
+  return analyses[0];
 }
 
 
 /* =========================================================
-   STRATEGY SELECTION
+   AI STRATEGY
    ========================================================= */
 
 function chooseBotStrategy(
   analysis
-){
+) {
 
   const pool =
     state.botStrategyPool.length
       ? state.botStrategyPool
-      : ["MATCHES","DIFFERS"];
+      : ["MATCHES"];
 
-  let best =
-    pool[0];
+  const scores = {};
 
-  let bestScore =
-    -Infinity;
-
-  pool.forEach(strategy=>{
+  pool.forEach(strategy => {
 
     let score =
-      analysis.agreement;
+      analysis.agreement * 25;
 
-    if(strategy === "MATCHES")
-      score +=
-        analysis.concentration * 100;
+    switch (strategy) {
 
-    if(strategy === "DIFFERS")
-      score +=
-        (1-analysis.concentration)*100;
+      case "MATCHES":
 
-    if(strategy === "EVEN")
-      score +=
-        Math.abs(
-          analysis.evenRate-.5
-        ) * 100;
+        score +=
+          analysis.concentration * 100;
 
-    if(strategy === "ODD")
-      score +=
-        Math.abs(
-          analysis.evenRate-.5
-        ) * 100;
+        break;
 
-    if(strategy === "OVER")
-      score +=
-        Math.abs(
-          analysis.overRate-.5
-        ) * 100;
+      case "DIFFERS":
 
-    if(strategy === "UNDER")
-      score +=
-        Math.abs(
-          analysis.underRate-.5
-        ) * 100;
+        score +=
+          (1 -
+            analysis.concentration) *
+          100;
 
-    if(score > bestScore){
+        break;
 
-      bestScore =
-        score;
+      case "EVEN":
 
-      best =
-        strategy;
+      case "ODD":
+
+        score +=
+          Math.abs(
+            analysis.evenRate - 0.5
+          ) * 100;
+
+        break;
+
+      case "OVER":
+
+        score +=
+          Math.abs(
+            analysis.overRate - 0.5
+          ) * 100;
+
+        break;
+
+      case "UNDER":
+
+        score +=
+          Math.abs(
+            analysis.underRate - 0.5
+          ) * 100;
+
+        break;
+
     }
+
+    scores[strategy] =
+      score;
+
   });
 
-  return best;
+  return pool.reduce(
+    (best, strategy) =>
+      scores[strategy] >
+      scores[best]
+        ? strategy
+        : best,
+    pool[0]
+  );
+
 }
 
 
@@ -1045,65 +1750,65 @@ function chooseBotStrategy(
 function createPrediction(
   analysis,
   strategy
-){
+) {
 
-  let prediction;
+  let digit =
+    analysis.hottestDigit;
 
-  if(
-    strategy === "MATCHES" ||
-    strategy === "DIFFERS"
-  ){
+  switch (strategy) {
 
-    prediction =
-      analysis.hottest;
-  }
+    case "MATCHES":
 
-  if(strategy === "OVER"){
+      digit =
+        analysis.hottestDigit;
 
-    prediction =
-      analysis.hottest > 5
-        ? analysis.hottest
-        : 6;
-  }
+      break;
 
-  if(strategy === "UNDER"){
+    case "DIFFERS":
 
-    prediction =
-      analysis.hottest < 5
-        ? analysis.hottest
-        : 4;
-  }
+      digit =
+        analysis.hottestDigit;
 
-  if(strategy === "EVEN"){
+      break;
 
-    const evenDigits =
-      [0,2,4,6,8];
+    case "OVER":
 
-    prediction =
-      evenDigits.reduce(
-        (best,d)=>
-          analysis.counts[d] >
-          analysis.counts[best]
-            ? d
-            : best,
-        0
-      );
-  }
+      digit =
+        analysis.hottestDigit > 5
+          ? analysis.hottestDigit
+          : 6;
 
-  if(strategy === "ODD"){
+      break;
 
-    const oddDigits =
-      [1,3,5,7,9];
+    case "UNDER":
 
-    prediction =
-      oddDigits.reduce(
-        (best,d)=>
-          analysis.counts[d] >
-          analysis.counts[best]
-            ? d
-            : best,
-        1
-      );
+      digit =
+        analysis.hottestDigit < 5
+          ? analysis.hottestDigit
+          : 4;
+
+      break;
+
+    case "EVEN":
+
+      digit =
+        findBestParityDigit(
+          analysis,
+          true
+        );
+
+      break;
+
+    case "ODD":
+
+      digit =
+        findBestParityDigit(
+          analysis,
+          false
+        );
+
+      break;
+
   }
 
   const confidence =
@@ -1112,300 +1817,737 @@ function createPrediction(
       Math.min(
         95,
         50 +
-        analysis.concentration * 150 +
-        analysis.score * .25 +
+        Math.abs(
+          analysis.concentration -
+          0.10
+        ) * 1.5 +
+        analysis.score * 0.25 +
         Math.min(
-          analysis.streak * 2,
+          analysis.streak * 1.5,
           10
         )
       )
     );
 
   return {
+
     strategy,
-    prediction,
-    confidence:
-      Number(
-        confidence.toFixed(1)
-      )
+
+    digit,
+
+    confidence,
+
+    text:
+      `${STRATEGY_LABELS[strategy]} ${digit}`
+
   };
+
+}
+
+
+function findBestParityDigit(
+  analysis,
+  even
+) {
+
+  let best =
+    even ? 0 : 1;
+
+  for (let d = 0; d < 10; d++) {
+
+    if (
+      d % 2 ===
+      (even ? 0 : 1)
+    ) {
+
+      if (
+        analysis.counts[d] >
+        analysis.counts[best]
+      ) {
+        best = d;
+      }
+
+    }
+
+  }
+
+  return best;
+
 }
 
 
 /* =========================================================
-   UPDATE ANALYSIS
+   AI BOT
    ========================================================= */
 
-function updateAnalysis(){
+async function startAIBot() {
 
-  const analysis =
-    analyzeMarket(
-      state.selectedMarket
+  if (state.aiRunning) return;
+
+  stopCircularAI(false);
+
+  state.engineMode = "ai";
+  state.aiRunning = true;
+  state.tradingStopped = false;
+
+  state.botBaseStake =
+    readNumber(
+      "stakeInput",
+      state.botBaseStake || 10
     );
 
-  if(!analysis){
+  state.botCurrentStake =
+    state.botBaseStake;
+
+  state.botMartingaleLevel = 0;
+
+  state.botTakeProfit =
+    readNumber(
+      "takeProfitInput",
+      50
+    );
+
+  state.botStopLoss =
+    readNumber(
+      "stopLossInput",
+      100
+    );
+
+  state.botSessionStartProfit =
+    state.totalProfit;
+
+  state.aiCycleToken++;
+
+  const token =
+    state.aiCycleToken;
+
+  setText(
+    "botStatusDash",
+    "AI BOT RUNNING"
+  );
+
+  setText(
+    "engineStatusText",
+    "AI BOT — AUTONOMOUS"
+  );
+
+  updateAnalysisColumn();
+
+  aiBotLoop(token);
+
+}
+
+
+async function aiBotLoop(token) {
+
+  while (
+    state.aiRunning &&
+    token === state.aiCycleToken &&
+    !state.tradingStopped
+  ) {
 
     setText(
-      "analysisMsg",
-      "Collecting tick data..."
+      "aiStatus",
+      "ANALYZING..."
     );
 
+    setText(
+      "botStatusDash",
+      "ANALYZING — 3 SEC"
+    );
+
+    updateAnalysisColumn();
+
+    await countdown(
+      3,
+      "aiStatus"
+    );
+
+    if (
+      !state.aiRunning ||
+      token !== state.aiCycleToken
+    ) {
+      break;
+    }
+
+    const analysis =
+      chooseBestMarket();
+
+    if (!analysis) {
+
+      setText(
+        "aiStatus",
+        "COLLECTING DATA"
+      );
+
+      await sleep(1500);
+
+      continue;
+    }
+
+    state.selectedMarket =
+      analysis.symbol;
+
+    const strategy =
+      chooseBotStrategy(
+        analysis
+      );
+
+    const prediction =
+      createPrediction(
+        analysis,
+        strategy
+      );
+
+    state.lastBotDecision = {
+
+      engine: "AI BOT",
+
+      market:
+        analysis.symbol,
+
+      strategy,
+
+      prediction:
+        prediction.digit,
+
+      confidence:
+        prediction.confidence,
+
+      score:
+        analysis.score,
+
+      time:
+        Date.now()
+
+    };
+
+    updateAIDisplay(
+      analysis,
+      prediction
+    );
+
+    updateAnalysisColumn();
+
+    /*
+     * IMPORTANT:
+     * AI BOT trades immediately
+     * after the 3-second analysis.
+     */
+
+    createPaperTrade({
+
+      engine: "AI BOT",
+
+      market:
+        analysis.symbol,
+
+      strategy,
+
+      prediction:
+        prediction.digit,
+
+      confidence:
+        prediction.confidence,
+
+      stake:
+        state.botCurrentStake,
+
+      takeProfit:
+        state.botTakeProfit,
+
+      stopLoss:
+        state.botStopLoss,
+
+      martingaleLevel:
+        state.botMartingaleLevel
+
+    });
+
+    updateAnalysisColumn();
+
+    await sleep(1800);
+
+    if (
+      checkSessionLimit(
+        "bot"
+      )
+    ) {
+      break;
+    }
+
+  }
+
+}
+
+
+/* =========================================================
+   STOP AI BOT
+   ========================================================= */
+
+function stopAIBot(update = true) {
+
+  state.aiRunning = false;
+
+  state.aiCycleToken++;
+
+  if (state.botTimer) {
+
+    clearTimeout(
+      state.botTimer
+    );
+
+    state.botTimer = null;
+
+  }
+
+  setText(
+    "botStatusDash",
+    "AI BOT STANDBY"
+  );
+
+  if (update) {
+    updateAnalysisColumn();
+  }
+
+}
+
+
+/* =========================================================
+   CIRCULAR AI
+   ========================================================= */
+
+async function startCircularAI() {
+
+  if (state.circularRunning) {
     return;
   }
 
-  setText(
-    "aiMarket",
-    analysis.symbol
-  );
+  stopAIBot(false);
 
-  setText(
-    "botSelectedMarket",
-    analysis.symbol
-  );
+  state.engineMode =
+    "circular";
 
-  setText(
-    "reportMarket",
-    analysis.symbol
-  );
+  state.circularRunning =
+    true;
 
-  setText(
-    "reportScore",
-    analysis.score.toFixed(1)
-  );
+  state.tradingStopped =
+    false;
 
-  setText(
-    "reportStrength",
-    analysis.strength
-  );
-
-  setText(
-    "reportStability",
-    analysis.stability.toFixed(1)+"%"
-  );
-
-  setText(
-    "reportConcentration",
-    (analysis.concentration*100)
-      .toFixed(1)+"%"
-  );
-
-  setText(
-    "reportStreak",
-    analysis.streak
-  );
-
-  setText(
-    "reportAgreement",
-    analysis.agreement.toFixed(1)+"%"
-  );
-
-  const strategy =
-    chooseBotStrategy(
-      analysis
+  state.circularTakeProfit =
+    readNumber(
+      "circularTakeProfitInput",
+      50
     );
 
-  const prediction =
-    createPrediction(
-      analysis,
-      strategy
+  state.circularStopLoss =
+    readNumber(
+      "circularStopLossInput",
+      100
     );
 
+  state.circularSessionStartProfit =
+    state.totalProfit;
+
+  state.circularToken++;
+
+  const token =
+    state.circularToken;
+
   setText(
-    "aiType",
-    STRATEGY_LABELS[strategy]
+    "circularStatusText",
+    "CIRCULAR AI RUNNING"
   );
 
   setText(
-    "aiPrediction",
-    prediction.prediction
+    "engineStatusText",
+    "CIRCULAR AI — 10 → 5 → 3"
   );
 
-  setText(
-    "analysisConfidence",
-    prediction.confidence+"%"
-  );
+  updateAnalysisColumn();
 
-  setText(
-    "botSelectedStrategy",
-    STRATEGY_LABELS[strategy]
-  );
+  circularLoop(token);
 
-  setText(
-    "botScore",
-    analysis.score.toFixed(1)
-  );
+}
 
-  setText(
-    "botConfidence",
-    prediction.confidence+"%"
-  );
 
-  setText(
-    "botStrategyLabel",
-    state.botStrategyPool
-      .map(s=>STRATEGY_LABELS[s])
-      .join(", ")
-  );
+async function circularLoop(token) {
 
-  setText(
-    "analysisMsg",
-    "AI continuously evaluates market score, digit concentration, streak, stability and agreement."
-  );
+  while (
+    state.circularRunning &&
+    token === state.circularToken &&
+    !state.tradingStopped
+  ) {
 
-  if(state.engineMode === "ai"){
+    const market =
+      getCircularMarket();
+
+    if (!market) {
+
+      setText(
+        "circularStatusText",
+        "COLLECTING DATA"
+      );
+
+      await sleep(1500);
+
+      continue;
+    }
+
+    state.selectedMarket =
+      market.symbol;
+
+    /*
+     * PHASE 1
+     * 10 SECOND ANALYSIS
+     */
 
     setText(
-      "aiCircleLabel",
-      state.aiRunning
-        ? "AI BOT"
-        : "READY"
+      "circularStatusText",
+      "ANALYSIS — 10 SEC"
     );
+
+    setText(
+      "cycleAnalysis",
+      "10"
+    );
+
+    updateCircularAnalysis(
+      market,
+      "ANALYSIS",
+      10
+    );
+
+    await countdown(
+      10,
+      "aiCircleTimer"
+    );
+
+    if (
+      !state.circularRunning ||
+      token !== state.circularToken
+    ) {
+      break;
+    }
+
+    /*
+     * PHASE 2
+     * 5 SECOND PREDICTION
+     */
+
+    const strategy =
+      chooseBotStrategy(
+        market
+      );
+
+    const prediction =
+      createPrediction(
+        market,
+        strategy
+      );
+
+    state.lastCircularPrediction = {
+
+      market:
+        market.symbol,
+
+      strategy,
+
+      prediction:
+        prediction.digit,
+
+      confidence:
+        prediction.confidence
+
+    };
+
+    setText(
+      "circularStatusText",
+      "PREDICTION — 5 SEC"
+    );
+
+    updateCircularAnalysis(
+      market,
+      "PREDICTION",
+      5,
+      strategy,
+      prediction
+    );
+
+    await countdown(
+      5,
+      "aiCircleTimer"
+    );
+
+    if (
+      !state.circularRunning ||
+      token !== state.circularToken
+    ) {
+      break;
+    }
+
+    /*
+     * PHASE 3
+     * 3 SECOND TRADE NOW
+     */
+
+    setText(
+      "circularStatusText",
+      "TRADE NOW — 3 SEC"
+    );
+
+    updateCircularAnalysis(
+      market,
+      "TRADE NOW",
+      3,
+      strategy,
+      prediction
+    );
+
+    await countdown(
+      3,
+      "aiCircleTimer"
+    );
+
+    if (
+      !state.circularRunning ||
+      token !== state.circularToken
+    ) {
+      break;
+    }
+
+    const stake =
+      readNumber(
+        "circularStakeInput",
+        10
+      );
+
+    createPaperTrade({
+
+      engine:
+        "CIRCULAR AI",
+
+      market:
+        market.symbol,
+
+      strategy,
+
+      prediction:
+        prediction.digit,
+
+      confidence:
+        prediction.confidence,
+
+      stake,
+
+      takeProfit:
+        state.circularTakeProfit,
+
+      stopLoss:
+        state.circularStopLoss,
+
+      martingaleLevel:
+        0
+
+    });
+
+    updateAnalysisColumn();
+
+    setText(
+      "circularStatusText",
+      "COOLDOWN"
+    );
+
+    setText(
+      "cycleCooldown",
+      "WAIT"
+    );
+
+    await sleep(3000);
+
+    if (
+      checkSessionLimit(
+        "circular"
+      )
+    ) {
+      break;
+    }
+
   }
+
+}
+
+
+function getCircularMarket() {
+
+  const selected =
+    $("circularMarketSelect")?.value;
+
+  if (
+    selected &&
+    state.markets[selected]
+  ) {
+
+    const analysis =
+      analyzeMarket(selected);
+
+    if (analysis) {
+      return analysis;
+    }
+
+  }
+
+  return chooseBestMarket();
+
 }
 
 
 /* =========================================================
-   DIGIT DISPLAY
+   STOP CIRCULAR
    ========================================================= */
 
-function renderDigitStats(symbol){
+function stopCircularAI(
+  update = true
+) {
+
+  state.circularRunning =
+    false;
+
+  state.circularToken++;
+
+  if (state.circularTimer) {
+
+    clearTimeout(
+      state.circularTimer
+    );
+
+    state.circularTimer = null;
+
+  }
+
+  setText(
+    "circularStatusText",
+    "CIRCULAR AI STANDBY"
+  );
+
+  if (update) {
+    updateAnalysisColumn();
+  }
+
+}
+
+
+/* =========================================================
+   MANUAL TRADE
+   ========================================================= */
+
+function executeManualTrade() {
+
+  stopAIBot(false);
+  stopCircularAI(false);
+
+  state.engineMode =
+    "manual";
+
+  state.tradingStopped =
+    false;
 
   const market =
-    state.markets[symbol];
+    $("manualMarketSelect")?.value ||
+    state.selectedMarket;
 
-  if(!market)
-    return;
+  const strategy =
+    state.selectedStrategy;
 
-  const ticks =
-    market.ticks.slice(-30);
+  const stake =
+    readNumber(
+      "manualStakeInput",
+      10
+    );
 
-  const counts =
-    Array(10).fill(0);
+  const targetDigit =
+    readNumber(
+      "manualTargetDigitInput",
+      5
+    );
 
-  ticks.forEach(
-    d=>counts[d]++
-  );
+  const takeProfit =
+    readNumber(
+      "manualTakeProfitInput",
+      50
+    );
+
+  const stopLoss =
+    readNumber(
+      "manualStopLossInput",
+      100
+    );
+
+  state.selectedMarket =
+    market;
+
+  createPaperTrade({
+
+    engine: "MANUAL",
+
+    market,
+
+    strategy,
+
+    prediction:
+      targetDigit,
+
+    confidence: null,
+
+    stake,
+
+    takeProfit,
+
+    stopLoss,
+
+    martingaleLevel: 0
+
+  });
 
   setText(
-    "digitSampleCount",
-    ticks.length+" ticks"
+    "manualStatusText",
+    "TRADE PLACED"
   );
 
-  const grid =
-    $("digitStatsGrid");
+  updateAnalysisColumn();
 
-  if(!grid)
-    return;
-
-  grid.innerHTML = "";
-
-  counts.forEach(
-    (count,d)=>{
-
-      const box =
-        document.createElement("div");
-
-      box.className =
-        "digit";
-
-      const pct =
-        ticks.length
-          ? (
-              count /
-              ticks.length *
-              100
-            ).toFixed(0)
-          : 0;
-
-      box.innerHTML =
-        `<b>${d}</b>
-         <small>${pct}%</small>`;
-
-      grid.appendChild(box);
-    }
-  );
 }
 
 
 /* =========================================================
-   CHART
+   COUNTDOWN
    ========================================================= */
 
-function drawChart(){
+async function countdown(
+  seconds,
+  elementId
+) {
 
-  const canvas =
-    $("priceChartCanvas");
+  for (
+    let i = seconds;
+    i > 0;
+    i--
+  ) {
 
-  if(!canvas)
-    return;
+    setText(
+      elementId,
+      String(i)
+    );
 
-  const ctx =
-    canvas.getContext("2d");
+    await sleep(1000);
 
-  const rect =
-    canvas.getBoundingClientRect();
+  }
 
-  const ratio =
-    window.devicePixelRatio || 1;
-
-  canvas.width =
-    rect.width * ratio;
-
-  canvas.height =
-    110 * ratio;
-
-  ctx.scale(
-    ratio,
-    ratio
+  setText(
+    elementId,
+    "0"
   );
 
-  const data =
-    state.priceHistory;
-
-  if(data.length < 2)
-    return;
-
-  const min =
-    Math.min(...data);
-
-  const max =
-    Math.max(...data);
-
-  const range =
-    max-min || 1;
-
-  ctx.beginPath();
-
-  data.forEach(
-    (value,i)=>{
-
-      const x =
-        i /
-        (data.length-1) *
-        rect.width;
-
-      const y =
-        100 -
-        (
-          (value-min) /
-          range *
-          90
-        );
-
-      if(i === 0)
-        ctx.moveTo(x,y);
-      else
-        ctx.lineTo(x,y);
-    }
-  );
-
-  ctx.strokeStyle =
-    "#00e5ff";
-
-  ctx.lineWidth =
-    2;
-
-  ctx.stroke();
 }
 
 
@@ -1413,107 +2555,171 @@ function drawChart(){
    PAPER TRADE
    ========================================================= */
 
-function createPaperTrade({
-  engine,
-  market,
-  strategy,
-  prediction,
-  stake,
-  takeProfit=0,
-  stopLoss=0,
-  martingaleLevel=0
-}){
+function createPaperTrade(data) {
 
-  if(state.tradingStopped){
-
-    toast(
-      "Trading is stopped."
-    );
-
-    return null;
+  if (
+    !Number.isFinite(
+      Number(data.stake)
+    ) ||
+    Number(data.stake) <= 0
+  ) {
+    return;
   }
 
-  stake =
-    Number(stake);
+  const stake =
+    Number(data.stake);
 
-  if(
-    !Number.isFinite(stake) ||
-    stake < .35
-  ){
+  if (
+    stake >
+    state.paperBalance
+  ) {
 
-    toast(
-      "Minimum paper stake is 0.35."
+    setText(
+      "analysisMsg",
+      "Insufficient demo/paper balance."
     );
 
-    return null;
+    return;
+
   }
 
-  if(stake > state.paperBalance){
+  state.paperBalance -=
+    stake;
 
-    toast(
-      "Insufficient paper balance."
-    );
-
-    return null;
-  }
-
-  state.paperBalance -= stake;
+  const now =
+    new Date();
 
   const trade = {
 
     id:
-      Date.now()+"_"+Math.random(),
+      "KW-" +
+      Date.now() +
+      "-" +
+      Math.random()
+        .toString(36)
+        .slice(2, 7),
 
     timestamp:
       Date.now(),
 
     time:
-      new Date().toLocaleTimeString(),
+      now.toLocaleTimeString(),
 
-    engine,
-    market,
-    strategy,
-    prediction,
+    engine:
+      data.engine,
+
+    market:
+      data.market,
+
+    strategy:
+      data.strategy,
+
+    prediction:
+      data.prediction,
+
+    confidence:
+      data.confidence,
+
     stake,
 
-    takeProfit,
-    stopLoss,
+    takeProfit:
+      data.takeProfit,
 
-    martingaleLevel,
+    stopLoss:
+      data.stopLoss,
 
-    result:null,
-    resultDigit:null,
+    martingaleLevel:
+      data.martingaleLevel || 0,
 
-    status:"PENDING",
+    result: null,
 
-    amountWon:0,
-    payout:0,
-    profit:0
+    resultDigit: null,
+
+    status: "PENDING",
+
+    amountWon: 0,
+
+    payout: 0,
+
+    profit: 0
+
   };
 
   state.activeTrades.push(
     trade
   );
 
-  saveState();
+  state.totalStake +=
+    stake;
 
-  renderBalance();
   renderActiveTrades();
 
-  return trade;
+  updateBalanceUI();
+
+  saveStorage();
+
 }
 
 
 /* =========================================================
-   TRADE EVALUATION
+   SETTLE TRADES
+   ========================================================= */
+
+function settlePendingTrades(
+  symbol,
+  digit
+) {
+
+  if (digit === null) {
+    return;
+  }
+
+  const pending =
+    state.activeTrades.filter(
+      trade =>
+        trade.market === symbol &&
+        trade.status === "PENDING"
+    );
+
+  if (!pending.length) {
+    return;
+  }
+
+  pending.forEach(
+    trade => {
+
+      const won =
+        evaluateTrade(
+          trade,
+          digit
+        );
+
+      settleTrade(
+        trade,
+        digit,
+        won
+      );
+
+    }
+  );
+
+  updateAllUI();
+
+}
+
+
+/* =========================================================
+   EVALUATE
    ========================================================= */
 
 function evaluateTrade(
   trade,
   digit
-){
+) {
 
-  switch(trade.strategy){
+  switch (
+    trade.strategy
+  ) {
 
     case "MATCHES":
       return digit ===
@@ -1539,53 +2745,49 @@ function evaluateTrade(
 
     default:
       return false;
+
   }
+
 }
 
 
 /* =========================================================
-   PAPER SETTLEMENT
+   SETTLE TRADE
    ========================================================= */
 
 function settleTrade(
   trade,
-  digit
-){
-
-  const win =
-    evaluateTrade(
-      trade,
-      digit
-    );
-
-  const multipliers = {
-
-    MATCHES:8.5,
-    DIFFERS:.09,
-    EVEN:.95,
-    ODD:.95,
-    OVER:.95,
-    UNDER:.95
-  };
+  digit,
+  won
+) {
 
   trade.resultDigit =
     digit;
 
   trade.result =
-    win
+    won
       ? "WIN"
       : "LOSS";
 
   trade.status =
-    win
+    won
       ? "WON"
       : "LOST";
 
-  if(win){
+  if (won) {
+
+    const multiplier =
+      getPaperMultiplier(
+        trade.strategy
+      );
 
     const payout =
       trade.stake *
-      multipliers[trade.strategy];
+      multiplier;
+
+    const profit =
+      payout -
+      trade.stake;
 
     trade.payout =
       payout;
@@ -1594,604 +2796,247 @@ function settleTrade(
       payout;
 
     trade.profit =
-      payout -
-      trade.stake;
+      profit;
 
     state.paperBalance +=
       payout;
 
+    state.totalAmountWon +=
+      payout;
+
+    state.totalProfit +=
+      profit;
+
     state.wins++;
 
-  }else{
-
-    trade.payout =
-      0;
-
-    trade.amountWon =
-      0;
-
-    trade.profit =
-      -trade.stake;
-
-    state.losses++;
-  }
-
-  state.totalProfit +=
-    trade.profit;
-
-  state.totalAmountWon +=
-    trade.amountWon;
-
-  state.totalStake +=
-    trade.stake;
-
-  state.history.unshift(
-    trade
-  );
-
-  state.activeTrades =
-    state.activeTrades.filter(
-      t=>t.id !== trade.id
-    );
-
-  saveState();
-
-  renderBalance();
-  renderStats();
-  renderHistory();
-  renderActiveTrades();
-
-  if(
-    trade.engine === "AI BOT"
-  ){
-
-    if(win){
+    if (
+      trade.engine === "AI BOT"
+    ) {
 
       state.botCurrentStake =
         state.botBaseStake;
 
-      state.botMartingaleLevel =
-        0;
+      state.botMartingaleLevel = 0;
 
-    }else{
+    }
+
+  } else {
+
+    trade.payout = 0;
+
+    trade.amountWon = 0;
+
+    trade.profit =
+      -trade.stake;
+
+    state.totalProfit -=
+      trade.stake;
+
+    state.losses++;
+
+    if (
+      trade.engine === "AI BOT"
+    ) {
 
       state.botMartingaleLevel++;
-
-      const factor =
-        Number(
-          $("martingaleInput")?.value || 2.1
-        );
 
       state.botCurrentStake =
         Math.min(
           state.botBaseStake *
           Math.pow(
-            factor,
+            2.1,
             state.botMartingaleLevel
           ),
-          state.botBaseStake * 32,
           Math.max(
-            .35,
+            state.botBaseStake,
             state.paperBalance
           )
         );
+
     }
 
-    checkBotLimits();
   }
 
-  if(
-    trade.engine === "CIRCULAR AI"
-  ){
-
-    checkCircularLimits();
-  }
-}
-
-
-/* =========================================================
-   SETTLE ACTIVE
-   ========================================================= */
-
-function settlePendingTrades(
-  symbol,
-  digit
-){
-
-  const pending =
+  state.activeTrades =
     state.activeTrades.filter(
-      trade=>
-        trade.market === symbol
+      t => t.id !== trade.id
     );
 
-  pending.forEach(
-    trade=>
-      settleTrade(
-        trade,
-        digit
-      )
+  state.history.unshift(
+    trade
   );
+
+  state.history =
+    state.history.slice(0, 300);
+
+  rebuildStatistics();
+
+  saveStorage();
+
+  renderHistory();
+
+  renderActiveTrades();
+
+  updateBalanceUI();
+
 }
 
 
 /* =========================================================
-   TOTALS
+   PAPER MULTIPLIERS
+   =========================================================
+   Simulation only.
+   These are NOT live Deriv payout rates.
    ========================================================= */
 
-function calculateTotals(){
+function getPaperMultiplier(
+  strategy
+) {
 
-  state.totalProfit =
-    state.history.reduce(
-      (sum,t)=>
-        sum + Number(t.profit||0),
-      0
-    );
+  switch (strategy) {
 
-  state.totalAmountWon =
-    state.history.reduce(
-      (sum,t)=>
-        sum + Number(t.amountWon||0),
-      0
-    );
+    case "MATCHES":
+      return 8.5;
 
-  state.totalStake =
-    state.history.reduce(
-      (sum,t)=>
-        sum + Number(t.stake||0),
-      0
-    );
+    case "DIFFERS":
+      return 0.09;
 
-  state.wins =
-    state.history.filter(
-      t=>t.result === "WIN"
-    ).length;
+    case "EVEN":
+    case "ODD":
+    case "OVER":
+    case "UNDER":
+      return 0.95;
 
-  state.losses =
-    state.history.filter(
-      t=>t.result === "LOSS"
-    ).length;
-}
+    default:
+      return 0.95;
 
-
-/* =========================================================
-   BALANCE
-   ========================================================= */
-
-function renderBalance(){
-
-  setText(
-    "balanceDisplay",
-    "$"+
-    state.paperBalance.toFixed(2)
-  );
-}
-
-
-/* =========================================================
-   RESULTS
-   ========================================================= */
-
-function renderStats(){
-
-  const total =
-    state.wins +
-    state.losses;
-
-  const accuracy =
-    total
-      ? (
-          state.wins /
-          total *
-          100
-        ).toFixed(1)
-      : "0.0";
-
-  setText(
-    "paperTotal",
-    total
-  );
-
-  setText(
-    "paperWins",
-    state.wins
-  );
-
-  setText(
-    "paperLosses",
-    state.losses
-  );
-
-  setText(
-    "paperAccuracy",
-    accuracy+"%"
-  );
-
-  setText(
-    "totalProfitDisplay",
-    "$"+
-    state.totalProfit.toFixed(2)
-  );
-
-  setText(
-    "historyTotalStake",
-    "$"+
-    state.totalStake.toFixed(2)
-  );
-
-  setText(
-    "historyAmountWon",
-    "$"+
-    state.totalAmountWon.toFixed(2)
-  );
-
-  setText(
-    "historyNetProfit",
-    "$"+
-    state.totalProfit.toFixed(2)
-  );
-
-  setText(
-    "sessionProfitDisplay",
-    "$"+
-    (
-      state.totalProfit -
-      state.sessionStartProfit
-    ).toFixed(2)
-  );
-}
-
-
-/* =========================================================
-   ACTIVE TRADES
-   ========================================================= */
-
-function renderActiveTrades(){
-
-  setText(
-    "activeTradeCount",
-    state.activeTrades.length
-  );
-
-  const box =
-    $("activeTradesList");
-
-  if(!box)
-    return;
-
-  box.innerHTML = "";
-
-  if(!state.activeTrades.length){
-
-    box.innerHTML =
-      `<div class="message">
-        No active paper trades.
-      </div>`;
-
-    return;
   }
 
-  state.activeTrades
-    .forEach(trade=>{
-
-      const item =
-        document.createElement("div");
-
-      item.className =
-        "trade-item";
-
-      item.innerHTML = `
-        <div class="top">
-          <b>${trade.market}</b>
-          <span class="pending">
-            ${trade.status}
-          </span>
-        </div>
-
-        <div class="info-row">
-          <span>${STRATEGY_LABELS[trade.strategy]}</span>
-          <b>${trade.prediction}</b>
-        </div>
-
-        <div class="info-row">
-          <span>Stake</span>
-          <b>$${Number(trade.stake).toFixed(2)}</b>
-        </div>
-      `;
-
-      box.appendChild(item);
-    });
 }
 
 
 /* =========================================================
-   HISTORY
+   SESSION LIMITS
    ========================================================= */
 
-function renderHistory(){
+function checkSessionLimit(
+  engine
+) {
 
-  const box =
-    $("historyCardsList");
+  const baseline =
+    engine === "bot"
+      ? state.botSessionStartProfit
+      : state.circularSessionStartProfit;
 
-  if(!box)
-    return;
+  const profit =
+    state.totalProfit -
+    baseline;
 
-  box.innerHTML = "";
+  const takeProfit =
+    engine === "bot"
+      ? state.botTakeProfit
+      : state.circularTakeProfit;
 
-  if(!state.history.length){
+  const stopLoss =
+    engine === "bot"
+      ? state.botStopLoss
+      : state.circularStopLoss;
 
-    box.innerHTML =
-      `<div class="message">
-        No paper trades yet.
-      </div>`;
+  if (
+    takeProfit > 0 &&
+    profit >= takeProfit
+  ) {
 
-    return;
-  }
+    if (engine === "bot") {
+      stopAIBot(false);
+    } else {
+      stopCircularAI(false);
+    }
 
-  state.history
-    .slice(0,100)
-    .forEach(trade=>{
-
-      const item =
-        document.createElement("div");
-
-      item.className =
-        "history-item";
-
-      const resultClass =
-        trade.result === "WIN"
-          ? "win"
-          : "loss";
-
-      item.innerHTML = `
-
-        <div class="top">
-
-          <div>
-            <b>${trade.market}</b>
-            <div>
-              <small>
-                ${trade.engine}
-              </small>
-            </div>
-          </div>
-
-          <b class="${resultClass}">
-            ${trade.result}
-          </b>
-
-        </div>
-
-        <div class="info-row">
-          <span>Strategy</span>
-          <b>${STRATEGY_LABELS[trade.strategy]}</b>
-        </div>
-
-        <div class="info-row">
-          <span>Prediction</span>
-          <b>${trade.prediction}</b>
-        </div>
-
-        <div class="info-row">
-          <span>Result Digit</span>
-          <b>${trade.resultDigit}</b>
-        </div>
-
-        <div class="info-row">
-          <span>Stake</span>
-          <b>$${Number(trade.stake).toFixed(2)}</b>
-        </div>
-
-        <div class="info-row">
-          <span>Amount Won</span>
-          <b class="${resultClass}">
-            $${Number(trade.amountWon).toFixed(2)}
-          </b>
-        </div>
-
-        <div class="info-row">
-          <span>Profit / Loss</span>
-          <b class="${resultClass}">
-            $${Number(trade.profit).toFixed(2)}
-          </b>
-        </div>
-
-        <small>${trade.time}</small>
-      `;
-
-      box.appendChild(item);
-    });
-
-  renderStats();
-}
-
-
-/* =========================================================
-   AI BOT
-   ========================================================= */
-
-async function startAI(){
-
-  if(state.aiRunning)
-    return;
-
-  if(state.tradingStopped){
-
-    toast(
-      "Trading is stopped. Reset the page/session to restart."
+    setText(
+      "analysisMsg",
+      `${engine.toUpperCase()} TAKE PROFIT reached.`
     );
 
-    return;
+    updateAnalysisColumn();
+
+    return true;
+
   }
 
-  stopCircular(false);
+  if (
+    stopLoss > 0 &&
+    profit <= -stopLoss
+  ) {
 
-  state.engineMode =
-    "ai";
+    if (engine === "bot") {
+      stopAIBot(false);
+    } else {
+      stopCircularAI(false);
+    }
 
-  state.aiRunning =
+    setText(
+      "analysisMsg",
+      `${engine.toUpperCase()} STOP LOSS reached.`
+    );
+
+    updateAnalysisColumn();
+
+    return true;
+
+  }
+
+  return false;
+
+}
+
+
+/* =========================================================
+   STOP ALL TRADING
+   ========================================================= */
+
+function stopAllTrading() {
+
+  state.tradingStopped =
     true;
 
-  state.aiCycleToken++;
+  stopAIBot(false);
 
-  state.botBaseStake =
-    Number(
-      $("stakeInput")?.value || 10
-    );
-
-  state.botCurrentStake =
-    state.botBaseStake;
-
-  state.botMartingaleLevel =
-    0;
-
-  state.botTakeProfit =
-    Number(
-      $("takeProfitInput")?.value || 50
-    );
-
-  state.botStopLoss =
-    Number(
-      $("stopLossInput")?.value || 100
-    );
-
-  state.botSessionStartProfit =
-    state.totalProfit;
-
-  selectEngine("ai");
+  stopCircularAI(false);
 
   setText(
-    "botStatusDash",
-    "RUNNING"
+    "tradingStatusLabel",
+    "STOPPED"
   );
 
   setText(
     "engineStatusText",
-    "ANALYZING..."
+    "ALL TRADING STOPPED"
   );
 
   setText(
-    "aiStatus",
-    "AI ACTIVE"
+    "analysisMsg",
+    "KRISHWAVE trading engines stopped."
   );
 
-  botLoop(
-    state.aiCycleToken
-  );
+  updateAnalysisColumn();
+
 }
 
 
-function stopAI(
-  show=true
-){
+/* =========================================================
+   AI DISPLAY
+   ========================================================= */
 
-  state.aiRunning =
-    false;
-
-  state.aiCycleToken++;
-
-  clearTimeout(
-    state.botTimer
-  );
-
-  setText(
-    "botStatusDash",
-    "STANDBY"
-  );
-
-  setText(
-    "engineStatusText",
-    "READY"
-  );
-
-  if(show)
-    toast("AI BOT stopped.");
-
-  updateAnalysisEngine();
-}
-
-
-async function botLoop(token){
-
-  if(
-    !state.aiRunning ||
-    token !== state.aiCycleToken ||
-    state.tradingStopped
-  )
-    return;
-
-  setText(
-    "engineStatusText",
-    "ANALYZING 3s..."
-  );
+function updateAIDisplay(
+  analysis,
+  prediction
+) {
 
   setText(
     "aiStatus",
-    "ANALYZING"
+    "AI BOT READY"
   );
-
-  for(
-    let n=3;
-    n>0;
-    n--
-  ){
-
-    if(
-      !state.aiRunning ||
-      token !== state.aiCycleToken
-    )
-      return;
-
-    setText(
-      "engineStatusText",
-      `ANALYZING ${n}s...`
-    );
-
-    setText(
-      "aiCircleTimer",
-      n+"s"
-    );
-
-    await wait(1000);
-  }
-
-  const analysis =
-    chooseBestMarket();
-
-  if(!analysis){
-
-    setText(
-      "engineStatusText",
-      "COLLECTING DATA"
-    );
-
-    state.botTimer =
-      setTimeout(
-        ()=>botLoop(token),
-        1500
-      );
-
-    return;
-  }
-
-  state.selectedMarket =
-    analysis.symbol;
-
-  const strategy =
-    chooseBotStrategy(
-      analysis
-    );
-
-  const prediction =
-    createPrediction(
-      analysis,
-      strategy
-    );
-
-  state.lastBotDecision = {
-    analysis,
-    strategy,
-    prediction
-  };
 
   setText(
     "aiMarket",
@@ -2199,998 +3044,594 @@ async function botLoop(token){
   );
 
   setText(
-    "botSelectedMarket",
-    analysis.symbol
+    "aiPrediction",
+    prediction.digit
   );
 
   setText(
     "aiType",
-    STRATEGY_LABELS[strategy]
-  );
-
-  setText(
-    "botSelectedStrategy",
-    STRATEGY_LABELS[strategy]
-  );
-
-  setText(
-    "botStrategyLabel",
-    STRATEGY_LABELS[strategy]
-  );
-
-  setText(
-    "aiPrediction",
-    prediction.prediction
-  );
-
-  setText(
-    "botConfidence",
-    prediction.confidence+"%"
+    STRATEGY_LABELS[
+      prediction.strategy
+    ]
   );
 
   setText(
     "analysisConfidence",
-    prediction.confidence+"%"
+    `${prediction.confidence.toFixed(1)}%`
   );
 
   setText(
-    "engineStatusText",
-    "TRADE NOW"
+    "aiPredictionLarge",
+    prediction.digit
   );
 
-  createPaperTrade({
+  setText(
+    "predictionConfidence",
+    `${prediction.confidence.toFixed(1)}%`
+  );
 
-    engine:"AI BOT",
+  setText(
+    "reportMarket",
+    analysis.symbol
+  );
 
-    market:analysis.symbol,
+  setText(
+    "reportScore",
+    analysis.score.toFixed(1)
+  );
 
-    strategy,
+  setText(
+    "reportStrength",
+    analysis.strength
+  );
 
-    prediction:
-      prediction.prediction,
+  setText(
+    "reportStability",
+    `${(
+      analysis.stability * 100
+    ).toFixed(1)}%`
+  );
 
-    stake:
-      Math.min(
-        state.botCurrentStake,
-        state.paperBalance
-      ),
+  setText(
+    "reportConcentration",
+    `${(
+      analysis.concentration * 100
+    ).toFixed(1)}%`
+  );
 
-    takeProfit:
-      state.botTakeProfit,
+  setText(
+    "reportStreak",
+    String(analysis.streak)
+  );
 
-    stopLoss:
-      state.botStopLoss,
+  setText(
+    "reportAgreement",
+    `${(
+      analysis.agreement * 100
+    ).toFixed(1)}%`
+  );
 
-    martingaleLevel:
-      state.botMartingaleLevel
-  });
-
-  state.botTimer =
-    setTimeout(
-      ()=>botLoop(token),
-      1200
-    );
 }
 
 
 /* =========================================================
-   BOT LIMITS
+   CIRCULAR DISPLAY
    ========================================================= */
 
-function checkBotLimits(){
-
-  const sessionProfit =
-    state.totalProfit -
-    state.botSessionStartProfit;
-
-  if(
-    state.botTakeProfit > 0 &&
-    sessionProfit >=
-      state.botTakeProfit
-  ){
-
-    stopAI(false);
-
-    toast(
-      "AI BOT TAKE PROFIT reached."
-    );
-
-    setText(
-      "tradingStatusLabel",
-      "TAKE PROFIT"
-    );
-
-    return;
-  }
-
-  if(
-    state.botStopLoss > 0 &&
-    sessionProfit <=
-      -state.botStopLoss
-  ){
-
-    stopAI(false);
-
-    toast(
-      "AI BOT STOP LOSS reached."
-    );
-
-    setText(
-      "tradingStatusLabel",
-      "STOP LOSS"
-    );
-  }
-}
-
-
-/* =========================================================
-   CIRCULAR AI
-   ========================================================= */
-
-function startCircular(){
-
-  if(state.circularRunning)
-    return;
-
-  if(state.tradingStopped){
-
-    toast(
-      "Trading is stopped."
-    );
-
-    return;
-  }
-
-  stopAI(false);
-
-  state.engineMode =
-    "circular";
-
-  state.circularRunning =
-    true;
-
-  state.circularToken++;
-
-  state.circularTakeProfit =
-    Number(
-      $("circularTakeProfitInput")
-        ?.value || 50
-    );
-
-  state.circularStopLoss =
-    Number(
-      $("circularStopLossInput")
-        ?.value || 100
-    );
-
-  state.circularSessionStartProfit =
-    state.totalProfit;
-
-  selectEngine("circular");
-
-  circularCycle(
-    state.circularToken
-  );
-}
-
-
-function stopCircular(
-  show=true
-){
-
-  state.circularRunning =
-    false;
-
-  state.circularToken++;
-
-  clearTimeout(
-    state.circularTimer
-  );
+function updateCircularAnalysis(
+  analysis,
+  phase,
+  timer,
+  strategy = null,
+  prediction = null
+) {
 
   setText(
-    "circularStatusText",
-    "STANDBY"
-  );
-
-  if(show)
-    toast(
-      "Circular AI stopped."
-    );
-
-  updateAnalysisEngine();
-}
-
-
-async function circularCycle(token){
-
-  if(
-    !state.circularRunning ||
-    token !== state.circularToken ||
-    state.tradingStopped
-  )
-    return;
-
-  setText(
-    "circularStatusText",
-    "ANALYSIS 10s"
-  );
-
-  setText(
-    "cycleAnalysis",
-    "ANALYZING"
-  );
-
-  for(
-    let n=10;
-    n>0;
-    n--
-  ){
-
-    if(
-      !state.circularRunning ||
-      token !== state.circularToken
-    )
-      return;
-
-    setText(
-      "aiCircleTimer",
-      n+"s"
-    );
-
-    await wait(1000);
-  }
-
-  const market =
-    analyzeMarket(
-      $("circularMarketSelect")?.value ||
-      state.selectedMarket
-    );
-
-  if(!market){
-
-    toast(
-      "Circular AI needs more tick data."
-    );
-
-    state.circularTimer =
-      setTimeout(
-        ()=>circularCycle(token),
-        1000
-      );
-
-    return;
-  }
-
-  const strategy =
-    state.selectedStrategy;
-
-  const prediction =
-    createPrediction(
-      market,
-      strategy
-    );
-
-  state.lastCircularPrediction =
-    prediction;
-
-  setText(
-    "cycleAnalysis",
-    STRATEGY_LABELS[strategy]
-  );
-
-  setText(
-    "aiCirclePrediction",
-    prediction.prediction
+    "aiCircleLabel",
+    "CIRCULAR AI"
   );
 
   setText(
     "aiCircleStatus",
-    "PREDICTION"
+    phase
+  );
+
+  setText(
+    "aiCircleTimer",
+    String(timer)
+  );
+
+  setText(
+    "aiCirclePrediction",
+    prediction
+      ? String(prediction.digit)
+      : "--"
+  );
+
+  setText(
+    "cycleAnalysis",
+    phase
   );
 
   setText(
     "cyclePrediction",
-    "PREDICTION READY"
+    prediction
+      ? String(prediction.digit)
+      : "--"
   );
-
-  setText(
-    "aiCircleTimer",
-    "5s"
-  );
-
-  for(
-    let n=5;
-    n>0;
-    n--
-  ){
-
-    if(
-      !state.circularRunning ||
-      token !== state.circularToken
-    )
-      return;
-
-    setText(
-      "aiCircleTimer",
-      n+"s"
-    );
-
-    await wait(1000);
-  }
 
   setText(
     "cycleTrade",
-    "TRADE NOW"
+    phase === "TRADE NOW"
+      ? "TRADE NOW"
+      : "--"
+  );
+
+  /*
+   * New/important analysis values.
+   */
+
+  setText(
+    "circularAnalysisMarket",
+    analysis.symbol
   );
 
   setText(
-    "aiCircleTimer",
-    "3s"
-  );
-
-  for(
-    let n=3;
-    n>0;
-    n--
-  ){
-
-    if(
-      !state.circularRunning ||
-      token !== state.circularToken
-    )
-      return;
-
-    setText(
-      "aiCircleTimer",
-      n+"s"
-    );
-
-    await wait(1000);
-  }
-
-  createPaperTrade({
-
-    engine:"CIRCULAR AI",
-
-    market:market.symbol,
-
-    strategy,
-
-    prediction:
-      prediction.prediction,
-
-    stake:
-      Number(
-        $("circularStakeInput")
-          ?.value || 10
-      ),
-
-    takeProfit:
-      state.circularTakeProfit,
-
-    stopLoss:
-      state.circularStopLoss
-  });
-
-  setText(
-    "cycleTrade",
-    "TRADE PLACED"
-  );
-
-  await wait(1000);
-
-  setText(
-    "cycleTrade",
-    "COOLDOWN"
+    "circularAnalysisStrategy",
+    strategy
+      ? STRATEGY_LABELS[strategy]
+      : "SELECTING..."
   );
 
   setText(
-    "aiCircleTimer",
-    "—"
+    "circularAnalysisPrediction",
+    prediction
+      ? String(prediction.digit)
+      : "--"
   );
 
-  state.circularTimer =
-    setTimeout(
-      ()=>circularCycle(token),
-      1500
-    );
+  setText(
+    "circularAnalysisConfidence",
+    prediction
+      ? `${prediction.confidence.toFixed(1)}%`
+      : "--"
+  );
+
 }
 
 
 /* =========================================================
-   CIRCULAR LIMITS
+   ANALYSIS COLUMN
+   =========================================================
+   THIS IS THE IMPORTANT FIX:
+   Circular AI + Strategy Chosen are explicitly
+   pushed into the Analysis column.
    ========================================================= */
 
-function checkCircularLimits(){
+function updateAnalysisColumn() {
 
-  const profit =
-    state.totalProfit -
-    state.circularSessionStartProfit;
+  const bot =
+    state.lastBotDecision;
 
-  if(
-    state.circularTakeProfit > 0 &&
-    profit >=
-      state.circularTakeProfit
-  ){
+  const circular =
+    state.lastCircularPrediction;
 
-    stopCircular(false);
+  /*
+   * Current engine
+   */
 
-    toast(
-      "Circular AI TAKE PROFIT reached."
-    );
+  let engineText =
+    "AI BOT";
 
-    return;
+  if (
+    state.engineMode === "circular"
+  ) {
+    engineText =
+      "CIRCULAR AI";
   }
 
-  if(
-    state.circularStopLoss > 0 &&
-    profit <=
-      -state.circularStopLoss
-  ){
-
-    stopCircular(false);
-
-    toast(
-      "Circular AI STOP LOSS reached."
-    );
-  }
-}
-
-
-/* =========================================================
-   MANUAL TRADE
-   ========================================================= */
-
-function executeManualTrade(){
-
-  if(state.tradingStopped){
-
-    toast(
-      "Trading is stopped."
-    );
-
-    return;
+  if (
+    state.engineMode === "manual"
+  ) {
+    engineText =
+      "MANUAL";
   }
 
-  const market =
-    $("manualMarketSelect")?.value ||
+  setText(
+    "analysisEngine",
+    engineText
+  );
+
+  /*
+   * AI BOT
+   */
+
+  if (bot) {
+
+    setText(
+      "analysisBotMarket",
+      bot.market
+    );
+
+    setText(
+      "analysisBotStrategy",
+      STRATEGY_LABELS[
+        bot.strategy
+      ] || bot.strategy
+    );
+
+    setText(
+      "analysisBotPrediction",
+      String(bot.prediction)
+    );
+
+    setText(
+      "analysisBotConfidence",
+      `${Number(
+        bot.confidence
+      ).toFixed(1)}%`
+    );
+
+  } else {
+
+    setText(
+      "analysisBotMarket",
+      "--"
+    );
+
+    setText(
+      "analysisBotStrategy",
+      "WAITING"
+    );
+
+    setText(
+      "analysisBotPrediction",
+      "--"
+    );
+
+    setText(
+      "analysisBotConfidence",
+      "--"
+    );
+
+  }
+
+
+  /*
+   * CIRCULAR AI
+   */
+
+  if (circular) {
+
+    setText(
+      "analysisCircularStatus",
+      state.circularRunning
+        ? "RUNNING"
+        : "LAST RESULT"
+    );
+
+    setText(
+      "analysisCircularMarket",
+      circular.market ||
+      "--"
+    );
+
+    setText(
+      "analysisCircularStrategy",
+      STRATEGY_LABELS[
+        circular.strategy
+      ] ||
+      circular.strategy ||
+      "--"
+    );
+
+    setText(
+      "analysisCircularPrediction",
+      circular.prediction != null
+        ? String(
+            circular.prediction
+          )
+        : "--"
+    );
+
+    setText(
+      "analysisCircularConfidence",
+      circular.confidence != null
+        ? `${Number(
+            circular.confidence
+          ).toFixed(1)}%`
+        : "--"
+    );
+
+  } else {
+
+    setText(
+      "analysisCircularStatus",
+      state.circularRunning
+        ? "RUNNING"
+        : "STANDBY"
+    );
+
+    setText(
+      "analysisCircularMarket",
+      "--"
+    );
+
+    setText(
+      "analysisCircularStrategy",
+      "WAITING"
+    );
+
+    setText(
+      "analysisCircularPrediction",
+      "--"
+    );
+
+    setText(
+      "analysisCircularConfidence",
+      "--"
+    );
+
+  }
+
+
+  /*
+   * CURRENT STRATEGY CHOSEN
+   */
+
+  let chosenStrategy =
+    state.selectedStrategy;
+
+  if (
+    state.engineMode === "ai" &&
+    bot
+  ) {
+
+    chosenStrategy =
+      bot.strategy;
+
+  }
+
+  if (
+    state.engineMode === "circular" &&
+    circular
+  ) {
+
+    chosenStrategy =
+      circular.strategy;
+
+  }
+
+  setText(
+    "analysisStrategyChosen",
+    STRATEGY_LABELS[
+      chosenStrategy
+    ] ||
+    chosenStrategy ||
+    "--"
+  );
+
+
+  /*
+   * Current market
+   */
+
+  let currentMarket =
     state.selectedMarket;
 
-  const strategy =
-    state.selectedStrategy;
-
-  let prediction;
-
-  if(
-    strategy === "MATCHES" ||
-    strategy === "DIFFERS" ||
-    strategy === "OVER" ||
-    strategy === "UNDER"
-  ){
-
-    const value =
-      Number(
-        $("manualTargetDigitInput")
-          ?.value
-      );
-
-    if(
-      !Number.isInteger(value) ||
-      value < 0 ||
-      value > 9
-    ){
-
-      toast(
-        "Enter a target number from 0 to 9."
-      );
-
-      return;
-    }
-
-    prediction =
-      value;
-
-  }else{
-
-    const analysis =
-      analyzeMarket(market);
-
-    if(!analysis){
-
-      toast(
-        "Collecting market data."
-      );
-
-      return;
-    }
-
-    prediction =
-      createPrediction(
-        analysis,
-        strategy
-      ).prediction;
+  if (
+    state.engineMode === "ai" &&
+    bot
+  ) {
+    currentMarket =
+      bot.market;
   }
 
-  createPaperTrade({
-
-    engine:"MANUAL",
-
-    market,
-
-    strategy,
-
-    prediction,
-
-    stake:
-      Number(
-        $("manualStakeInput")
-          ?.value || 10
-      ),
-
-    takeProfit:
-      Number(
-        $("manualTakeProfitInput")
-          ?.value || 50
-      ),
-
-    stopLoss:
-      Number(
-        $("manualStopLossInput")
-          ?.value || 100
-      )
-  });
-
-  toast(
-    "Manual paper trade placed."
-  );
-}
-
-
-/* =========================================================
-   STOP TRADING
-   ========================================================= */
-
-function stopAllTrading(){
-
-  state.tradingStopped =
-    true;
-
-  stopAI(false);
-  stopCircular(false);
+  if (
+    state.engineMode === "circular" &&
+    circular
+  ) {
+    currentMarket =
+      circular.market;
+  }
 
   setText(
-    "tradingStatusLabel",
-    "STOPPED"
+    "analysisCurrentMarket",
+    currentMarket ||
+    "--"
   );
 
-  toast(
-    "⛔ ALL TRADING STOPPED"
-  );
 
   /*
-    Existing pending paper trades are NOT
-    silently converted into wins/losses.
-    They remain pending until their market
-    tick settles them.
-  */
+   * Prediction
+   */
 
-  renderActiveTrades();
-}
+  let currentPrediction =
+    "--";
 
+  if (
+    state.engineMode === "ai" &&
+    bot
+  ) {
 
-/* =========================================================
-   STRATEGY MODAL
-   ========================================================= */
+    currentPrediction =
+      bot.prediction;
 
-function openStrategyModal(){
+  } else if (
+    state.engineMode === "circular" &&
+    circular
+  ) {
 
-  $("strategyModal")
-    ?.classList.remove("hidden");
-}
+    currentPrediction =
+      circular.prediction;
 
-
-function closeStrategyModal(){
-
-  $("strategyModal")
-    ?.classList.add("hidden");
-}
-
-
-function chooseStrategy(strategy){
-
-  state.selectedStrategy =
-    strategy;
+  }
 
   setText(
-    "manualSelectedStrategyLabel",
-    STRATEGY_LABELS[strategy]
-  );
-
-  setText(
-    "circularStrategyLabel",
-    STRATEGY_LABELS[strategy]
-  );
-
-  saveState();
-
-  updateTargetDigitVisibility();
-
-  closeStrategyModal();
-}
-
-
-function updateTargetDigitVisibility(){
-
-  const strategy =
-    state.selectedStrategy;
-
-  const needsDigit =
-    [
-      "MATCHES",
-      "DIFFERS",
-      "OVER",
-      "UNDER"
-    ].includes(strategy);
-
-  $("targetDigitContainer")
-    ?.classList.toggle(
-      "hidden",
-      !needsDigit
-    );
-}
-
-
-/* =========================================================
-   BOT STRATEGY MODAL
-   ========================================================= */
-
-function openBotStrategyModal(){
-
-  document.querySelectorAll(
-    ".bot-strategy-check"
-  ).forEach(check=>{
-
-    check.checked =
-      state.botStrategyPool
-        .includes(check.value);
-  });
-
-  $("botStrategyModal")
-    ?.classList.remove("hidden");
-}
-
-
-function closeBotStrategyModal(){
-
-  $("botStrategyModal")
-    ?.classList.add("hidden");
-}
-
-
-function applyBotStrategies(){
-
-  const selected =
-    Array.from(
-      document.querySelectorAll(
-        ".bot-strategy-check:checked"
-      )
+    "analysisCurrentPrediction",
+    String(
+      currentPrediction
     )
-    .map(
-      check=>check.value
+  );
+
+
+  /*
+   * Confidence
+   */
+
+  let currentConfidence =
+    "--";
+
+  if (
+    state.engineMode === "ai" &&
+    bot
+  ) {
+
+    currentConfidence =
+      `${Number(
+        bot.confidence
+      ).toFixed(1)}%`;
+
+  } else if (
+    state.engineMode === "circular" &&
+    circular
+  ) {
+
+    currentConfidence =
+      `${Number(
+        circular.confidence
+      ).toFixed(1)}%`;
+
+  }
+
+  setText(
+    "analysisCurrentConfidence",
+    currentConfidence
+  );
+
+
+  /*
+   * Status
+   */
+
+  if (state.tradingStopped) {
+
+    setText(
+      "analysisMsg",
+      "TRADING STOPPED"
     );
 
-  if(!selected.length){
+  } else if (state.aiRunning) {
 
-    toast(
-      "Select at least one strategy."
+    setText(
+      "analysisMsg",
+      "AI BOT autonomously selecting market + strategy."
     );
 
+  } else if (
+    state.circularRunning
+  ) {
+
+    setText(
+      "analysisMsg",
+      "Circular AI running 10 → 5 → 3 cycle."
+    );
+
+  } else if (
+    state.engineMode === "manual"
+  ) {
+
+    setText(
+      "analysisMsg",
+      "Manual trading mode."
+    );
+
+  }
+
+}
+
+
+/* =========================================================
+   SELECTED MARKET UI
+   ========================================================= */
+
+function updateSelectedMarketUI() {
+
+  const analysis =
+    analyzeMarket(
+      state.selectedMarket
+    );
+
+  if (!analysis) {
     return;
   }
 
-  state.botStrategyPool =
-    selected;
+  setText(
+    "currentChartMarket",
+    analysis.symbol
+  );
 
   setText(
-    "botStrategyLabel",
-    selected
-      .map(
-        s=>STRATEGY_LABELS[s]
-      )
-      .join(", ")
-  );
-
-  saveState();
-
-  closeBotStrategyModal();
-}
-
-
-/* =========================================================
-   WAIT
-   ========================================================= */
-
-function wait(ms){
-
-  return new Promise(
-    resolve=>
-      setTimeout(
-        resolve,
-        ms
-      )
-  );
-}
-
-
-/* =========================================================
-   CLEAR HISTORY
-   ========================================================= */
-
-function clearHistory(){
-
-  if(
-    !confirm(
-      "Clear all paper trade history?"
+    "currentLivePrice",
+    formatLatestPrice(
+      analysis.symbol
     )
-  )
-    return;
-
-  state.history = [];
-
-  calculateTotals();
-
-  saveState();
-
-  renderHistory();
-
-  toast(
-    "History cleared."
   );
+
+  setText(
+    "digitSampleCount",
+    String(
+      analysis.total
+    )
+  );
+
+  const grid =
+    $("digitStatsGrid");
+
+  if (grid) {
+
+    grid.innerHTML =
+      analysis.percentages
+        .map(
+          (percentage, digit) =>
+            `
+            <div class="digit-stat">
+              <span>${digit}</span>
+              <b>${percentage.toFixed(1)}%</b>
+            </div>
+            `
+        )
+        .join("");
+
+  }
+
+}
+
+
+function formatLatestPrice(
+  symbol
+) {
+
+  const price =
+    state.markets[
+      symbol
+    ]?.prices?.at(-1);
+
+  if (
+    !Number.isFinite(price)
+  ) {
+    return "--";
+  }
+
+  return price.toFixed(2);
+
 }
 
 
 /* =========================================================
-   DEMO CONNECT
+   ACTIVE TRADES
    ========================================================= */
 
-function connectDeriv(){
+function renderActiveTrades() {
 
-  /*
-    The public market WebSocket is already
-    connected independently.
-
-    OAuth credentials are never stored in
-    localStorage and this V7 interface remains
-    paper/demo only.
-  */
-
-  toast(
-    "Deriv market data is connected. Demo/Paper mode active."
-  );
-
-  setText(
-    "accountId",
-    "DEMO / PAPER"
-  );
-}
-
-
-/* =========================================================
-   EVENT SETUP
-   ========================================================= */
-
-function setupEvents(){
-
-  $("themeToggle")
-    ?.addEventListener(
-      "click",
-      toggleTheme
-    );
-
-  $("connectDerivBtn")
-    ?.addEventListener(
-      "click",
-      connectDeriv
-    );
-
-
-  $("tabAiBot")
-    ?.addEventListener(
-      "click",
-      ()=>selectEngine("ai")
-    );
-
-  $("tabCircularAI")
-    ?.addEventListener(
-      "click",
-      ()=>selectEngine("circular")
-    );
-
-  $("tabManual")
-    ?.addEventListener(
-      "click",
-      ()=>selectEngine("manual")
-    );
-
-
-  $("startBotBtn")
-    ?.addEventListener(
-      "click",
-      startAI
-    );
-
-  $("startCircularTradeBtn")
-    ?.addEventListener(
-      "click",
-      startCircular
-    );
-
-  $("placeTradeBtn")
-    ?.addEventListener(
-      "click",
-      executeManualTrade
-    );
-
-
-  $("botStrategyTrigger")
-    ?.addEventListener(
-      "click",
-      openBotStrategyModal
-    );
-
-  $("closeBotStrategyModal")
-    ?.addEventListener(
-      "click",
-      closeBotStrategyModal
-    );
-
-  $("applyBotStrategies")
-    ?.addEventListener(
-      "click",
-      applyBotStrategies
-    );
-
-
-  $("manualStrategyTrigger")
-    ?.addEventListener(
-      "click",
-      openStrategyModal
-    );
-
-  $("circularStrategyTrigger")
-    ?.addEventListener(
-      "click",
-      openStrategyModal
-    );
-
-  $("closeStrategyModal")
-    ?.addEventListener(
-      "click",
-      closeStrategyModal
-    );
-
-
-  document.querySelectorAll(
-    ".strategy-option"
-  ).forEach(button=>{
-
-    button.addEventListener(
-      "click",
-      ()=>{
-        chooseStrategy(
-          button.dataset.strategy
-        );
-      }
-    );
-  });
-
-
-  $("manualMarketSelect")
-    ?.addEventListener(
-      "change",
-      event=>{
-        state.selectedMarket =
-          event.target.value;
-
-        saveState();
-
-        updateAnalysis();
-      }
-    );
-
-
-  $("circularMarketSelect")
-    ?.addEventListener(
-      "change",
-      event=>{
-        state.selectedMarket =
-          event.target.value;
-
-        saveState();
-
-        updateAnalysis();
-      }
-    );
-
-
-  $("stopTradingBtn")
-    ?.addEventListener(
-      "click",
-      stopAllTrading
-    );
-
-
-  $("clearLogsBtn")
-    ?.addEventListener(
-      "click",
-      clearHistory
-    );
-}
-
-
-/* =========================================================
-   INIT
-   ========================================================= */
-
-function init(){
-
-  loadTheme();
-
-  loadState();
-
-  populateMarkets();
-
-  setupNavigation();
-
-  setupEvents();
-
-  updateTargetDigitVisibility();
-
-  renderBalance();
-
-  renderStats();
-
-  renderHistory();
-
-  renderActiveTrades();
-
-  setText(
-    "botStrategyLabel",
-    state.botStrategyPool
-      .map(
-        s=>STRATEGY_LABELS[s]
-      )
-      .join(", ")
-  );
-
-  setText(
-    "manualSelectedStrategyLabel",
-    STRATEGY_LABELS[
-      state.selectedStrategy
-    ]
-  );
-
-  setText(
-    "circularStrategyLabel",
-    STRATEGY_LABELS[
-      state.selectedStrategy
-    ]
-  );
-
-  selectEngine("ai");
-
-  connectPublicWS();
-
-  setInterval(
-    updateAnalysis,
-    1000
-  );
-
-  window.addEventListener(
-    "resize",
-    drawChart
-  );
-}
-
-
-init();
+ 
