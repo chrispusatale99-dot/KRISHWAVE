@@ -3,7 +3,7 @@
    ---------------------------------------------------------
    DEMO / PAPER INTELLIGENCE ENGINE
 
-   V7 FEATURES
+   FEATURES
    ---------------------------------------------------------
    • AI BOT autonomous market selection
    • AI BOT autonomous strategy selection
@@ -51,6 +51,10 @@ const PUBLIC_WS =
   "wss://api.derivws.com/trading/v1/options/ws/public";
 
 
+/* =========================================================
+   MARKETS
+========================================================= */
+
 const MARKETS = [
 
   "R_10",
@@ -73,6 +77,10 @@ const MARKETS = [
 ];
 
 
+/* =========================================================
+   STRATEGIES
+========================================================= */
+
 const STRATEGIES = [
 
   "MATCHES",
@@ -87,12 +95,12 @@ const STRATEGIES = [
 
 const STRATEGY_LABELS = {
 
-  MATCHES:"Matches",
-  DIFFERS:"Differs",
-  OVER:"Over",
-  UNDER:"Under",
-  EVEN:"Even",
-  ODD:"Odd"
+  MATCHES: "Matches",
+  DIFFERS: "Differs",
+  OVER: "Over",
+  UNDER: "Under",
+  EVEN: "Even",
+  ODD: "Odd"
 
 };
 
@@ -103,60 +111,86 @@ const STRATEGY_LABELS = {
 
 const state = {
 
-  connected:false,
+  connected: false,
 
-  accessToken:null,
+  accessToken: null,
 
-  accountId:null,
+  accountId: null,
 
-  currency:"USD",
+  currency: "USD",
 
-  paperBalance:1000,
+  paperBalance: 1000,
 
-  engineMode:"ai",
+  startingBalance: 1000,
 
-  selectedMarket:"R_10",
+  engineMode: "ai",
 
-  selectedStrategy:"MATCHES",
+  selectedMarket: "R_10",
 
-  botStrategyPool:[
+  selectedStrategy: "MATCHES",
+
+  botStrategyPool: [
     "MATCHES",
     "DIFFERS"
   ],
 
-  markets:{},
+  markets: {},
 
-  priceHistory:[],
+  priceHistory: [],
 
-  history:[],
+  history: [],
 
-  activeTrades:[],
+  activeTrades: [],
 
-  totalProfit:0,
+  totalProfit: 0,
 
-  totalAmountWon:0,
+  totalAmountWon: 0,
 
-  totalStake:0,
+  totalStake: 0,
 
-  aiRunning:false,
+  totalPayout: 0,
 
-  aiCycleToken:0,
+  wins: 0,
 
-  circularRunning:false,
+  losses: 0,
 
-  circularToken:0,
+  aiRunning: false,
 
-  publicWS:null,
+  aiCycleToken: 0,
 
-  demoWS:null,
+  circularRunning: false,
 
-  botTimer:null,
+  circularToken: 0,
 
-  circularTimer:null,
+  publicWS: null,
 
-  lastBotDecision:null,
+  demoWS: null,
 
-  lastCircularPrediction:null
+  botTimer: null,
+
+  circularTimer: null,
+
+  lastBotDecision: null,
+
+  lastCircularPrediction: null,
+
+  botMartingaleLevel: 0,
+
+  circularMartingaleLevel: 0,
+
+  botBaseStake: 0.35,
+
+  circularBaseStake: 0.35,
+
+  manualBaseStake: 0.35,
+
+  botSessionProfit: 0,
+
+  circularSessionProfit: 0,
+
+  botSessionStart: 0,
+
+  circularSessionStart: 0
 
 };
 
@@ -169,7 +203,7 @@ const $ = id =>
   document.getElementById(id);
 
 
-function setText(id,value){
+function setText(id, value){
 
   const el = $(id);
 
@@ -183,10 +217,11 @@ function setText(id,value){
 function esc(value){
 
   return String(value ?? "")
-    .replaceAll("&","&amp;")
-    .replaceAll("<","&lt;")
-    .replaceAll(">","&gt;")
-    .replaceAll('"',"&quot;");
+    .replaceAll("&", "&amp;")
+    .replaceAll("<", "&lt;")
+    .replaceAll(">", "&gt;")
+    .replaceAll('"', "&quot;")
+    .replaceAll("'", "&#039;");
 
 }
 
@@ -194,17 +229,17 @@ function esc(value){
 function sleep(ms){
 
   return new Promise(resolve =>
-    setTimeout(resolve,ms)
+    setTimeout(resolve, ms)
   );
 
 }
 
 
-function clamp(value,min,max){
+function clamp(value, min, max){
 
   return Math.max(
     min,
-    Math.min(max,value)
+    Math.min(max, value)
   );
 
 }
@@ -217,13 +252,29 @@ function money(value){
 }
 
 
+function numberValue(id, fallback){
+
+  const value =
+    Number($(id)?.value);
+
+  return Number.isFinite(value)
+    ? value
+    : fallback;
+
+}
+
+
 function formatMarketName(symbol){
+
+  if(!symbol){
+    return "--";
+  }
 
   if(symbol.startsWith("R_")){
 
     return (
       "Volatility " +
-      symbol.replace("R_","") +
+      symbol.replace("R_", "") +
       " Index"
     );
 
@@ -233,7 +284,7 @@ function formatMarketName(symbol){
 
     return (
       "Volatility " +
-      symbol.replace("1HZ","") +
+      symbol.replace("1HZ", "") +
       " Index"
     );
 
@@ -248,8 +299,29 @@ function strategyLabel(strategy){
 
   return (
     STRATEGY_LABELS[strategy] ||
-    strategy
+    strategy ||
+    "--"
   );
+
+}
+
+
+function formatDate(timestamp){
+
+  if(!timestamp){
+    return "--";
+  }
+
+  try{
+
+    return new Date(timestamp)
+      .toLocaleString();
+
+  }catch(error){
+
+    return "--";
+
+  }
 
 }
 
@@ -266,21 +338,21 @@ function buildInitialMarkets(){
 
       symbol,
 
-      price:null,
+      price: null,
 
-      lastDigit:null,
+      lastDigit: null,
 
-      pipSize:null,
+      pipSize: null,
 
-      digits:Array(10).fill(0),
+      digits: Array(10).fill(0),
 
-      ticks:[],
+      ticks: [],
 
-      prices:[],
+      prices: [],
 
-      updated:0,
+      updated: 0,
 
-      received:0
+      received: 0
 
     };
 
@@ -339,6 +411,13 @@ document.addEventListener(
 
     updateTargetDigitVisibility();
 
+    updateSelectedMarketDisplay();
+
+    window.addEventListener(
+      "resize",
+      updateChart
+    );
+
   }
 );
 
@@ -368,7 +447,11 @@ function bindNavigation(){
             $(page + "Page");
 
           if(target){
-            target.classList.add("active");
+
+            target.classList.add(
+              "active"
+            );
+
           }
 
           document.querySelectorAll(".nav-btn")
@@ -377,6 +460,7 @@ function bindNavigation(){
             );
 
           btn.classList.add("active");
+
 
           if(page === "trade"){
 
@@ -388,6 +472,7 @@ function bindNavigation(){
 
           }
 
+
           if(page === "history"){
 
             renderHistory();
@@ -396,15 +481,17 @@ function bindNavigation(){
 
           }
 
+
           if(page === "analysis"){
 
             updateCircularUI();
 
           }
 
+
           window.scrollTo({
-            top:0,
-            behavior:"smooth"
+            top: 0,
+            behavior: "smooth"
           });
 
         }
@@ -425,7 +512,9 @@ function bindTheme(){
     "click",
     () => {
 
-      document.body.classList.toggle("light");
+      document.body.classList.toggle(
+        "light"
+      );
 
       localStorage.setItem(
         "krishwave_theme",
@@ -450,7 +539,9 @@ function loadTheme(){
     ) === "light"
   ){
 
-    document.body.classList.add("light");
+    document.body.classList.add(
+      "light"
+    );
 
   }
 
@@ -465,34 +556,28 @@ function bindEngineTabs(){
 
   const tabs = {
 
-    ai:
-      $("tabAiBot"),
+    ai: $("tabAiBot"),
 
-    circular:
-      $("tabCircularAI"),
+    circular: $("tabCircularAI"),
 
-    manual:
-      $("tabManual")
+    manual: $("tabManual")
 
   };
 
 
   const contents = {
 
-    ai:
-      $("aiBotContent"),
+    ai: $("aiBotContent"),
 
-    circular:
-      $("circularAIContent"),
+    circular: $("circularAIContent"),
 
-    manual:
-      $("manualContent")
+    manual: $("manualContent")
 
   };
 
 
   Object.entries(tabs)
-    .forEach(([mode,tab]) => {
+    .forEach(([mode, tab]) => {
 
       tab?.addEventListener(
         "click",
@@ -500,10 +585,12 @@ function bindEngineTabs(){
 
           state.engineMode = mode;
 
+
           Object.values(tabs)
             .forEach(t =>
               t?.classList.remove("active")
             );
+
 
           Object.values(contents)
             .forEach(c => {
@@ -514,11 +601,17 @@ function bindEngineTabs(){
 
             });
 
-          tab.classList.add("active");
+
+          tab.classList.add(
+            "active"
+          );
+
 
           if(contents[mode]){
+
             contents[mode].style.display =
               "block";
+
           }
 
         }
@@ -545,11 +638,14 @@ function populateMarketSelectors(){
 
   selectors.forEach(select => {
 
-    if(!select) return;
+    if(!select){
+      return;
+    }
+
 
     select.innerHTML =
       MARKETS.map(symbol =>
-        `<option value="${symbol}">
+        `<option value="${esc(symbol)}">
           ${esc(formatMarketName(symbol))}
         </option>`
       ).join("");
@@ -558,15 +654,58 @@ function populateMarketSelectors(){
 
 
   if($("manualMarketSelect")){
+
     $("manualMarketSelect").value =
       state.selectedMarket;
+
   }
 
 
   if($("circularMarketSelect")){
+
     $("circularMarketSelect").value =
       state.selectedMarket;
+
   }
+
+}
+
+
+function updateSelectedMarketDisplay(){
+
+  setText(
+    "currentChartMarket",
+    formatMarketName(
+      state.selectedMarket
+    )
+  );
+
+}
+
+
+/* =========================================================
+   RESET SELECTED MARKET VIEW
+========================================================= */
+
+function resetSelectedMarketView(){
+
+  const market =
+    state.markets[
+      state.selectedMarket
+    ];
+
+
+  state.priceHistory =
+    market
+      ? market.prices.slice(-60)
+      : [];
+
+
+  updateSelectedMarketDisplay();
+
+  updateChart();
+
+  renderDigitStats();
 
 }
 
@@ -591,7 +730,9 @@ function connectPublicMarket(){
   try{
 
     state.publicWS =
-      new WebSocket(PUBLIC_WS);
+      new WebSocket(
+        PUBLIC_WS
+      );
 
   }catch(error){
 
@@ -608,6 +749,7 @@ function connectPublicMarket(){
       "connected"
     );
 
+
     MARKETS.forEach(symbol => {
 
       try{
@@ -615,9 +757,9 @@ function connectPublicMarket(){
         state.publicWS.send(
           JSON.stringify({
 
-            ticks:symbol,
+            ticks: symbol,
 
-            subscribe:1
+            subscribe: 1
 
           })
         );
@@ -629,22 +771,28 @@ function connectPublicMarket(){
   };
 
 
-  state.publicWS.onmessage = event => {
+  state.publicWS.onmessage =
+    event => {
 
-    try{
+      try{
 
-      const msg =
-        JSON.parse(event.data);
+        const msg =
+          JSON.parse(
+            event.data
+          );
 
-      if(msg.tick){
 
-        processTick(msg.tick);
+        if(msg.tick){
 
-      }
+          processTick(
+            msg.tick
+          );
 
-    }catch(error){}
+        }
 
-  };
+      }catch(error){}
+
+    };
 
 
   state.publicWS.onerror = () => {
@@ -662,10 +810,12 @@ function connectPublicMarket(){
       "error"
     );
 
+
     setText(
       "dataStatus",
       "RECONNECTING..."
     );
+
 
     setTimeout(
       () => {
@@ -695,6 +845,7 @@ function handlePublicConnectionError(){
     "error"
   );
 
+
   setText(
     "dataStatus",
     "OFFLINE"
@@ -708,12 +859,14 @@ function setConnectionState(status){
   const dot =
     $("connectionDot");
 
+
   if(dot){
 
     dot.classList.remove(
       "connected",
       "error"
     );
+
 
     if(status === "connected"){
 
@@ -722,6 +875,7 @@ function setConnectionState(status){
       );
 
     }
+
 
     if(status === "error"){
 
@@ -736,10 +890,14 @@ function setConnectionState(status){
 
   if(status === "connected"){
 
+    state.connected = true;
+
+
     setText(
       "connectionText",
       "LIVE"
     );
+
 
     setText(
       "dataStatus",
@@ -748,10 +906,14 @@ function setConnectionState(status){
 
   }else{
 
+    state.connected = false;
+
+
     setText(
       "connectionText",
       "OFFLINE"
     );
+
 
     setText(
       "dataStatus",
@@ -759,6 +921,108 @@ function setConnectionState(status){
     );
 
   }
+
+
+  updateConnectionUI();
+
+}
+
+
+/* =========================================================
+   CONNECTION UI
+========================================================= */
+
+function updateConnectionUI(){
+
+  if(state.connected){
+
+    setText(
+      "accountConnection",
+      state.accountId
+        ? `Connected: ${state.accountId}`
+        : "Market data connected"
+    );
+
+  }else{
+
+    setText(
+      "accountConnection",
+      "Not connected"
+    );
+
+  }
+
+
+  setText(
+    "currency",
+    state.currency
+  );
+
+}
+
+
+/* =========================================================
+   OPTIONAL DERIV ACCOUNT UI
+========================================================= */
+
+function checkOAuthCallback(){
+
+  try{
+
+    const params =
+      new URLSearchParams(
+        window.location.search
+      );
+
+
+    const token =
+      params.get("token") ||
+      params.get("access_token");
+
+
+    const account =
+      params.get("account") ||
+      params.get("account_id");
+
+
+    const currency =
+      params.get("currency");
+
+
+    if(token){
+
+      state.accessToken =
+        token;
+
+    }
+
+
+    if(account){
+
+      state.accountId =
+        account;
+
+    }
+
+
+    if(currency){
+
+      state.currency =
+        currency;
+
+    }
+
+
+    if(
+      token ||
+      account
+    ){
+
+      updateConnectionUI();
+
+    }
+
+  }catch(error){}
 
 }
 
@@ -772,8 +1036,11 @@ function getLastDigitFromTick(tick){
   const quote =
     Number(tick.quote);
 
+
   if(!Number.isFinite(quote)){
+
     return null;
+
   }
 
 
@@ -789,13 +1056,20 @@ function getLastDigitFromTick(tick){
     const quoteString =
       String(tick.quote);
 
+
     const decimals =
       quoteString.includes(".")
-        ? quoteString.split(".")[1].length
+        ? quoteString
+            .split(".")[1]
+            .length
         : 0;
 
+
     pipSize =
-      Math.pow(10,-decimals);
+      Math.pow(
+        10,
+        -decimals
+      );
 
   }
 
@@ -822,24 +1096,35 @@ function processTick(tick){
   const symbol =
     tick.symbol;
 
+
   if(!state.markets[symbol]){
+
     return;
+
   }
 
 
   const price =
     Number(tick.quote);
 
+
   if(!Number.isFinite(price)){
+
     return;
+
   }
 
 
   const digit =
-    getLastDigitFromTick(tick);
+    getLastDigitFromTick(
+      tick
+    );
+
 
   if(digit === null){
+
     return;
+
   }
 
 
@@ -850,18 +1135,35 @@ function processTick(tick){
   market.price =
     price;
 
+
   market.lastDigit =
     digit;
 
-  market.pipSize =
-    Number(tick.pip_size) ||
-    market.pipSize;
+
+  const pip =
+    Number(tick.pip_size);
+
+
+  if(
+    Number.isFinite(pip) &&
+    pip > 0
+  ){
+
+    market.pipSize =
+      pip;
+
+  }
+
 
   market.digits[digit]++;
 
-  market.ticks.push(digit);
+  market.ticks.push(
+    digit
+  );
 
-  market.prices.push(price);
+  market.prices.push(
+    price
+  );
 
   market.received++;
 
@@ -869,24 +1171,36 @@ function processTick(tick){
     Date.now();
 
 
-  if(market.ticks.length > 200){
+  if(
+    market.ticks.length > 200
+  ){
+
     market.ticks.shift();
+
   }
 
-  if(market.prices.length > 100){
+
+  if(
+    market.prices.length > 100
+  ){
+
     market.prices.shift();
+
   }
 
 
-  if(symbol === state.selectedMarket){
+  if(
+    symbol ===
+    state.selectedMarket
+  ){
 
     state.priceHistory.push(
       price
     );
 
+
     if(
-      state.priceHistory.length >
-      60
+      state.priceHistory.length > 60
     ){
 
       state.priceHistory.shift();
@@ -899,10 +1213,13 @@ function processTick(tick){
       formatMarketName(symbol)
     );
 
+
     setText(
       "currentLivePrice",
       price.toFixed(
-        getPriceDecimals(market)
+        getPriceDecimals(
+          market
+        )
       )
     );
 
@@ -932,6 +1249,10 @@ function processTick(tick){
 }
 
 
+/* =========================================================
+   PRICE DECIMALS
+========================================================= */
+
 function getPriceDecimals(market){
 
   if(
@@ -941,26 +1262,75 @@ function getPriceDecimals(market){
     )
   ){
 
-    const str =
-      String(market.pipSize);
-
-    if(str.includes("e-")){
-
-      return Number(
-        str.split("e-")[1]
+    const pip =
+      Number(
+        market.pipSize
       );
+
+
+    if(
+      pip > 0 &&
+      pip < 1
+    ){
+
+      const stringValue =
+        pip.toString();
+
+
+      if(
+        stringValue.includes("e-")
+      ){
+
+        return Number(
+          stringValue
+            .split("e-")[1]
+        );
+
+      }
+
+
+      if(
+        stringValue.includes(".")
+      ){
+
+        return (
+          stringValue
+            .split(".")[1]
+            .replace(/0+$/, "")
+            .length
+        );
+
+      }
 
     }
 
+  }
+
+
+  const price =
+    Number(
+      market?.price
+    );
+
+
+  if(
+    Number.isFinite(price)
+  ){
+
+    const str =
+      String(price);
+
+
     if(str.includes(".")){
 
-      return str.split(".")[1]
-        .replace(/0+$/,"")
+      return str
+        .split(".")[1]
         .length;
 
     }
 
   }
+
 
   return 2;
 
@@ -976,10 +1346,8 @@ function updateChart(){
   const canvas =
     $("priceChartCanvas");
 
-  if(
-    !canvas ||
-    !state.priceHistory.length
-  ){
+
+  if(!canvas){
 
     return;
 
@@ -993,13 +1361,18 @@ function updateChart(){
   const width =
     Math.max(
       300,
-      Math.floor(rect.width)
+      Math.floor(
+        rect.width || 300
+      )
     );
+
 
   const height =
     Math.max(
       150,
-      Math.floor(rect.height)
+      Math.floor(
+        rect.height || 180
+      )
     );
 
 
@@ -1011,12 +1384,20 @@ function updateChart(){
   canvas.width =
     width * ratio;
 
+
   canvas.height =
     height * ratio;
 
 
   const ctx =
     canvas.getContext("2d");
+
+
+  if(!ctx){
+
+    return;
+
+  }
 
 
   ctx.setTransform(
@@ -1042,15 +1423,23 @@ function updateChart(){
 
 
   if(prices.length < 2){
+
     return;
+
   }
 
 
   const min =
-    Math.min(...prices);
+    Math.min(
+      ...prices
+    );
+
 
   const max =
-    Math.max(...prices);
+    Math.max(
+      ...prices
+    );
+
 
   const range =
     max - min || 1;
@@ -1071,10 +1460,14 @@ function updateChart(){
   ctx.strokeStyle =
     lineColor;
 
-  ctx.lineWidth = 2.5;
+
+  ctx.lineWidth =
+    2.5;
+
 
   ctx.lineJoin =
     "round";
+
 
   ctx.lineCap =
     "round";
@@ -1084,18 +1477,22 @@ function updateChart(){
 
 
   prices.forEach(
-    (price,index) => {
+    (price, index) => {
 
       const x =
-        (index /
-          (prices.length - 1)) *
+        (
+          index /
+          (prices.length - 1)
+        ) *
         width;
 
 
       const y =
         height -
-        ((price - min) /
-          range) *
+        (
+          (price - min) /
+          range
+        ) *
         (height - 25) -
         12;
 
@@ -1126,13 +1523,14 @@ function updateChart(){
 
 
 /* =========================================================
-   DIGIT STATS
+   DIGIT STATISTICS
 ========================================================= */
 
 function renderDigitStats(){
 
   const box =
     $("digitStatsGrid");
+
 
   const market =
     state.markets[
@@ -1152,7 +1550,8 @@ function renderDigitStats(){
 
   const total =
     market.digits.reduce(
-      (a,b) => a + b,
+      (a, b) =>
+        a + b,
       0
     );
 
@@ -1167,8 +1566,8 @@ function renderDigitStats(){
 
     box.innerHTML =
       Array.from(
-        {length:10},
-        (_,d) =>
+        {length: 10},
+        (_, d) =>
           `
           <div class="digit-stat-circle">
             <span class="digit-num">${d}</span>
@@ -1185,58 +1584,70 @@ function renderDigitStats(){
   const percentages =
     market.digits.map(
       count =>
-        (count / total) * 100
+        (
+          count /
+          total
+        ) *
+        100
     );
 
 
   const maxPct =
-    Math.max(...percentages);
+    Math.max(
+      ...percentages
+    );
+
 
   const minPct =
-    Math.min(...percentages);
+    Math.min(
+      ...percentages
+    );
 
 
   box.innerHTML =
     market.digits
-      .map((count,d) => {
+      .map(
+        (count, d) => {
 
-        const pct =
-          percentages[d];
-
-
-        let statusClass = "";
+          const pct =
+            percentages[d];
 
 
-        if(
-          total >= 20 &&
-          pct === maxPct
-        ){
+          let statusClass =
+            "";
 
-          statusClass =
-            "highest";
+
+          if(
+            total >= 20 &&
+            pct === maxPct
+          ){
+
+            statusClass =
+              "highest";
+
+          }
+
+
+          if(
+            total >= 20 &&
+            pct === minPct
+          ){
+
+            statusClass =
+              "lowest";
+
+          }
+
+
+          return `
+            <div class="digit-stat-circle ${statusClass}">
+              <span class="digit-num">${d}</span>
+              <span class="digit-pct">${pct.toFixed(1)}%</span>
+            </div>
+          `;
 
         }
-
-
-        if(
-          total >= 20 &&
-          pct === minPct
-        ){
-
-          statusClass =
-            "lowest";
-
-        }
-
-
-        return `
-          <div class="digit-stat-circle ${statusClass}">
-            <span class="digit-num">${d}</span>
-            <span class="digit-pct">${pct.toFixed(1)}%</span>
-          </div>
-        `;
-
-      })
+      )
       .join("");
 
 }
@@ -1262,11 +1673,8 @@ function analyzeMarket(symbol){
   }
 
 
-  const ticks =
-    market.ticks;
-
   const recent =
-    ticks.slice(-30);
+    market.ticks.slice(-30);
 
 
   const counts =
@@ -1290,20 +1698,26 @@ function analyzeMarket(symbol){
     );
 
 
-  let hottestDigit =
+  const hottestDigit =
     percentages.indexOf(
-      Math.max(...percentages)
+      Math.max(
+        ...percentages
+      )
     );
 
 
-  let coldestDigit =
+  const coldestDigit =
     percentages.indexOf(
-      Math.min(...percentages)
+      Math.min(
+        ...percentages
+      )
     );
 
 
   const last =
-    recent[recent.length - 1];
+    recent[
+      recent.length - 1
+    ];
 
 
   let streak = 1;
@@ -1338,7 +1752,8 @@ function analyzeMarket(symbol){
 
 
   const evenRate =
-    recentEven / total;
+    recentEven /
+    total;
 
 
   const overFive =
@@ -1348,7 +1763,8 @@ function analyzeMarket(symbol){
 
 
   const overRate =
-    overFive / total;
+    overFive /
+    total;
 
 
   const underFive =
@@ -1358,11 +1774,14 @@ function analyzeMarket(symbol){
 
 
   const underRate =
-    underFive / total;
+    underFive /
+    total;
 
 
   const concentration =
-    Math.max(...percentages);
+    Math.max(
+      ...percentages
+    );
 
 
   const entropy =
@@ -1379,24 +1798,21 @@ function analyzeMarket(symbol){
     );
 
 
-  /*
-    This is a statistical score,
-    NOT a guarantee of future outcome.
-  */
-
   let score = 50;
 
 
   score +=
     Math.abs(
-      evenRate - .5
-    ) * 30;
+      evenRate - 0.5
+    ) *
+    30;
 
 
   score +=
     Math.abs(
-      overRate - .5
-    ) * 25;
+      overRate - 0.5
+    ) *
+    25;
 
 
   score +=
@@ -1408,8 +1824,9 @@ function analyzeMarket(symbol){
 
   score +=
     Math.abs(
-      concentration - .10
-    ) * 30;
+      concentration - 0.10
+    ) *
+    30;
 
 
   score =
@@ -1463,16 +1880,22 @@ function analyzeMarket(symbol){
 
     underRate,
 
-    lastDigit:last,
+    lastDigit: last,
 
-    sampleSize:total
+    sampleSize: total
 
   };
 
 }
 
 
-function calculateEntropy(probabilities){
+/* =========================================================
+   ENTROPY
+========================================================= */
+
+function calculateEntropy(
+  probabilities
+){
 
   let entropy = 0;
 
@@ -1492,21 +1915,26 @@ function calculateEntropy(probabilities){
   );
 
 
-  /*
-    Maximum entropy for
-    ten digits is log2(10).
-  */
-
-  return entropy /
-    Math.log2(10);
+  return (
+    entropy /
+    Math.log2(10)
+  );
 
 }
 
 
-function calculateAgreement(ticks){
+/* =========================================================
+   AGREEMENT
+========================================================= */
+
+function calculateAgreement(
+  ticks
+){
 
   if(ticks.length < 8){
+
     return 0;
+
   }
 
 
@@ -1534,7 +1962,9 @@ function calculateAgreement(ticks){
 
   const evenBias =
     Math.abs(
-      even / recent.length - .5
+      even /
+      recent.length -
+      0.5
     );
 
 
@@ -1559,7 +1989,7 @@ function calculateAgreement(ticks){
 
 
 /* =========================================================
-   AI BOT MARKET SELECTION
+   BEST MARKET
 ========================================================= */
 
 function chooseBestMarket(){
@@ -1575,7 +2005,9 @@ function chooseBestMarket(){
 
 
       if(!analysis){
+
         return;
+
       }
 
 
@@ -1595,17 +2027,10 @@ function chooseBestMarket(){
 
 
   candidates.sort(
-    (a,b) =>
+    (a, b) =>
       b.score - a.score
   );
 
-
-  /*
-    Small randomization among
-    the strongest markets prevents
-    the bot from permanently
-    locking onto one market.
-  */
 
   const top =
     candidates.slice(
@@ -1619,7 +2044,8 @@ function chooseBestMarket(){
 
   return top[
     Math.floor(
-      Math.random() * top.length
+      Math.random() *
+      top.length
     )
   ];
 
@@ -1627,7 +2053,7 @@ function chooseBestMarket(){
 
 
 /* =========================================================
-   AI BOT STRATEGY SELECTION
+   BOT STRATEGY
 ========================================================= */
 
 function chooseBotStrategy(
@@ -1651,8 +2077,7 @@ function chooseBotStrategy(
   }
 
 
-  const candidates =
-    [];
+  const candidates = [];
 
 
   pool.forEach(
@@ -1665,12 +2090,6 @@ function chooseBotStrategy(
 
         case "MATCHES":
 
-          /*
-            Matches becomes more
-            interesting when a digit
-            is unusually concentrated.
-          */
-
           score +=
             analysis.concentration *
             1.5;
@@ -1680,14 +2099,11 @@ function chooseBotStrategy(
 
         case "DIFFERS":
 
-          /*
-            Differs is favored when
-            concentration is weak.
-          */
-
           score +=
-            (20 -
-              analysis.concentration) *
+            (
+              20 -
+              analysis.concentration
+            ) *
             1.2;
 
           break;
@@ -1698,7 +2114,7 @@ function chooseBotStrategy(
           score +=
             Math.abs(
               analysis.evenRate -
-              .5
+              0.5
             ) *
             100;
 
@@ -1710,7 +2126,7 @@ function chooseBotStrategy(
           score +=
             Math.abs(
               analysis.evenRate -
-              .5
+              0.5
             ) *
             100;
 
@@ -1722,7 +2138,7 @@ function chooseBotStrategy(
           score +=
             Math.abs(
               analysis.overRate -
-              .5
+              0.5
             ) *
             100;
 
@@ -1734,7 +2150,7 @@ function chooseBotStrategy(
           score +=
             Math.abs(
               analysis.underRate -
-              .5
+              0.5
             ) *
             100;
 
@@ -1742,11 +2158,6 @@ function chooseBotStrategy(
 
       }
 
-
-      /*
-        Slight random factor gives
-        the bot flexibility.
-      */
 
       score +=
         Math.random() * 10;
@@ -1762,7 +2173,7 @@ function chooseBotStrategy(
 
 
   candidates.sort(
-    (a,b) =>
+    (a, b) =>
       b.score - a.score
   );
 
@@ -1773,7 +2184,7 @@ function chooseBotStrategy(
 
 
 /* =========================================================
-   CREATE PREDICTION
+   PREDICTION
 ========================================================= */
 
 function createPrediction(
@@ -1782,7 +2193,9 @@ function createPrediction(
 ){
 
   if(!analysis){
+
     return null;
+
   }
 
 
@@ -1852,8 +2265,7 @@ function createPrediction(
   }
 
 
-  let confidence =
-    50;
+  let confidence = 50;
 
 
   confidence +=
@@ -1866,7 +2278,7 @@ function createPrediction(
 
   confidence +=
     analysis.score *
-    .25;
+    0.25;
 
 
   confidence +=
@@ -1894,7 +2306,6 @@ function createPrediction(
     prediction,
 
     confidence:
-
       Math.round(
         confidence
       ),
@@ -1905,6 +2316,10 @@ function createPrediction(
 
 }
 
+
+/* =========================================================
+   PARITY DIGIT
+========================================================= */
 
 function findBestParityDigit(
   analysis,
@@ -1918,7 +2333,11 @@ function findBestParityDigit(
 
 
   if(!market){
-    return even ? 4 : 5;
+
+    return even
+      ? 4
+      : 5;
+
   }
 
 
@@ -1926,7 +2345,9 @@ function findBestParityDigit(
     [0,1,2,3,4,5,6,7,8,9]
       .filter(
         d =>
-          (d % 2 === 0) === even
+          (
+            d % 2 === 0
+          ) === even
       );
 
 
@@ -1963,43 +2384,48 @@ function findBestParityDigit(
 
 
 /* =========================================================
-   AI BOT CONTROL
+   AI BOT CONTROLS
 ========================================================= */
 
 function bindBotControls(){
 
-  $("startBotBtn")?.addEventListener(
-    "click",
-    () => {
+  $("startBotBtn")
+    ?.addEventListener(
+      "click",
+      () => {
 
-      if(state.aiRunning){
+        if(state.aiRunning){
 
-        stopAIBot();
+          stopAIBot();
 
-      }else{
+        }else{
 
-        startAIBot();
+          startAIBot();
+
+        }
 
       }
-
-    }
-  );
+    );
 
 
-  $("botStrategyTrigger")?.addEventListener(
-    "click",
-    () => {
+  $("botStrategyTrigger")
+    ?.addEventListener(
+      "click",
+      () => {
 
-      const modal =
-        $("botStrategyModal");
+        const modal =
+          $("botStrategyModal");
 
-      if(modal){
-        modal.style.display =
-          "flex";
+
+        if(modal){
+
+          modal.style.display =
+            "flex";
+
+        }
+
       }
-
-    }
-  );
+    );
 
 }
 
@@ -2011,11 +2437,53 @@ function bindBotControls(){
 function startAIBot(){
 
   if(state.aiRunning){
+
     return;
+
   }
 
 
-  state.aiRunning = true;
+  const baseStake =
+    numberValue(
+      "stakeInput",
+      0.35
+    );
+
+
+  if(
+    !Number.isFinite(baseStake) ||
+    baseStake < 0.35
+  ){
+
+    setText(
+      "engineStatusText",
+      "Minimum stake is $0.35"
+    );
+
+    return;
+
+  }
+
+
+  state.botBaseStake =
+    baseStake;
+
+
+  state.botMartingaleLevel =
+    0;
+
+
+  state.botSessionProfit =
+    0;
+
+
+  state.botSessionStart =
+    Date.now();
+
+
+  state.aiRunning =
+    true;
+
 
   state.aiCycleToken++;
 
@@ -2049,7 +2517,9 @@ function startAIBot(){
    AI BOT LOOP
 ========================================================= */
 
-async function runAIBotLoop(token){
+async function runAIBotLoop(
+  token
+){
 
   while(
     state.aiRunning &&
@@ -2067,10 +2537,12 @@ async function runAIBotLoop(token){
         "Collecting more tick data..."
       );
 
+
       setText(
         "botStatusDash",
         "WAIT"
       );
+
 
       await sleep(3000);
 
@@ -2088,54 +2560,101 @@ async function runAIBotLoop(token){
     );
 
 
-    const stake =
-      Number(
-        $("stakeInput")?.value ||
-        .35
+    const baseStake =
+      numberValue(
+        "stakeInput",
+        0.35
+      );
+
+
+    const multiplier =
+      numberValue(
+        "martingaleInput",
+        2.1
+      );
+
+
+    let stake =
+      baseStake *
+      Math.pow(
+        multiplier,
+        state.botMartingaleLevel
+      );
+
+
+    /*
+      Keep the calculated stake
+      within the available balance.
+    */
+
+    stake =
+      Math.min(
+        stake,
+        state.paperBalance
       );
 
 
     if(
-      Number.isFinite(stake) &&
-      stake >= .35
+      stake >= 0.35
     ){
 
-      createPaperTrade({
+      const trade =
+        createPaperTrade({
 
-        engine:"AI BOT",
+          engine: "AI BOT",
 
-        market:
-          decision.market,
+          market:
+            decision.market,
 
-        strategy:
-          decision.strategy,
+          strategy:
+            decision.strategy,
 
-        prediction:
-          decision.prediction,
+          prediction:
+            decision.prediction,
 
-        stake,
+          stake,
 
-        takeProfit:
-          Number(
-            $("takeProfitInput")?.value ||
-            50
-          ),
+          takeProfit:
+            numberValue(
+              "takeProfitInput",
+              50
+            ),
 
-        stopLoss:
-          Number(
-            $("stopLossInput")?.value ||
-            100
-          )
+          stopLoss:
+            numberValue(
+              "stopLossInput",
+              100
+            ),
 
-      });
+          martingaleLevel:
+            state.botMartingaleLevel
+
+        });
+
+
+      if(trade){
+
+        trade.martingaleBaseStake =
+          baseStake;
+
+        trade.martingaleMultiplier =
+          multiplier;
+
+      }
+
+    }else{
+
+      setText(
+        "engineStatusText",
+        "Paper balance too low"
+      );
+
+      stopAIBot();
+
+      break;
 
     }
 
-
-    /*
-      The AI Bot operates independently.
-      It does NOT run the Circular AI cycle.
-    */
 
     await sleep(5000);
 
@@ -2144,6 +2663,10 @@ async function runAIBotLoop(token){
 }
 
 
+/* =========================================================
+   BOT DECISION
+========================================================= */
+
 function chooseBotDecision(){
 
   const analysis =
@@ -2151,7 +2674,9 @@ function chooseBotDecision(){
 
 
   if(!analysis){
+
     return null;
+
   }
 
 
@@ -2169,7 +2694,9 @@ function chooseBotDecision(){
 
 
   if(!prediction){
+
     return null;
+
   }
 
 
@@ -2191,10 +2718,12 @@ function updateBotDisplay(
     "TRADING"
   );
 
+
   setText(
     "engineStatusText",
     `AI selected ${formatMarketName(decision.market)}`
   );
+
 
   setText(
     "botSelectedMarket",
@@ -2203,6 +2732,7 @@ function updateBotDisplay(
     )
   );
 
+
   setText(
     "botSelectedStrategy",
     strategyLabel(
@@ -2210,10 +2740,12 @@ function updateBotDisplay(
     )
   );
 
+
   setText(
     "botScore",
     `${decision.analysis.score.toFixed(0)}/100`
   );
+
 
   setText(
     "botConfidence",
@@ -2244,9 +2776,23 @@ function updateBotDisplayFromDecision(){
 
 function stopAIBot(){
 
-  state.aiRunning = false;
+  state.aiRunning =
+    false;
+
 
   state.aiCycleToken++;
+
+
+  if(state.botTimer){
+
+    clearTimeout(
+      state.botTimer
+    );
+
+    state.botTimer =
+      null;
+
+  }
 
 
   setText(
@@ -2254,10 +2800,12 @@ function stopAIBot(){
     "Start Trading Bot"
   );
 
+
   setText(
     "engineStatusText",
     "AI Bot Ready"
   );
+
 
   setText(
     "botStatusDash",
@@ -2268,14 +2816,26 @@ function stopAIBot(){
 
 
 /* =========================================================
-   CIRCULAR AI
+   CIRCULAR AI CONTROLS
 ========================================================= */
 
 function bindCircularControls(){
 
   $("startAI")?.addEventListener(
     "click",
-    startCircularAI
+    () => {
+
+      if(state.circularRunning){
+
+        stopCircularAI();
+
+      }else{
+
+        startCircularAI();
+
+      }
+
+    }
   );
 
 
@@ -2290,7 +2850,9 @@ function bindCircularControls(){
       "click",
       () => {
 
-        if(state.circularRunning){
+        if(
+          state.circularRunning
+        ){
 
           stopCircularAI();
 
@@ -2312,6 +2874,17 @@ function bindCircularControls(){
         state.selectedMarket =
           e.target.value;
 
+
+        if(
+          $("manualMarketSelect")
+        ){
+
+          $("manualMarketSelect").value =
+            state.selectedMarket;
+
+        }
+
+
         resetSelectedMarketView();
 
       }
@@ -2320,15 +2893,60 @@ function bindCircularControls(){
 }
 
 
+/* =========================================================
+   START CIRCULAR AI
+========================================================= */
+
 async function startCircularAI(){
 
   if(state.circularRunning){
+
     return;
+
   }
+
+
+  const baseStake =
+    numberValue(
+      "circularStakeInput",
+      0.35
+    );
+
+
+  if(
+    !Number.isFinite(baseStake) ||
+    baseStake < 0.35
+  ){
+
+    setText(
+      "circularStatusText",
+      "Minimum stake is $0.35"
+    );
+
+    return;
+
+  }
+
+
+  state.circularBaseStake =
+    baseStake;
+
+
+  state.circularMartingaleLevel =
+    0;
+
+
+  state.circularSessionProfit =
+    0;
+
+
+  state.circularSessionStart =
+    Date.now();
 
 
   state.circularRunning =
     true;
+
 
   state.circularToken++;
 
@@ -2338,9 +2956,16 @@ async function startCircularAI(){
     "■ STOP CIRCULAR AI"
   );
 
+
   setText(
     "startCircularTradeBtn",
     "Stop Circular AI"
+  );
+
+
+  setText(
+    "circularStatusText",
+    "Circular AI Starting..."
   );
 
 
@@ -2351,12 +2976,29 @@ async function startCircularAI(){
 }
 
 
+/* =========================================================
+   STOP CIRCULAR AI
+========================================================= */
+
 function stopCircularAI(){
 
   state.circularRunning =
     false;
 
+
   state.circularToken++;
+
+
+  if(state.circularTimer){
+
+    clearTimeout(
+      state.circularTimer
+    );
+
+    state.circularTimer =
+      null;
+
+  }
 
 
   setText(
@@ -2364,20 +3006,25 @@ function stopCircularAI(){
     "▶ START CIRCULAR AI"
   );
 
+
   setText(
     "startCircularTradeBtn",
     "Start Circular AI Trading"
   );
+
 
   setText(
     "circularStatusText",
     "Circular AI Ready"
   );
 
+
   resetCycleUI();
+
 
   const circle =
     $("aiCircle");
+
 
   circle?.classList.remove(
     "active",
@@ -2387,7 +3034,13 @@ function stopCircularAI(){
 }
 
 
-async function circularCycle(token){
+/* =========================================================
+   CIRCULAR AI CYCLE
+========================================================= */
+
+async function circularCycle(
+  token
+){
 
   while(
     state.circularRunning &&
@@ -2395,17 +3048,16 @@ async function circularCycle(token){
   ){
 
     const market =
-      $("circularMarketSelect")?.value ||
+      $("circularMarketSelect")
+        ?.value ||
       state.selectedMarket;
 
 
-    const analysis =
-      analyzeMarket(market);
-
-
     /*
+      ======================================================
       PHASE 1
-      10 second analysis
+      10 SECOND ANALYSIS
+      ======================================================
     */
 
     activateCycle(
@@ -2418,15 +3070,20 @@ async function circularCycle(token){
       "ANALYZING"
     );
 
+
     setText(
       "aiMarket",
-      formatMarketName(market)
+      formatMarketName(
+        market
+      )
     );
+
 
     setText(
       "aiType",
       "CIRCULAR AI"
     );
+
 
     setText(
       "analysisMsg",
@@ -2441,32 +3098,38 @@ async function circularCycle(token){
     );
 
 
-    await countdown(
-      10,
-      token,
-      value => {
+    const analysisCompleted =
+      await countdown(
+        10,
+        token,
+        value => {
 
-        updateCircularCircle(
-          "ANALYZING",
-          "--",
-          value
-        );
+          updateCircularCircle(
+            "ANALYZING",
+            "--",
+            value
+          );
 
-      }
-    );
+        }
+      );
 
 
     if(
+      !analysisCompleted ||
       !state.circularRunning ||
       token !== state.circularToken
     ){
+
       break;
+
     }
 
 
     /*
+      ======================================================
       PHASE 2
-      Prediction
+      PREDICTION
+      ======================================================
     */
 
     activateCycle(
@@ -2475,7 +3138,9 @@ async function circularCycle(token){
 
 
     const freshAnalysis =
-      analyzeMarket(market);
+      analyzeMarket(
+        market
+      );
 
 
     if(!freshAnalysis){
@@ -2484,6 +3149,7 @@ async function circularCycle(token){
         "analysisMsg",
         "Waiting for at least 20 ticks..."
       );
+
 
       await sleep(2000);
 
@@ -2501,6 +3167,15 @@ async function circularCycle(token){
         freshAnalysis,
         strategy
       );
+
+
+    if(!prediction){
+
+      await sleep(1000);
+
+      continue;
+
+    }
 
 
     state.lastCircularPrediction =
@@ -2526,7 +3201,9 @@ async function circularCycle(token){
 
     setText(
       "aiType",
-      strategyLabel(strategy)
+      strategyLabel(
+        strategy
+      )
     );
 
 
@@ -2555,32 +3232,38 @@ async function circularCycle(token){
     );
 
 
-    await countdown(
-      5,
-      token,
-      value => {
+    const predictionCompleted =
+      await countdown(
+        5,
+        token,
+        value => {
 
-        updateCircularCircle(
-          "PREDICTION",
-          prediction.prediction,
-          value
-        );
+          updateCircularCircle(
+            "PREDICTION",
+            prediction.prediction,
+            value
+          );
 
-      }
-    );
+        }
+      );
 
 
     if(
+      !predictionCompleted ||
       !state.circularRunning ||
       token !== state.circularToken
     ){
+
       break;
+
     }
 
 
     /*
+      ======================================================
       PHASE 3
-      Trade Now
+      TRADE NOW
+      ======================================================
     */
 
     activateCycle(
@@ -2613,57 +3296,109 @@ async function circularCycle(token){
       );
 
 
-    const stake =
-      Number(
-        $("circularStakeInput")
-          ?.value ||
-        .35
+    const baseStake =
+      numberValue(
+        "circularStakeInput",
+        0.35
       );
 
 
-    createPaperTrade({
-
-      engine:"CIRCULAR AI",
-
-      market,
-
-      strategy,
-
-      prediction:
-        prediction.prediction,
-
-      stake,
-
-      takeProfit:
-        Number(
-          $("circularTakeProfitInput")
-            ?.value ||
-          50
-        ),
-
-      stopLoss:
-        Number(
-          $("circularStopLossInput")
-            ?.value ||
-          100
-        )
-
-    });
+    const martingaleMultiplier =
+      numberValue(
+        "martingaleInput",
+        2.1
+      );
 
 
-    await countdown(
-      3,
-      token,
-      value => {
+    let stake =
+      baseStake *
+      Math.pow(
+        martingaleMultiplier,
+        state.circularMartingaleLevel
+      );
 
-        updateCircularCircle(
-          "TRADE NOW",
-          prediction.prediction,
-          value
-        );
+
+    stake =
+      Math.min(
+        stake,
+        state.paperBalance
+      );
+
+
+    if(
+      stake >= 0.35
+    ){
+
+      const trade =
+        createPaperTrade({
+
+          engine: "CIRCULAR AI",
+
+          market,
+
+          strategy,
+
+          prediction:
+            prediction.prediction,
+
+          stake,
+
+          takeProfit:
+            numberValue(
+              "circularTakeProfitInput",
+              50
+            ),
+
+          stopLoss:
+            numberValue(
+              "circularStopLossInput",
+              100
+            ),
+
+          martingaleLevel:
+            state.circularMartingaleLevel
+
+        });
+
+
+      if(trade){
+
+        trade.martingaleBaseStake =
+          baseStake;
+
+        trade.martingaleMultiplier =
+          martingaleMultiplier;
 
       }
-    );
+
+    }else{
+
+      setText(
+        "circularStatusText",
+        "Paper balance too low"
+      );
+
+      stopCircularAI();
+
+      break;
+
+    }
+
+
+    const tradeCompleted =
+      await countdown(
+        3,
+        token,
+        value => {
+
+          updateCircularCircle(
+            "TRADE NOW",
+            prediction.prediction,
+            value
+          );
+
+        }
+      );
 
 
     $("aiCircle")
@@ -2672,9 +3407,22 @@ async function circularCycle(token){
       );
 
 
+    if(
+      !tradeCompleted ||
+      !state.circularRunning ||
+      token !== state.circularToken
+    ){
+
+      break;
+
+    }
+
+
     /*
+      ======================================================
       PHASE 4
-      Repeat
+      COOLDOWN
+      ======================================================
     */
 
     activateCycle(
@@ -2694,6 +3442,10 @@ async function circularCycle(token){
 
 }
 
+
+/* =========================================================
+   COUNTDOWN
+========================================================= */
 
 async function countdown(
   seconds,
@@ -2736,6 +3488,13 @@ async function countdown(
 function updateCircularReport(
   prediction
 ){
+
+  if(!prediction){
+
+    return;
+
+  }
+
 
   const a =
     prediction.analysis;
@@ -2793,6 +3552,10 @@ function updateCircularReport(
 }
 
 
+/* =========================================================
+   CIRCULAR CIRCLE
+========================================================= */
+
 function updateCircularCircle(
   label,
   prediction,
@@ -2804,15 +3567,18 @@ function updateCircularCircle(
     label
   );
 
+
   setText(
     "aiCirclePrediction",
     prediction
   );
 
+
   setText(
     "aiCircleTimer",
     timer
   );
+
 
   setText(
     "aiCircleStatus",
@@ -2838,6 +3604,10 @@ function updateCircularUI(){
 
 }
 
+
+/* =========================================================
+   CYCLE UI
+========================================================= */
 
 function activateCycle(id){
 
@@ -2873,7 +3643,7 @@ function resetCycleUI(){
 
 
 /* =========================================================
-   MANUAL
+   MANUAL CONTROLS
 ========================================================= */
 
 function bindManualControls(){
@@ -2893,6 +3663,17 @@ function bindManualControls(){
         state.selectedMarket =
           e.target.value;
 
+
+        if(
+          $("circularMarketSelect")
+        ){
+
+          $("circularMarketSelect").value =
+            state.selectedMarket;
+
+        }
+
+
         resetSelectedMarketView();
 
       }
@@ -2900,6 +3681,10 @@ function bindManualControls(){
 
 }
 
+
+/* =========================================================
+   MANUAL TRADE
+========================================================= */
 
 function executeManualTrade(){
 
@@ -2932,16 +3717,15 @@ function executeManualTrade(){
 
 
   const stake =
-    Number(
-      $("manualStakeInput")
-        ?.value ||
-      .35
+    numberValue(
+      "manualStakeInput",
+      0.35
     );
 
 
   if(
     !Number.isFinite(stake) ||
-    stake < .35
+    stake < 0.35
   ){
 
     setText(
@@ -2954,33 +3738,46 @@ function executeManualTrade(){
   }
 
 
-  createPaperTrade({
+  const trade =
+    createPaperTrade({
 
-    engine:"MANUAL",
+      engine: "MANUAL",
 
-    market,
+      market,
 
-    strategy,
+      strategy,
 
-    prediction,
+      prediction,
 
-    stake,
+      stake,
 
-    takeProfit:
-      Number(
-        $("manualTakeProfitInput")
-          ?.value ||
-        50
-      ),
+      takeProfit:
+        numberValue(
+          "manualTakeProfitInput",
+          50
+        ),
 
-    stopLoss:
-      Number(
-        $("manualStopLossInput")
-          ?.value ||
-        100
-      )
+      stopLoss:
+        numberValue(
+          "manualStopLossInput",
+          100
+        ),
 
-  });
+      martingaleLevel: 0
+
+    });
+
+
+  if(!trade){
+
+    setText(
+      "manualStatusText",
+      "Trade could not be created."
+    );
+
+    return;
+
+  }
 
 
   setText(
@@ -3011,6 +3808,17 @@ function bindStrategyModal(){
 
         const strategy =
           option.dataset.strategy;
+
+
+        if(
+          !STRATEGIES.includes(
+            strategy
+          )
+        ){
+
+          return;
+
+        }
 
 
         state.selectedStrategy =
@@ -3066,8 +3874,10 @@ function bindStrategyModal(){
       () => {
 
         if(modal){
+
           modal.style.display =
             "flex";
+
         }
 
       }
@@ -3080,8 +3890,10 @@ function bindStrategyModal(){
       () => {
 
         if(modal){
+
           modal.style.display =
             "flex";
+
         }
 
       }
@@ -3094,8 +3906,10 @@ function bindStrategyModal(){
       () => {
 
         if(modal){
+
           modal.style.display =
             "none";
+
         }
 
       }
@@ -3106,7 +3920,9 @@ function bindStrategyModal(){
     "click",
     event => {
 
-      if(event.target === modal){
+      if(
+        event.target === modal
+      ){
 
         modal.style.display =
           "none";
@@ -3120,7 +3936,7 @@ function bindStrategyModal(){
 
 
 /* =========================================================
-   BOT STRATEGY POOL
+   BOT STRATEGY MODAL
 ========================================================= */
 
 function bindBotStrategyModal(){
@@ -3134,8 +3950,12 @@ function bindBotStrategyModal(){
       "click",
       () => {
 
-        modal.style.display =
-          "none";
+        if(modal){
+
+          modal.style.display =
+            "none";
+
+        }
 
       }
     );
@@ -3152,7 +3972,9 @@ function bindBotStrategyModal(){
     "click",
     event => {
 
-      if(event.target === modal){
+      if(
+        event.target === modal
+      ){
 
         modal.style.display =
           "none";
@@ -3168,6 +3990,10 @@ function bindBotStrategyModal(){
 }
 
 
+/* =========================================================
+   APPLY BOT STRATEGIES
+========================================================= */
+
 function applyBotStrategyPool(){
 
   const checked =
@@ -3178,6 +4004,12 @@ function applyBotStrategyPool(){
     ).map(
       input =>
         input.value
+    )
+    .filter(
+      strategy =>
+        STRATEGIES.includes(
+          strategy
+        )
     );
 
 
@@ -3214,6 +4046,10 @@ function applyBotStrategyPool(){
 }
 
 
+/* =========================================================
+   BOT STRATEGY LABEL
+========================================================= */
+
 function updateBotStrategyLabel(){
 
   setText(
@@ -3221,7 +4057,10 @@ function updateBotStrategyLabel(){
 
     state.botStrategyPool
       .map(
-        strategyLabel
+        strategy =>
+          strategyLabel(
+            strategy
+          )
       )
       .join(" / ")
 
@@ -3231,7 +4070,7 @@ function updateBotStrategyLabel(){
 
 
 /* =========================================================
-   TARGET DIGIT VISIBILITY
+   TARGET DIGIT
 ========================================================= */
 
 function updateTargetDigitVisibility(){
@@ -3241,7 +4080,9 @@ function updateTargetDigitVisibility(){
 
 
   if(!container){
+
     return;
+
   }
 
 
@@ -3269,7 +4110,9 @@ function updateTargetDigitVisibility(){
    PAPER TRADE ENGINE
 ========================================================= */
 
-function createPaperTrade(config){
+function createPaperTrade(
+  config
+){
 
   const stake =
     Number(config.stake);
@@ -3277,18 +4120,13 @@ function createPaperTrade(config){
 
   if(
     !Number.isFinite(stake) ||
-    stake < .35
+    stake < 0.35
   ){
 
     return null;
 
   }
 
-
-  /*
-    Demo balance accounting:
-    reserve the stake immediately.
-  */
 
   if(
     state.paperBalance <
@@ -3299,6 +4137,19 @@ function createPaperTrade(config){
       "engineStatusText",
       "Insufficient paper balance"
     );
+
+
+    setText(
+      "manualStatusText",
+      "Insufficient paper balance"
+    );
+
+
+    setText(
+      "circularStatusText",
+      "Insufficient paper balance"
+    );
+
 
     return null;
 
@@ -3314,7 +4165,7 @@ function createPaperTrade(config){
     id:
       `${Date.now()}-${Math.random()
         .toString(36)
-        .slice(2,8)}`,
+        .slice(2, 8)}`,
 
     time:
       new Date()
@@ -3343,31 +4194,53 @@ function createPaperTrade(config){
     stake,
 
     takeProfit:
-      Number(
-        config.takeProfit ||
-        50
-      ),
+      Number.isFinite(
+        Number(config.takeProfit)
+      )
+        ? Number(config.takeProfit)
+        : 50,
 
     stopLoss:
-      Number(
-        config.stopLoss ||
-        100
-      ),
+      Number.isFinite(
+        Number(config.stopLoss)
+      )
+        ? Number(config.stopLoss)
+        : 100,
 
-    result:null,
+    result: null,
 
-    status:"PENDING",
+    status: "PENDING",
 
-    amountWon:0,
+    amountWon: 0,
 
-    payout:0,
+    payout: 0,
 
-    profit:0,
+    profit: 0,
 
     martingaleLevel:
-      0
+      Number.isInteger(
+        config.martingaleLevel
+      )
+        ? config.martingaleLevel
+        : 0,
+
+    martingaleBaseStake:
+      Number(config.stake),
+
+    martingaleMultiplier:
+      Number.isFinite(
+        Number(config.martingaleMultiplier)
+      )
+        ? Number(
+            config.martingaleMultiplier
+          )
+        : 2.1
 
   };
+
+
+  state.totalStake +=
+    stake;
 
 
   state.activeTrades.push(
@@ -3376,6 +4249,8 @@ function createPaperTrade(config){
 
 
   renderActiveTrades();
+
+  updateStats();
 
   updateBalance();
 
@@ -3440,37 +4315,51 @@ function evaluateStrategy(
 
     case "MATCHES":
 
-      return digit === prediction;
+      return (
+        digit === prediction
+      );
 
 
     case "DIFFERS":
 
-      return digit !== prediction;
+      return (
+        digit !== prediction
+      );
 
 
     case "EVEN":
 
-      return digit % 2 === 0;
+      return (
+        digit % 2 === 0
+      );
 
 
     case "ODD":
 
-      return digit % 2 !== 0;
+      return (
+        digit % 2 !== 0
+      );
 
 
     case "OVER":
 
-      return digit > prediction;
+      return (
+        digit > prediction
+      );
 
 
     case "UNDER":
 
-      return digit < prediction;
+      return (
+        digit < prediction
+      );
 
 
     default:
 
-      return digit === prediction;
+      return (
+        digit === prediction
+      );
 
   }
 
@@ -3478,7 +4367,7 @@ function evaluateStrategy(
 
 
 /* =========================================================
-   PAYOUT MODEL
+   PAPER PAYOUT MODEL
 ========================================================= */
 
 function getPayoutMultiplier(
@@ -3488,25 +4377,38 @@ function getPayoutMultiplier(
   switch(strategy){
 
     case "MATCHES":
+
       return 8.5;
 
+
     case "DIFFERS":
-      return .09;
+
+      return 0.09;
+
 
     case "EVEN":
-      return .95;
+
+      return 0.95;
+
 
     case "ODD":
-      return .95;
+
+      return 0.95;
+
 
     case "OVER":
-      return .95;
+
+      return 0.95;
+
 
     case "UNDER":
-      return .95;
+
+      return 0.95;
+
 
     default:
-      return .95;
+
+      return 0.95;
 
   }
 
@@ -3524,7 +4426,8 @@ function settlePaperTrade(
 ){
 
   if(
-    trade.status !== "PENDING"
+    trade.status !==
+    "PENDING"
   ){
 
     return;
@@ -3542,8 +4445,1254 @@ function settlePaperTrade(
     );
 
 
+  /*
+    ========================================================
+    WIN
+    ========================================================
+    payout = stake + simulated profit
+  */
+
   if(win){
 
+    trade.status =
+      "WIN";
+
+
+    trade.payout =
+      trade.stake *
+      multiplier;
+
+
+    trade.amountWon =
+      trade.payout;
+
+
+    trade.profit =
+      trade.payout -
+      trade.stake;
+
+
+    state.paperBalance +=
+      trade.payout;
+
+
+    state.totalAmountWon +=
+      trade.amountWon;
+
+
+    state.totalPayout +=
+      trade.payout;
+
+
+    state.totalProfit +=
+      trade.profit;
+
+
+    state.wins++;
+
+
     /*
-      Payout includes stake
-      plus profit
+      Successful trade resets
+      the Martingale level.
+    */
+
+    if(
+      trade.engine ===
+      "AI BOT"
+    ){
+
+      state.botMartingaleLevel =
+        0;
+
+      state.botSessionProfit +=
+        trade.profit;
+
+    }
+
+
+    if(
+      trade.engine ===
+      "CIRCULAR AI"
+    ){
+
+      state.circularMartingaleLevel =
+        0;
+
+      state.circularSessionProfit +=
+        trade.profit;
+
+    }
+
+  }else{
+
+    /*
+      ======================================================
+      LOSS
+      ======================================================
+      The stake was already reserved
+      when the trade was created.
+    */
+
+    trade.status =
+      "LOSS";
+
+
+    trade.payout =
+      0;
+
+
+    trade.amountWon =
+      0;
+
+
+    trade.profit =
+      -trade.stake;
+
+
+    state.totalProfit +=
+      trade.profit;
+
+
+    state.losses++;
+
+
+    if(
+      trade.engine ===
+      "AI BOT"
+    ){
+
+      state.botSessionProfit +=
+        trade.profit;
+
+
+      state.botMartingaleLevel++;
+
+    }
+
+
+    if(
+      trade.engine ===
+      "CIRCULAR AI"
+    ){
+
+      state.circularSessionProfit +=
+        trade.profit;
+
+
+      state.circularMartingaleLevel++;
+
+    }
+
+  }
+
+
+  /*
+    Add completed trade to history.
+  */
+
+  state.history.unshift(
+    {
+      ...trade
+    }
+  );
+
+
+  /*
+    Keep history at a safe size.
+  */
+
+  if(
+    state.history.length > 500
+  ){
+
+    state.history =
+      state.history.slice(
+        0,
+        500
+      );
+
+  }
+
+
+  /*
+    Remove completed trade
+    from active list.
+  */
+
+  state.activeTrades =
+    state.activeTrades.filter(
+      item =>
+        item.id !== trade.id
+    );
+
+
+  saveHistory();
+
+
+  renderHistory();
+
+  renderActiveTrades();
+
+  updateStats();
+
+  updateBalance();
+
+
+  /*
+    Update engine messages.
+  */
+
+  const resultText =
+    win
+      ? `WIN +${money(trade.profit)}`
+      : `LOSS ${money(trade.profit)}`;
+
+
+  if(
+    trade.engine ===
+    "AI BOT"
+  ){
+
+    setText(
+      "engineStatusText",
+      `${resultText} • ${strategyLabel(trade.strategy)} • Digit ${digit}`
+    );
+
+  }
+
+
+  if(
+    trade.engine ===
+    "CIRCULAR AI"
+  ){
+
+    setText(
+      "circularStatusText",
+      `${resultText} • Digit ${digit}`
+    );
+
+  }
+
+
+  if(
+    trade.engine ===
+    "MANUAL"
+  ){
+
+    setText(
+      "manualStatusText",
+      `${resultText} • ${strategyLabel(trade.strategy)} • Digit ${digit}`
+    );
+
+  }
+
+
+  /*
+    Apply session Take Profit
+    and Stop Loss.
+  */
+
+  checkEngineRiskControls();
+
+}
+
+
+/* =========================================================
+   ENGINE RISK CONTROLS
+========================================================= */
+
+function checkEngineRiskControls(){
+
+  /*
+    AI BOT
+  */
+
+  if(state.aiRunning){
+
+    const takeProfit =
+      numberValue(
+        "takeProfitInput",
+        50
+      );
+
+
+    const stopLoss =
+      numberValue(
+        "stopLossInput",
+        100
+      );
+
+
+    if(
+      takeProfit > 0 &&
+      state.botSessionProfit >=
+        takeProfit
+    ){
+
+      setText(
+        "engineStatusText",
+        `Take Profit reached: ${money(state.botSessionProfit)}`
+      );
+
+
+      stopAIBot();
+
+    }
+
+
+    if(
+      stopLoss > 0 &&
+      state.botSessionProfit <=
+        -Math.abs(stopLoss)
+    ){
+
+      setText(
+        "engineStatusText",
+        `Stop Loss reached: ${money(state.botSessionProfit)}`
+      );
+
+
+      stopAIBot();
+
+    }
+
+  }
+
+
+  /*
+    CIRCULAR AI
+  */
+
+  if(state.circularRunning){
+
+    const takeProfit =
+      numberValue(
+        "circularTakeProfitInput",
+        50
+      );
+
+
+    const stopLoss =
+      numberValue(
+        "circularStopLossInput",
+        100
+      );
+
+
+    if(
+      takeProfit > 0 &&
+      state.circularSessionProfit >=
+        takeProfit
+    ){
+
+      setText(
+        "circularStatusText",
+        `Take Profit reached: ${money(state.circularSessionProfit)}`
+      );
+
+
+      stopCircularAI();
+
+    }
+
+
+    if(
+      stopLoss > 0 &&
+      state.circularSessionProfit <=
+        -Math.abs(stopLoss)
+    ){
+
+      setText(
+        "circularStatusText",
+        `Stop Loss reached: ${money(state.circularSessionProfit)}`
+      );
+
+
+      stopCircularAI();
+
+    }
+
+  }
+
+}
+
+
+/* =========================================================
+   ACTIVE TRADES RENDER
+========================================================= */
+
+function renderActiveTrades(){
+
+  const box =
+    $("activeTradesList");
+
+
+  if(!box){
+
+    return;
+
+  }
+
+
+  const trades =
+    state.activeTrades;
+
+
+  setText(
+    "activeTradeCount",
+    String(
+      trades.length
+    )
+  );
+
+
+  if(!trades.length){
+
+    box.innerHTML = `
+      <div class="empty-state">
+        No active paper trades
+      </div>
+    `;
+
+    return;
+
+  }
+
+
+  box.innerHTML =
+    trades
+      .map(
+        trade => {
+
+          return `
+            <div class="active-trade-card">
+
+              <div>
+                <strong>
+                  ${esc(trade.engine)}
+                </strong>
+
+                <div>
+                  ${esc(
+                    formatMarketName(
+                      trade.market
+                    )
+                  )}
+                </div>
+
+                <small>
+                  ${esc(
+                    strategyLabel(
+                      trade.strategy
+                    )
+                  )}
+                </small>
+              </div>
+
+              <div>
+                <strong>
+                  ${money(trade.stake)}
+                </strong>
+
+                <div>
+                  Prediction:
+                  ${esc(trade.prediction)}
+                </div>
+
+                <small>
+                  ${esc(trade.time)}
+                </small>
+              </div>
+
+              <div>
+                <span>
+                  PENDING
+                </span>
+              </div>
+
+            </div>
+          `;
+
+        }
+      )
+      .join("");
+
+}
+
+
+/* =========================================================
+   HISTORY STORAGE
+========================================================= */
+
+const HISTORY_KEY =
+  "krishwave_v7_history";
+
+
+const BALANCE_KEY =
+  "krishwave_v7_balance";
+
+
+function saveHistory(){
+
+  try{
+
+    localStorage.setItem(
+      HISTORY_KEY,
+      JSON.stringify(
+        state.history
+      )
+    );
+
+  }catch(error){}
+
+}
+
+
+function loadHistory(){
+
+  try{
+
+    const saved =
+      localStorage.getItem(
+        HISTORY_KEY
+      );
+
+
+    if(saved){
+
+      const parsed =
+        JSON.parse(
+          saved
+        );
+
+
+      if(
+        Array.isArray(parsed)
+      ){
+
+        state.history =
+          parsed;
+
+      }
+
+    }
+
+
+    const savedBalance =
+      localStorage.getItem(
+        BALANCE_KEY
+      );
+
+
+    if(savedBalance !== null){
+
+      const balance =
+        Number(
+          savedBalance
+        );
+
+
+      if(
+        Number.isFinite(balance) &&
+        balance >= 0
+      ){
+
+        state.paperBalance =
+          balance;
+
+      }
+
+    }
+
+  }catch(error){}
+
+}
+
+
+/* =========================================================
+   SAVE BALANCE
+========================================================= */
+
+function saveBalance(){
+
+  try{
+
+    localStorage.setItem(
+      BALANCE_KEY,
+      String(
+        state.paperBalance
+      )
+    );
+
+  }catch(error){}
+
+}
+
+
+/* =========================================================
+   RECALCULATE HISTORY STATS
+========================================================= */
+
+function calculateHistoryStats(){
+
+  let totalStake = 0;
+
+  let amountWon = 0;
+
+  let totalPayout = 0;
+
+  let netProfit = 0;
+
+  let wins = 0;
+
+  let losses = 0;
+
+
+  state.history.forEach(
+    trade => {
+
+      totalStake +=
+        Number(
+          trade.stake || 0
+        );
+
+
+      amountWon +=
+        Number(
+          trade.amountWon || 0
+        );
+
+
+      totalPayout +=
+        Number(
+          trade.payout || 0
+        );
+
+
+      netProfit +=
+        Number(
+          trade.profit || 0
+        );
+
+
+      if(
+        trade.status ===
+        "WIN"
+      ){
+
+        wins++;
+
+      }
+
+
+      if(
+        trade.status ===
+        "LOSS"
+      ){
+
+        losses++;
+
+      }
+
+    }
+  );
+
+
+  return {
+
+    totalStake,
+
+    amountWon,
+
+    totalPayout,
+
+    netProfit,
+
+    wins,
+
+    losses
+
+  };
+
+}
+
+
+/* =========================================================
+   HISTORY RENDER
+========================================================= */
+
+function renderHistory(){
+
+  const box =
+    $("historyCardsList");
+
+
+  const stats =
+    calculateHistoryStats();
+
+
+  setText(
+    "historyTotalStake",
+    money(
+      stats.totalStake
+    )
+  );
+
+
+  setText(
+    "historyAmountWon",
+    money(
+      stats.amountWon
+    )
+  );
+
+
+  setText(
+    "historyNetProfit",
+    money(
+      stats.netProfit
+    )
+  );
+
+
+  if(!box){
+
+    return;
+
+  }
+
+
+  if(!state.history.length){
+
+    box.innerHTML = `
+      <div class="empty-state">
+        No completed trades yet.
+      </div>
+    `;
+
+    return;
+
+  }
+
+
+  box.innerHTML =
+    state.history
+      .map(
+        trade => {
+
+          const win =
+            trade.status ===
+            "WIN";
+
+
+          const resultClass =
+            win
+              ? "win"
+              : "loss";
+
+
+          return `
+            <div class="history-card ${resultClass}">
+
+              <div class="history-card-top">
+
+                <div>
+
+                  <strong>
+                    ${esc(trade.engine)}
+                  </strong>
+
+                  <div>
+                    ${esc(
+                      formatMarketName(
+                        trade.market
+                      )
+                    )}
+                  </div>
+
+                </div>
+
+                <div class="history-result ${resultClass}">
+                  ${win ? "WIN" : "LOSS"}
+                </div>
+
+              </div>
+
+
+              <div class="history-grid">
+
+                <div>
+                  <span>Time</span>
+                  <strong>
+                    ${esc(
+                      trade.time ||
+                      formatDate(
+                        trade.timestamp
+                      )
+                    )}
+                  </strong>
+                </div>
+
+
+                <div>
+                  <span>Strategy</span>
+                  <strong>
+                    ${esc(
+                      strategyLabel(
+                        trade.strategy
+                      )
+                    )}
+                  </strong>
+                </div>
+
+
+                <div>
+                  <span>Prediction</span>
+                  <strong>
+                    ${esc(
+                      trade.prediction
+                    )}
+                  </strong>
+                </div>
+
+
+                <div>
+                  <span>Result Digit</span>
+                  <strong>
+                    ${esc(
+                      trade.result
+                    )}
+                  </strong>
+                </div>
+
+
+                <div>
+                  <span>Stake</span>
+                  <strong>
+                    ${money(
+                      trade.stake
+                    )}
+                  </strong>
+                </div>
+
+
+                <div>
+                  <span>Amount Won</span>
+                  <strong>
+                    ${money(
+                      trade.amountWon
+                    )}
+                  </strong>
+                </div>
+
+
+                <div>
+                  <span>Payout</span>
+                  <strong>
+                    ${money(
+                      trade.payout
+                    )}
+                  </strong>
+                </div>
+
+
+                <div>
+                  <span>Profit / Loss</span>
+                  <strong class="${trade.profit >= 0 ? "profit" : "loss"}">
+                    ${money(
+                      trade.profit
+                    )}
+                  </strong>
+                </div>
+
+
+                <div>
+                  <span>Martingale</span>
+                  <strong>
+                    Level ${esc(
+                      trade.martingaleLevel ?? 0
+                    )}
+                  </strong>
+                </div>
+
+              </div>
+
+            </div>
+          `;
+
+        }
+      )
+      .join("");
+
+}
+
+
+/* =========================================================
+   GLOBAL STATS
+========================================================= */
+
+function updateStats(){
+
+  const stats =
+    calculateHistoryStats();
+
+
+  state.totalStake =
+    stats.totalStake;
+
+
+  state.totalAmountWon =
+    stats.amountWon;
+
+
+  state.totalPayout =
+    stats.totalPayout;
+
+
+  state.totalProfit =
+    stats.netProfit;
+
+
+  state.wins =
+    stats.wins;
+
+
+  state.losses =
+    stats.losses;
+
+
+  const totalTrades =
+    stats.wins +
+    stats.losses;
+
+
+  const accuracy =
+    totalTrades > 0
+      ? (
+          stats.wins /
+          totalTrades
+        ) *
+        100
+      : 0;
+
+
+  setText(
+    "paperTotal",
+    String(
+      totalTrades
+    )
+  );
+
+
+  setText(
+    "paperWins",
+    String(
+      stats.wins
+    )
+  );
+
+
+  setText(
+    "paperLosses",
+    String(
+      stats.losses
+    )
+  );
+
+
+  setText(
+    "paperAccuracy",
+    `${accuracy.toFixed(1)}%`
+  );
+
+
+  setText(
+    "totalProfitDisplay",
+    money(
+      stats.netProfit
+    )
+  );
+
+
+  setText(
+    "historyTotalStake",
+    money(
+      stats.totalStake
+    )
+  );
+
+
+  setText(
+    "historyAmountWon",
+    money(
+      stats.amountWon
+    )
+  );
+
+
+  setText(
+    "historyNetProfit",
+    money(
+      stats.netProfit
+    )
+  );
+
+}
+
+
+/* =========================================================
+   BALANCE
+========================================================= */
+
+function updateBalance(){
+
+  setText(
+    "paperBalance",
+    money(
+      state.paperBalance
+    )
+  );
+
+
+  /*
+    Some versions of the HTML use
+    BALANCE as a generic element.
+    This fallback updates matching
+    balance elements safely.
+  */
+
+  document.querySelectorAll(
+    "[data-paper-balance]"
+  ).forEach(
+    el => {
+
+      el.textContent =
+        money(
+          state.paperBalance
+        );
+
+    }
+  );
+
+
+  saveBalance();
+
+}
+
+
+/* =========================================================
+   CLEAR HISTORY
+========================================================= */
+
+function bindClearHistory(){
+
+  $("clearLogsBtn")
+    ?.addEventListener(
+      "click",
+      () => {
+
+        const confirmed =
+          window.confirm(
+            "Clear all KRISHWAVE paper trade history?"
+          );
+
+
+        if(!confirmed){
+
+          return;
+
+        }
+
+
+        state.history = [];
+
+        state.totalProfit = 0;
+
+        state.totalAmountWon = 0;
+
+        state.totalStake = 0;
+
+        state.totalPayout = 0;
+
+        state.wins = 0;
+
+        state.losses = 0;
+
+
+        saveHistory();
+
+        renderHistory();
+
+        updateStats();
+
+      }
+    );
+
+}
+
+
+/* =========================================================
+   RESET PAPER ACCOUNT
+========================================================= */
+
+function resetPaperAccount(){
+
+  state.paperBalance =
+    1000;
+
+  state.startingBalance =
+    1000;
+
+  state.activeTrades = [];
+
+  state.history = [];
+
+  state.totalProfit = 0;
+
+  state.totalAmountWon = 0;
+
+  state.totalStake = 0;
+
+  state.totalPayout = 0;
+
+  state.wins = 0;
+
+  state.losses = 0;
+
+  state.botMartingaleLevel =
+    0;
+
+  state.circularMartingaleLevel =
+    0;
+
+
+  saveHistory();
+
+  saveBalance();
+
+  renderHistory();
+
+  renderActiveTrades();
+
+  updateStats();
+
+  updateBalance();
+
+}
+
+
+/* =========================================================
+   INITIAL STRATEGY SELECTION
+========================================================= */
+
+function initializeSelectedStrategy(){
+
+  const options =
+    document.querySelectorAll(
+      "#strategyModal .strategy-option"
+    );
+
+
+  options.forEach(
+    option => {
+
+      option.classList.toggle(
+        "selected",
+        option.dataset.strategy ===
+          state.selectedStrategy
+      );
+
+    }
+  );
+
+
+  setText(
+    "manualSelectedStrategyLabel",
+    strategyLabel(
+      state.selectedStrategy
+    )
+  );
+
+
+  setText(
+    "circularStrategyLabel",
+    strategyLabel(
+      state.selectedStrategy
+    )
+  );
+
+}
+
+
+/* =========================================================
+   PERIODIC UI REFRESH
+========================================================= */
+
+setInterval(
+  () => {
+
+    if(
+      document.visibilityState !==
+      "hidden"
+    ){
+
+      renderActiveTrades();
+
+      updateStats();
+
+      updateBalance();
+
+    }
+
+  },
+  2000
+);
+
+
+/* =========================================================
+   INITIAL STRATEGY PATCH
+========================================================= */
+
+document.addEventListener(
+  "DOMContentLoaded",
+  () => {
+
+    initializeSelectedStrategy();
+
+  }
+);
+
+
+/* =========================================================
+   EXPOSE SAFE DEBUG OBJECT
+========================================================= */
+
+window.KRISHWAVE =
+  {
+
+    state,
+
+    analyzeMarket,
+
+    chooseBestMarket,
+
+    createPrediction,
+
+    startAIBot,
+
+    stopAIBot,
+
+    startCircularAI,
+
+    stopCircularAI,
+
+    executeManualTrade,
+
+    resetPaperAccount
+
+  };
+
+
+/* =========================================================
+   END KRISHWAVE AI BEAST V7.0
+========================================================= */
