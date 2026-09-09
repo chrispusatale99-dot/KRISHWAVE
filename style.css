@@ -1,1956 +1,240 @@
-/* =========================================================
-   KRISHWAVE AI BEAST V7.0
-   PROFESSIONAL MOBILE TRADING / AI DASHBOARD
-   ========================================================= */
-
-:root {
-  --bg: #07111f;
-  --bg-2: #0b1728;
-  --card: #0e1c2e;
-  --card-2: #12243a;
-  --card-3: #162b43;
-
-  --text: #f5f8ff;
-  --muted: #8fa3bd;
-  --border: rgba(255,255,255,.09);
-
-  --primary: #00e5ff;
-  --primary-2: #00a8ff;
-  --success: #19e68c;
-  --danger: #ff4d67;
-  --warning: #ffc857;
-  --purple: #9b7cff;
-
-  --shadow: 0 12px 35px rgba(0,0,0,.28);
-
-  --radius: 18px;
-  --radius-sm: 12px;
-}
-
-body.light {
-  --bg: #eef4fa;
-  --bg-2: #f7faff;
-  --card: #ffffff;
-  --card-2: #f2f7fc;
-  --card-3: #e9f1f8;
-
-  --text: #142033;
-  --muted: #66758a;
-  --border: rgba(20,32,51,.10);
-
-  --shadow: 0 10px 25px rgba(40,65,90,.12);
-}
-
-/* =========================================================
-   RESET
-   ========================================================= */
-
-* {
-  box-sizing: border-box;
-  margin: 0;
-  padding: 0;
-}
-
-html {
-  scroll-behavior: smooth;
-}
-
-body {
-  min-height: 100vh;
-  background:
-    radial-gradient(circle at 20% 0%, rgba(0,229,255,.07), transparent 28%),
-    radial-gradient(circle at 90% 10%, rgba(155,124,255,.08), transparent 25%),
-    var(--bg);
-
-  color: var(--text);
-  font-family:
-    Inter,
-    system-ui,
-    -apple-system,
-    BlinkMacSystemFont,
-    "Segoe UI",
-    sans-serif;
-
-  overflow-x: hidden;
-  -webkit-tap-highlight-color: transparent;
-}
-
-button,
-input,
-select {
-  font: inherit;
-}
-
-button {
-  border: 0;
-  cursor: pointer;
-}
-
-a {
-  color: inherit;
-  text-decoration: none;
-}
-
-/* =========================================================
-   APP SHELL
-   ========================================================= */
-
-.app {
-  width: 100%;
-  max-width: 1180px;
-  margin: auto;
-  min-height: 100vh;
-  padding-bottom: 90px;
-}
-
-/* =========================================================
-   TOP BAR
-   ========================================================= */
-
-.topbar {
-  position: sticky;
-  top: 0;
-  z-index: 100;
-
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-
-  min-height: 70px;
-  padding: 12px 16px;
-
-  background: rgba(7,17,31,.88);
-  backdrop-filter: blur(18px);
-  -webkit-backdrop-filter: blur(18px);
-
-  border-bottom: 1px solid var(--border);
-}
-
-body.light .topbar {
-  background: rgba(247,250,255,.90);
-}
-
-.brand {
-  display: flex;
-  align-items: center;
-  gap: 10px;
-}
-
-.brand-logo {
-  width: 42px;
-  height: 42px;
-
-  display: flex;
-  align-items: center;
-  justify-content: center;
-
-  border-radius: 14px;
-
-  background: linear-gradient(
-    135deg,
-    var(--primary),
-    var(--primary-2)
-  );
-
-  color: #00131b;
-  font-size: 21px;
-  font-weight: 900;
-
-  box-shadow:
-    0 0 22px rgba(0,229,255,.25);
-}
-
-.brand-text {
-  display: flex;
-  flex-direction: column;
-}
-
-.brand-title {
-  font-size: 16px;
-  font-weight: 900;
-  letter-spacing: .5px;
-}
-
-.brand-version {
-  color: var(--primary);
-  font-size: 10px;
-  font-weight: 800;
-  letter-spacing: 1px;
-}
-
-.top-actions {
-  display: flex;
-  align-items: center;
-  gap: 7px;
-}
-
-/* =========================================================
-   STATUS
-   ========================================================= */
-
-.status-pill {
-  display: inline-flex;
-  align-items: center;
-  gap: 6px;
-
-  padding: 7px 10px;
-
-  border-radius: 999px;
-
-  background: var(--card-2);
-  border: 1px solid var(--border);
-
-  color: var(--muted);
-  font-size: 11px;
-  font-weight: 800;
-}
-
-.status-dot {
-  width: 8px;
-  height: 8px;
-  border-radius: 50%;
-  background: var(--danger);
-}
-
-.status-dot.connected,
-.connected .status-dot {
-  background: var(--success);
-  box-shadow: 0 0 10px rgba(25,230,140,.6);
-}
-
-.status-dot.connecting {
-  background: var(--warning);
-  animation: pulse 1s infinite;
-}
-
-/* =========================================================
-   GENERAL BUTTONS
-   ========================================================= */
-
-.icon-btn {
-  width: 40px;
-  height: 40px;
-
-  display: flex;
-  align-items: center;
-  justify-content: center;
-
-  border-radius: 12px;
-
-  background: var(--card-2);
-  color: var(--text);
-
-  border: 1px solid var(--border);
-}
-
-.icon-btn:active {
-  transform: scale(.95);
-}
-
-.primary-btn,
-.secondary-btn,
-.danger-btn,
-.success-btn,
-.warning-btn {
-  min-height: 44px;
-  padding: 0 17px;
-
-  border-radius: 12px;
-
-  font-weight: 900;
-  font-size: 13px;
-
-  transition:
-    transform .15s ease,
-    opacity .15s ease,
-    box-shadow .15s ease;
-}
-
-.primary-btn {
-  background: linear-gradient(
-    135deg,
-    var(--primary),
-    var(--primary-2)
-  );
-  color: #00131b;
-
-  box-shadow: 0 7px 20px rgba(0,180,255,.18);
-}
-
-.secondary-btn {
-  background: var(--card-2);
-  color: var(--text);
-  border: 1px solid var(--border);
-}
-
-.success-btn {
-  background: var(--success);
-  color: #001b10;
-}
-
-.danger-btn {
-  background: var(--danger);
-  color: #fff;
-}
-
-.warning-btn {
-  background: var(--warning);
-  color: #251a00;
-}
-
-.primary-btn:active,
-.secondary-btn:active,
-.success-btn:active,
-.danger-btn:active,
-.warning-btn:active {
-  transform: translateY(1px) scale(.98);
-}
-
-button:disabled {
-  opacity: .45;
-  cursor: not-allowed;
-}
-
-/* =========================================================
-   PAGE SYSTEM
-   ========================================================= */
-
-.page {
-  display: none;
-  padding: 16px;
-}
-
-.page.active {
-  display: block;
-}
-
-/* =========================================================
-   SECTION HEADERS
-   ========================================================= */
-
-.section-title {
-  margin: 18px 0 10px;
-
-  font-size: 13px;
-  font-weight: 900;
-
-  letter-spacing: .7px;
-  text-transform: uppercase;
-
-  color: var(--muted);
-}
-
-.section-heading {
-  margin-bottom: 14px;
-}
-
-.section-heading h1,
-.section-heading h2 {
-  font-size: 22px;
-  font-weight: 950;
-}
-
-.section-heading p {
-  margin-top: 4px;
-  color: var(--muted);
-  font-size: 12px;
-}
-
-/* =========================================================
-   UNIVERSAL CARD
-   ========================================================= */
-
-.card {
-  position: relative;
-
-  padding: 16px;
-  margin-bottom: 12px;
-
-  background:
-    linear-gradient(
-      145deg,
-      rgba(255,255,255,.025),
-      transparent
-    ),
-    var(--card);
-
-  border: 1px solid var(--border);
-  border-radius: var(--radius);
-
-  box-shadow: var(--shadow);
-
-  overflow: hidden;
-}
-
-.card::before {
-  content: "";
-
-  position: absolute;
-  inset: 0;
-
-  pointer-events: none;
-
-  background:
-    linear-gradient(
-      120deg,
-      rgba(0,229,255,.025),
-      transparent 45%
-    );
-}
-
-.card-header {
-  position: relative;
-
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-
-  gap: 10px;
-
-  margin-bottom: 13px;
-}
-
-.card-title {
-  font-size: 14px;
-  font-weight: 900;
-}
-
-.card-subtitle {
-  color: var(--muted);
-  font-size: 11px;
-}
-
-/* =========================================================
-   ACCOUNT CARD
-   ========================================================= */
-
-.account-card {
-  display: grid;
-  grid-template-columns: 1fr auto;
-  gap: 12px;
-
-  background:
-    linear-gradient(
-      135deg,
-      rgba(0,229,255,.10),
-      rgba(155,124,255,.06)
-    ),
-    var(--card);
-
-  border-color: rgba(0,229,255,.18);
-}
-
-.account-main {
-  display: flex;
-  flex-direction: column;
-  gap: 5px;
-}
-
-.account-label {
-  color: var(--muted);
-  font-size: 10px;
-  text-transform: uppercase;
-  font-weight: 800;
-  letter-spacing: .7px;
-}
-
-.account-balance {
-  font-size: 26px;
-  font-weight: 950;
-}
-
-.account-id {
-  color: var(--muted);
-  font-size: 10px;
-}
-
-.account-badge {
-  align-self: start;
-
-  padding: 7px 10px;
-  border-radius: 999px;
-
-  background: rgba(25,230,140,.10);
-  border: 1px solid rgba(25,230,140,.2);
-
-  color: var(--success);
-  font-size: 10px;
-  font-weight: 900;
-}
-
-/* =========================================================
-   AI CIRCLE HERO
-   ========================================================= */
-
-.ai-hero {
-  position: relative;
-
-  padding: 20px;
-  margin-bottom: 14px;
-
-  border-radius: 24px;
-
-  background:
-    radial-gradient(
-      circle at 50% 0%,
-      rgba(0,229,255,.13),
-      transparent 50%
-    ),
-    var(--card);
-
-  border: 1px solid rgba(0,229,255,.14);
-
-  box-shadow:
-    0 20px 55px rgba(0,0,0,.25);
-}
-
-.ai-hero-top {
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-}
-
-.ai-label {
-  color: var(--primary);
-  font-size: 11px;
-  font-weight: 950;
-  letter-spacing: 1px;
-  text-transform: uppercase;
-}
-
-.ai-live {
-  display: flex;
-  align-items: center;
-  gap: 6px;
-
-  color: var(--success);
-  font-size: 10px;
-  font-weight: 900;
-}
-
-.ai-live-dot {
-  width: 7px;
-  height: 7px;
-  border-radius: 50%;
-  background: var(--success);
-  box-shadow: 0 0 10px rgba(25,230,140,.7);
-}
-
-/* =========================================================
-   AI CIRCLE
-   ========================================================= */
-
-.ai-circle-wrap {
-  display: flex;
-  align-items: center;
-  justify-content: center;
-
-  padding: 20px 0;
-}
-
-.ai-circle {
-  position: relative;
-
-  width: 180px;
-  height: 180px;
-
-  display: flex;
-  align-items: center;
-  justify-content: center;
-
-  border-radius: 50%;
-
-  background:
-    radial-gradient(
-      circle,
-      var(--card-3) 0 52%,
-      transparent 53%
-    );
-
-  border: 3px solid rgba(0,229,255,.35);
-
-  box-shadow:
-    0 0 0 8px rgba(0,229,255,.035),
-    0 0 45px rgba(0,229,255,.14);
-}
-
-.ai-circle::before,
-.ai-circle::after {
-  content: "";
-
-  position: absolute;
-
-  border-radius: 50%;
-
-  border: 1px dashed rgba(0,229,255,.22);
-
-  animation: spin 15s linear infinite;
-}
-
-.ai-circle::before {
-  inset: 10px;
-}
-
-.ai-circle::after {
-  inset: -8px;
-  animation-direction: reverse;
-  animation-duration: 22s;
-}
-
-.ai-circle-content {
-  position: relative;
-  z-index: 2;
-
-  text-align: center;
-}
-
-.ai-circle-name {
-  font-size: 15px;
-  font-weight: 950;
-}
-
-.ai-circle-status {
-  margin-top: 5px;
-
-  color: var(--primary);
-  font-size: 10px;
-  font-weight: 800;
-}
-
-.ai-score {
-  margin-top: 7px;
-
-  font-size: 27px;
-  font-weight: 950;
-}
-
-/* =========================================================
-   AI STATS GRID
-   ========================================================= */
-
-.stats-grid {
-  display: grid;
-  grid-template-columns: repeat(2, 1fr);
-  gap: 9px;
-}
-
-.stat-card {
-  padding: 13px;
-
-  background: var(--card-2);
-  border: 1px solid var(--border);
-  border-radius: 14px;
-}
-
-.stat-label {
-  color: var(--muted);
-  font-size: 9px;
-  font-weight: 800;
-  text-transform: uppercase;
-  letter-spacing: .5px;
-}
-
-.stat-value {
-  margin-top: 5px;
-
-  font-size: 17px;
-  font-weight: 950;
-}
-
-.stat-value.good {
-  color: var(--success);
-}
-
-.stat-value.bad {
-  color: var(--danger);
-}
-
-.stat-value.info {
-  color: var(--primary);
-}
-
-.stat-value.warn {
-  color: var(--warning);
-}
-
-/* =========================================================
-   PREDICTION CARD
-   ========================================================= */
-
-.prediction-card {
-  text-align: center;
-
-  padding: 20px;
-
-  background:
-    linear-gradient(
-      145deg,
-      rgba(0,229,255,.08),
-      rgba(155,124,255,.06)
-    ),
-    var(--card);
-
-  border-color: rgba(0,229,255,.2);
-}
-
-.prediction-market {
-  color: var(--muted);
-  font-size: 11px;
-  font-weight: 800;
-}
-
-.prediction-main {
-  margin: 10px 0;
-
-  font-size: 34px;
-  font-weight: 950;
-
-  color: var(--primary);
-}
-
-.prediction-target {
-  display: inline-flex;
-
-  padding: 7px 12px;
-
-  border-radius: 999px;
-
-  background: var(--card-2);
-  border: 1px solid var(--border);
-
-  font-size: 12px;
-  font-weight: 900;
-}
-
-/* =========================================================
-   REPORT CARD
-   ========================================================= */
-
-.report-list {
-  display: grid;
-  gap: 8px;
-}
-
-.report-row {
-  display: grid;
-  grid-template-columns: 1fr auto;
-  gap: 10px;
-
-  padding: 10px 0;
-
-  border-bottom: 1px solid var(--border);
-}
-
-.report-row:last-child {
-  border-bottom: 0;
-}
-
-.report-name {
-  color: var(--muted);
-  font-size: 11px;
-}
-
-.report-value {
-  font-size: 11px;
-  font-weight: 900;
-}
-
-/* =========================================================
-   TRADING ENGINE TABS
-   ========================================================= */
-
-.engine-tabs {
-  display: grid;
-  grid-template-columns: repeat(2, 1fr);
-
-  gap: 6px;
-
-  padding: 5px;
-
-  background: var(--card);
-  border: 1px solid var(--border);
-  border-radius: 15px;
-
-  margin-bottom: 12px;
-}
-
-.engine-tab {
-  min-height: 42px;
-
-  border-radius: 11px;
-
-  background: transparent;
-  color: var(--muted);
-
-  font-size: 12px;
-  font-weight: 900;
-}
-
-.engine-tab.active {
-  background: linear-gradient(
-    135deg,
-    var(--primary),
-    var(--primary-2)
-  );
-
-  color: #00131b;
-}
-
-/* =========================================================
-   BOT IDENTITY
-   ========================================================= */
-
-.bot-identity {
-  display: flex;
-  align-items: center;
-  gap: 13px;
-}
-
-.bot-icon {
-  width: 50px;
-  height: 50px;
-
-  display: flex;
-  align-items: center;
-  justify-content: center;
-
-  border-radius: 15px;
-
-  background:
-    linear-gradient(
-      135deg,
-      rgba(155,124,255,.25),
-      rgba(0,229,255,.12)
-    );
-
-  border: 1px solid rgba(155,124,255,.2);
-
-  font-size: 22px;
-}
-
-.bot-name {
-  font-size: 16px;
-  font-weight: 950;
-}
-
-.bot-description {
-  margin-top: 3px;
-  color: var(--muted);
-  font-size: 10px;
-}
-
-.bot-status {
-  margin-left: auto;
-
-  padding: 7px 10px;
-
-  border-radius: 999px;
-
-  background: var(--card-2);
-
-  color: var(--muted);
-  font-size: 10px;
-  font-weight: 900;
-}
-
-.bot-status.running {
-  color: var(--success);
-  background: rgba(25,230,140,.08);
-}
-
-/* =========================================================
-   BOT DECISION CARD
-   ========================================================= */
-
-.bot-decision {
-  background:
-    linear-gradient(
-      145deg,
-      rgba(155,124,255,.09),
-      rgba(0,229,255,.05)
-    ),
-    var(--card);
-
-  border-color: rgba(155,124,255,.18);
-}
-
-.bot-decision-header {
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-
-  margin-bottom: 15px;
-}
-
-.bot-decision-title {
-  font-size: 13px;
-  font-weight: 950;
-}
-
-.bot-lock {
-  padding: 6px 9px;
-
-  border-radius: 999px;
-
-  background: rgba(255,200,87,.08);
-  color: var(--warning);
-
-  font-size: 9px;
-  font-weight: 900;
-}
-
-.bot-decision-grid {
-  display: grid;
-  grid-template-columns: repeat(2, 1fr);
-
-  gap: 8px;
-}
-
-.decision-box {
-  padding: 11px;
-
-  background: var(--card-2);
-  border: 1px solid var(--border);
-
-  border-radius: 13px;
-}
-
-.decision-box-label {
-  color: var(--muted);
-
-  font-size: 9px;
-  font-weight: 800;
-
-  text-transform: uppercase;
-}
-
-.decision-box-value {
-  margin-top: 4px;
-
-  font-size: 14px;
-  font-weight: 950;
-}
-
-/* =========================================================
-   STRATEGY GROUP SELECTOR
-   ========================================================= */
-
-.select-card {
-  position: relative;
-}
-
-.select-label {
-  display: block;
-
-  margin-bottom: 7px;
-
-  color: var(--muted);
-
-  font-size: 10px;
-  font-weight: 900;
-
-  text-transform: uppercase;
-  letter-spacing: .5px;
-}
-
-select,
-input {
-  width: 100%;
-
-  min-height: 46px;
-
-  padding: 0 13px;
-
-  border-radius: 12px;
-
-  background: var(--card-2);
-
-  color: var(--text);
-
-  border: 1px solid var(--border);
-
-  outline: none;
-}
-
-select:focus,
-input:focus {
-  border-color: rgba(0,229,255,.45);
-
-  box-shadow:
-    0 0 0 3px rgba(0,229,255,.06);
-}
-
-input::placeholder {
-  color: var(--muted);
-}
-
-/* =========================================================
-   TRADING CONTROLS
-   ========================================================= */
-
-.control-grid {
-  display: grid;
-  grid-template-columns: repeat(2, 1fr);
-  gap: 9px;
-}
-
-.control-group {
-  margin-bottom: 11px;
-}
-
-.control-group.full {
-  grid-column: 1 / -1;
-}
-
-.control-label {
-  display: block;
-
-  margin-bottom: 6px;
-
-  color: var(--muted);
-
-  font-size: 10px;
-  font-weight: 850;
-}
-
-/* =========================================================
-   RANGE / SLIDERS
-   ========================================================= */
-
-input[type="range"] {
-  min-height: auto;
-  padding: 0;
-
-  border: 0;
-
-  accent-color: var(--primary);
-
-  background: transparent;
-}
-
-.range-value {
-  display: flex;
-  justify-content: space-between;
-
-  margin-top: 5px;
-
-  color: var(--muted);
-  font-size: 10px;
-}
-
-/* =========================================================
-   BIG BOT BUTTON
-   ========================================================= */
-
-.bot-start-btn {
-  width: 100%;
-  min-height: 54px;
-
-  margin-top: 5px;
-
-  border-radius: 15px;
-
-  background:
-    linear-gradient(
-      135deg,
-      var(--primary),
-      var(--primary-2)
-    );
-
-  color: #00131b;
-
-  font-size: 14px;
-  font-weight: 950;
-
-  box-shadow:
-    0 10px 30px rgba(0,180,255,.20);
-}
-
-.bot-start-btn.running {
-  background: var(--danger);
-  color: #fff;
-
-  box-shadow:
-    0 10px 30px rgba(255,77,103,.16);
-}
-
-/* =========================================================
-   CYCLE CARD
-   ========================================================= */
-
-.cycle-card {
-  text-align: center;
-}
-
-.cycle-timeline {
-  display: grid;
-  grid-template-columns: 10fr 5fr 3fr;
-
-  gap: 5px;
-
-  margin-top: 12px;
-}
-
-.cycle-step {
-  padding: 10px 5px;
-
-  border-radius: 10px;
-
-  background: var(--card-2);
-
-  color: var(--muted);
-
-  font-size: 9px;
-  font-weight: 900;
-}
-
-.cycle-step.active {
-  background:
-    linear-gradient(
-      135deg,
-      rgba(0,229,255,.2),
-      rgba(0,168,255,.12)
-    );
-
-  color: var(--primary);
-
-  border: 1px solid rgba(0,229,255,.2);
-}
-
-.cycle-countdown {
-  margin-top: 13px;
-
-  font-size: 29px;
-  font-weight: 950;
-
-  color: var(--primary);
-}
-
-/* =========================================================
-   MANUAL PANEL
-   ========================================================= */
-
-.manual-panel {
-  display: block;
-}
-
-.manual-market {
-  margin-bottom: 12px;
-}
-
-.manual-strategy-trigger {
-  width: 100%;
-
-  min-height: 48px;
-
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-
-  padding: 0 13px;
-
-  border-radius: 12px;
-
-  background: var(--card-2);
-
-  color: var(--text);
-
-  border: 1px solid var(--border);
-
-  font-size: 12px;
-  font-weight: 850;
-}
-
-.manual-strategy-trigger span:last-child {
-  color: var(--primary);
-}
-
-/* =========================================================
-   MANUAL AI ASSIST
-   ========================================================= */
-
-.manual-ai-assist {
-  background:
-    linear-gradient(
-      145deg,
-      rgba(0,229,255,.07),
-      rgba(25,230,140,.035)
-    ),
-    var(--card);
-
-  border-color: rgba(0,229,255,.16);
-}
-
-.ai-assist-header {
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-}
-
-.ai-assist-badge {
-  padding: 5px 8px;
-
-  border-radius: 999px;
-
-  background: rgba(0,229,255,.08);
-
-  color: var(--primary);
-
-  font-size: 9px;
-  font-weight: 900;
-}
-
-.ai-assist-grid {
-  display: grid;
-  grid-template-columns: repeat(2, 1fr);
-  gap: 7px;
-
-  margin-top: 12px;
-}
-
-.ai-assist-box {
-  padding: 9px;
-
-  border-radius: 11px;
-
-  background: var(--card-2);
-  border: 1px solid var(--border);
-}
-
-.ai-assist-label {
-  color: var(--muted);
-  font-size: 8px;
-  font-weight: 800;
-  text-transform: uppercase;
-}
-
-.ai-assist-value {
-  margin-top: 3px;
-  font-size: 12px;
-  font-weight: 950;
-}
-
-.ai-assist-reason {
-  margin-top: 10px;
-
-  padding: 10px;
-
-  border-radius: 11px;
-
-  background: rgba(0,229,255,.04);
-
-  color: var(--muted);
-
-  font-size: 10px;
-  line-height: 1.5;
-}
-
-/* =========================================================
-   TRADE BUTTON
-   ========================================================= */
-
-.trade-button {
-  width: 100%;
-  min-height: 52px;
-
-  margin-top: 8px;
-
-  border-radius: 14px;
-
-  background: linear-gradient(
-    135deg,
-    var(--success),
-    #0fcf78
-  );
-
-  color: #001b10;
-
-  font-weight: 950;
-
-  box-shadow:
-    0 10px 28px rgba(25,230,140,.13);
-}
-
-/* =========================================================
-   CHART
-   ========================================================= */
-
-.chart-card {
-  padding: 12px;
-}
-
-.chart-header {
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-
-  padding: 3px 3px 11px;
-}
-
-.chart-title {
-  font-size: 13px;
-  font-weight: 950;
-}
-
-.chart-value {
-  color: var(--primary);
-  font-size: 12px;
-  font-weight: 900;
-}
-
-.chart {
-  width: 100%;
-  height: 220px;
-
-  border-radius: 13px;
-
-  background:
-    linear-gradient(
-      to bottom,
-      rgba(255,255,255,.025) 1px,
-      transparent 1px
-    ),
-    linear-gradient(
-      to right,
-      rgba(255,255,255,.018) 1px,
-      transparent 1px
-    ),
-    var(--card-2);
-
-  background-size:
-    100% 25%,
-    20% 100%;
-}
-
-/* =========================================================
-   DIGIT DISTRIBUTION
-   ========================================================= */
-
-.digit-grid {
-  display: grid;
-  grid-template-columns: repeat(5, 1fr);
-
-  gap: 6px;
-}
-
-.digit-box {
-  padding: 8px 4px;
-
-  text-align: center;
-
-  border-radius: 10px;
-
-  background: var(--card-2);
-
-  border: 1px solid var(--border);
-}
-
-.digit-number {
-  font-size: 13px;
-  font-weight: 950;
-}
-
-.digit-percent {
-  margin-top: 3px;
-
-  color: var(--muted);
-
-  font-size: 8px;
-  font-weight: 800;
-}
-
-.digit-box.hot {
-  border-color: rgba(25,230,140,.35);
-  background: rgba(25,230,140,.06);
-}
-
-.digit-box.cold {
-  border-color: rgba(255,77,103,.25);
-  background: rgba(255,77,103,.045);
-}
-
-/* =========================================================
-   HISTORY
-   ========================================================= */
-
-.history-list {
-  display: grid;
-  gap: 8px;
-}
-
-.history-item {
-  display: grid;
-  grid-template-columns: auto 1fr auto;
-
-  align-items: center;
-
-  gap: 10px;
-
-  padding: 11px;
-
-  background: var(--card);
-
-  border: 1px solid var(--border);
-
-  border-radius: 13px;
-}
-
-.history-icon {
-  width: 34px;
-  height: 34px;
-
-  display: flex;
-  align-items: center;
-  justify-content: center;
-
-  border-radius: 10px;
-
-  background: var(--card-2);
-
-  font-weight: 950;
-}
-
-.history-main {
-  min-width: 0;
-}
-
-.history-strategy {
-  font-size: 11px;
-  font-weight: 900;
-}
-
-.history-meta {
-  margin-top: 3px;
-
-  color: var(--muted);
-
-  font-size: 9px;
-}
-
-.history-result {
-  font-size: 12px;
-  font-weight: 950;
-}
-
-.history-result.win {
-  color: var(--success);
-}
-
-.history-result.loss {
-  color: var(--danger);
-}
-
-/* =========================================================
-   MODALS
-   ========================================================= */
-
-.modal {
-  position: fixed;
-
-  inset: 0;
-
-  z-index: 300;
-
-  display: none;
-  align-items: flex-end;
-  justify-content: center;
-
-  padding: 12px;
-
-  background: rgba(0,0,0,.68);
-
-  backdrop-filter: blur(7px);
-  -webkit-backdrop-filter: blur(7px);
-}
-
-.modal.active,
-.modal.show {
-  display: flex;
-}
-
-.modal-content {
-  width: 100%;
-  max-width: 520px;
-
-  max-height: 88vh;
-
-  overflow-y: auto;
-
-  padding: 17px;
-
-  background: var(--card);
-
-  border: 1px solid var(--border);
-
-  border-radius: 22px 22px 15px 15px;
-
-  box-shadow:
-    0 -15px 50px rgba(0,0,0,.35);
-}
-
-.modal-header {
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-
-  margin-bottom: 15px;
-}
-
-.modal-title {
-  font-size: 16px;
-  font-weight: 950;
-}
-
-.modal-close {
-  width: 36px;
-  height: 36px;
-
-  border-radius: 10px;
-
-  background: var(--card-2);
-  color: var(--text);
-}
-
-/* =========================================================
-   STRATEGY OPTIONS
-   ========================================================= */
-
-.strategy-options {
-  display: grid;
-  gap: 8px;
-}
-
-.strategy-option,
-.ai-strategy-group-option {
-  width: 100%;
-
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-
-  padding: 13px;
-
-  border-radius: 13px;
-
-  background: var(--card-2);
-
-  color: var(--text);
-
-  border: 1px solid var(--border);
-
-  text-align: left;
-}
-
-.strategy-option.active,
-.ai-strategy-group-option.active {
-  border-color: rgba(0,229,255,.45);
-
-  background:
-    rgba(0,229,255,.08);
-
-  color: var(--primary);
-}
-
-.strategy-name {
-  font-size: 12px;
-  font-weight: 900;
-}
-
-.strategy-desc {
-  margin-top: 3px;
-
-  color: var(--muted);
-
-  font-size: 9px;
-}
-
-.strategy-check {
-  color: var(--success);
-  font-weight: 950;
-}
-
-/* =========================================================
-   BOTTOM NAV
-   ========================================================= */
-
-.bottom-nav {
-  position: fixed;
-
-  left: 50%;
-  bottom: 10px;
-
-  transform: translateX(-50%);
-
-  z-index: 200;
-
-  width: calc(100% - 20px);
-  max-width: 520px;
-
-  display: grid;
-  grid-template-columns: repeat(3, 1fr);
-
-  gap: 4px;
-
-  padding: 6px;
-
-  background: rgba(10,25,42,.93);
-
-  border: 1px solid var(--border);
-
-  border-radius: 18px;
-
-  box-shadow:
-    0 12px 40px rgba(0,0,0,.35);
-
-  backdrop-filter: blur(18px);
-  -webkit-backdrop-filter: blur(18px);
-}
-
-body.light .bottom-nav {
-  background: rgba(255,255,255,.94);
-}
-
-.nav-item {
-  min-height: 50px;
-
-  display: flex;
-  flex-direction: column;
-
-  align-items: center;
-  justify-content: center;
-
-  gap: 3px;
-
-  border-radius: 13px;
-
-  background: transparent;
-
-  color: var(--muted);
-
-  font-size: 9px;
-  font-weight: 850;
-}
-
-.nav-icon {
-  font-size: 17px;
-}
-
-.nav-item.active {
-  background:
-    rgba(0,229,255,.10);
-
-  color: var(--primary);
-}
-
-/* =========================================================
-   FOOTER
-   ========================================================= */
-
-.footer {
-  padding: 18px 16px 25px;
-
-  text-align: center;
-
-  color: var(--muted);
-
-  font-size: 9px;
-  line-height: 1.5;
-}
-
-/* =========================================================
-   EMPTY / LOADING
-   ========================================================= */
-
-.empty-state {
-  padding: 30px 15px;
-
-  text-align: center;
-
-  color: var(--muted);
-}
-
-.empty-icon {
-  margin-bottom: 8px;
-
-  font-size: 30px;
-}
-
-.loading {
-  position: relative;
-
-  overflow: hidden;
-
-  background: var(--card-2);
-}
-
-.loading::after {
-  content: "";
-
-  position: absolute;
-
-  inset: 0;
-
-  transform: translateX(-100%);
-
-  background:
-    linear-gradient(
-      90deg,
-      transparent,
-      rgba(255,255,255,.06),
-      transparent
-    );
-
-  animation: shimmer 1.4s infinite;
-}
-
-/* =========================================================
-   NOTICES / ALERTS
-   ========================================================= */
-
-.alert {
-  padding: 11px 13px;
-
-  margin-bottom: 10px;
-
-  border-radius: 12px;
-
-  font-size: 10px;
-  font-weight: 750;
-
-  border: 1px solid var(--border);
-}
-
-.alert-info {
-  color: var(--primary);
-  background: rgba(0,229,255,.06);
-}
-
-.alert-success {
-  color: var(--success);
-  background: rgba(25,230,140,.06);
-}
-
-.alert-warning {
-  color: var(--warning);
-  background: rgba(255,200,87,.06);
-}
-
-.alert-danger {
-  color: var(--danger);
-  background: rgba(255,77,103,.06);
-}
-
-/* =========================================================
-   UTILITY CLASSES
-   ========================================================= */
-
-.hidden {
-  display: none !important;
-}
-
-.text-center {
-  text-align: center;
-}
-
-.text-muted {
-  color: var(--muted);
-}
-
-.text-primary {
-  color: var(--primary);
-}
-
-.text-success {
-  color: var(--success);
-}
-
-.text-danger {
-  color: var(--danger);
-}
-
-.text-warning {
-  color: var(--warning);
-}
-
-.bold {
-  font-weight: 900;
-}
-
-.mt-8 {
-  margin-top: 8px;
-}
-
-.mt-12 {
-  margin-top: 12px;
-}
-
-.mb-8 {
-  margin-bottom: 8px;
-}
-
-.mb-12 {
-  margin-bottom: 12px;
-}
-
-/* =========================================================
-   RESPONSIVE DESKTOP
-   ========================================================= */
-
-@media (min-width: 700px) {
-
-  .page {
-    padding: 22px;
-  }
-
-  .stats-grid {
-    grid-template-columns: repeat(4, 1fr);
-  }
-
-  .control-grid {
-    grid-template-columns: repeat(3, 1fr);
-  }
-
-  .bot-decision-grid {
-    grid-template-columns: repeat(4, 1fr);
-  }
-
-  .ai-assist-grid {
-    grid-template-columns: repeat(3, 1fr);
-  }
-
-  .digit-grid {
-    grid-template-columns: repeat(10, 1fr);
-  }
-
-  .modal {
-    align-items: center;
-  }
-
-  .modal-content {
-    border-radius: 22px;
-  }
-
-  .bottom-nav {
-    bottom: 18px;
-  }
-}
-
-/* =========================================================
-   SMALL ANDROID PHONES
-   ========================================================= */
-
-@media (max-width: 380px) {
-
-  .page {
-    padding: 11px;
-  }
-
-  .topbar {
-    padding: 10px 11px;
-  }
-
-  .brand-title {
-    font-size: 14px;
-  }
-
-  .brand-logo {
-    width: 38px;
-    height: 38px;
-  }
-
-  .status-pill {
-    display: none;
-  }
-
-  .card {
-    padding: 13px;
-    border-radius: 16px;
-  }
-
-  .account-balance {
-    font-size: 22px;
-  }
-
-  .ai-circle {
-    width: 155px;
-    height: 155px;
-  }
-
-  .prediction-main {
-    font-size: 29px;
-  }
-
-  .bot-decision-grid {
-    grid-template-columns: 1fr 1fr;
-  }
-
-  .digit-grid {
-    gap: 4px;
-  }
-
-  .digit-box {
-    padding: 7px 2px;
-  }
-
-  .digit-number {
-    font-size: 12px;
-  }
-
-  .bottom-nav {
-    width: calc(100% - 14px);
-    bottom: 7px;
-  }
-}
-
-/* =========================================================
-   ANIMATIONS
-   ========================================================= */
-
-@keyframes pulse {
-  0%,
-  100% {
-    opacity: 1;
-    transform: scale(1);
-  }
-
-  50% {
-    opacity: .45;
-    transform: scale(.8);
-  }
-}
-
-@keyframes spin {
-  from {
-    transform: rotate(0deg);
-  }
-
-  to {
-    transform: rotate(360deg);
-  }
-}
-
-@keyframes shimmer {
-  100% {
-    transform: translateX(100%);
-  }
-}
-
-/* =========================================================
-   SAFE AREA FOR ANDROID
-   ========================================================= */
-
-@supports (padding: env(safe-area-inset-bottom)) {
-
-  .bottom-nav {
-    bottom: calc(8px + env(safe-area-inset-bottom));
-  }
-
-  .app {
-    padding-bottom:
-      calc(90px + env(safe-area-inset-bottom));
-  }
+*{box-sizing:border-box}
+:root{
+--bg:#07111f;
+--card:#0d1b2d;
+--card2:#10243a;
+--text:#eef7ff;
+--muted:#91a7bd;
+--line:#1d3852;
+--accent:#00e5ff;
+--green:#19e68c;
+--red:#ff4f6d;
+--yellow:#ffd166;
+}
+body.light{
+--bg:#eef4f8;
+--card:#fff;
+--card2:#e8f0f6;
+--text:#102030;
+--muted:#5c7080;
+--line:#c9d6df;
+}
+html{scroll-behavior:smooth}
+body{
+margin:0;
+background:var(--bg);
+color:var(--text);
+font-family:Arial,sans-serif;
+padding-bottom:90px;
+}
+button,input,select{font:inherit}
+button{cursor:pointer}
+.topbar{
+position:sticky;top:0;z-index:20;
+display:flex;justify-content:space-between;align-items:center;
+padding:12px 16px;
+background:rgba(7,17,31,.96);
+border-bottom:1px solid var(--line);
+backdrop-filter:blur(12px)
+}
+.brand{display:flex;gap:10px;align-items:center}
+.brand-icon{
+width:42px;height:42px;border-radius:12px;
+display:grid;place-items:center;
+background:linear-gradient(135deg,#00e5ff,#1677ff);
+color:#00131c;font-size:24px;font-weight:900
+}
+.brand h1{margin:0;font-size:20px}
+.brand span{font-size:10px;color:var(--accent);font-weight:bold}
+.top-controls{display:flex;gap:6px;align-items:center}
+.connection-status{font-size:10px;color:var(--muted);display:flex;align-items:center;gap:5px}
+.status-dot{
+width:8px;height:8px;border-radius:50%;display:inline-block;background:var(--yellow)
+}
+.status-dot.connected{background:var(--green)}
+.status-dot.error{background:var(--red)}
+.mode-btn,.icon-btn,.small-btn{
+border:1px solid var(--line);
+background:var(--card);
+color:var(--text);
+border-radius:8px;padding:8px 10px;font-weight:bold;font-size:11px
+}
+.mode-btn.active{border-color:var(--accent);color:var(--accent)}
+.account-card{
+margin:12px auto;max-width:1200px;
+display:grid;grid-template-columns:repeat(3,1fr);gap:10px;
+padding:12px
+}
+.account-card>div,.auth-card,.card,.hero,.cycle-card,.prediction-card,.report-card,.trade-signal,.history-card{
+background:var(--card);
+border:1px solid var(--line);
+border-radius:16px;
+box-shadow:0 8px 30px rgba(0,0,0,.12)
+}
+.account-card>div{padding:13px}
+small,.eyebrow{display:block;color:var(--muted);font-size:10px;font-weight:bold;letter-spacing:.7px}
+.account-card strong{display:block;margin-top:5px}
+.auth-card{
+max-width:1200px;margin:12px auto;padding:16px
+}
+.auth-card h2{margin:5px 0;font-size:17px}
+.auth-card p{color:var(--muted);font-size:12px}
+.auth-actions{display:flex;gap:8px;flex-wrap:wrap;margin:12px 0}
+.auth-status,.message{
+padding:10px;border-radius:9px;
+background:var(--card2);color:var(--muted);font-size:12px
+}
+.auth-details{
+display:grid;grid-template-columns:repeat(3,1fr);gap:10px;margin-top:10px
+}
+.auth-details>div{padding:10px;background:var(--card2);border-radius:9px}
+.auth-details strong{display:block;margin-top:4px}
+main{max-width:1200px;margin:auto;padding:0 12px}
+.page{display:none}
+.page.active{display:block}
+.page-header{
+display:flex;justify-content:space-between;align-items:center;
+gap:10px;padding:18px 3px
+}
+.page-header h2{margin:5px 0}
+.page-header p{margin:5px 0;color:var(--muted);font-size:12px}
+.live-indicator{font-size:11px;color:var(--green);white-space:nowrap}
+.hero{
+padding:18px;display:grid;grid-template-columns:1fr 1fr;gap:18px
+}
+.ai-badge{
+display:inline-grid;place-items:center;
+width:35px;height:35px;border-radius:10px;
+background:var(--accent);color:#00131c;font-weight:900
+}
+.hero h2{margin:10px 0 3px}
+.hero p{color:var(--muted);font-size:11px}
+.hero-stats{
+display:grid;grid-template-columns:repeat(2,1fr);gap:8px
+}
+.hero-stats>div{
+background:var(--card2);border-radius:10px;padding:10px
+}
+.hero-stats strong{display:block;margin-top:5px}
+.circle-wrap{text-align:center;padding:22px}
+.ai-circle{
+width:210px;height:210px;margin:auto;border-radius:50%;
+border:5px solid var(--accent);
+display:flex;flex-direction:column;justify-content:center;align-items:center;
+box-shadow:0 0 35px rgba(0,229,255,.18)
+}
+.ai-circle.active{animation:pulse 1s infinite}
+.ai-circle.trade-now{border-color:var(--green)}
+.ai-circle strong{font-size:48px;margin:5px}
+.ai-circle b{color:var(--accent)}
+@keyframes pulse{50%{transform:scale(1.025);box-shadow:0 0 55px rgba(0,229,255,.3)}}
+.cycle-card,.prediction-card,.report-card,.card,.trade-signal,.history-card{padding:16px;margin-bottom:12px}
+.section-heading{display:flex;justify-content:space-between;align-items:center;gap:8px;margin-bottom:12px}
+.section-heading h3{margin:4px 0}
+.cycle-grid{display:grid;grid-template-columns:repeat(4,1fr);gap:8px}
+.cycle-step{
+padding:14px;text-align:center;background:var(--card2);
+border-radius:12px;opacity:.55
+}
+.cycle-step.active{opacity:1;border:1px solid var(--accent)}
+.cycle-step b,.cycle-step strong,.cycle-step small{display:block}
+.cycle-step strong{font-size:18px;margin:4px}
+.buttons{display:flex;gap:8px;flex-wrap:wrap;margin-top:14px}
+.primary-btn,.secondary-btn{
+border:0;border-radius:9px;padding:11px 15px;font-weight:bold
+}
+.primary-btn{background:var(--accent);color:#00131c}
+.secondary-btn{background:var(--card2);border:1px solid var(--line);color:var(--text)}
+.primary-btn:disabled,.secondary-btn:disabled{opacity:.45;cursor:not-allowed}
+.big-prediction{text-align:center;font-size:56px;font-weight:900;padding:12px}
+.prediction-card{text-align:center}
+.report-grid,.stats-grid{
+display:grid;grid-template-columns:repeat(4,1fr);gap:8px
+}
+.report-grid>div,.stats-grid>div{
+background:var(--card2);padding:11px;border-radius:9px
+}
+.report-grid strong,.stats-grid strong{display:block;margin-top:5px}
+.markets-grid,.trade-markets-grid{
+display:grid;grid-template-columns:repeat(auto-fit,minmax(140px,1fr));gap:8px
+}
+.market,.trade-market{
+padding:11px;background:var(--card2);border:1px solid var(--line);
+border-radius:10px
+}
+.market.good,.trade-market.good{border-color:var(--green)}
+.market-head{display:flex;justify-content:space-between}
+.market-price{font-size:17px;font-weight:bold;margin-top:7px}
+.market-badge{font-size:9px;color:var(--green)}
+.digits-grid{display:grid;grid-template-columns:repeat(10,1fr);gap:5px}
+.digit{
+text-align:center;padding:8px 2px;background:var(--card2);border-radius:7px
+}
+.digit b{display:block}
+.digit small{font-size:9px}
+.strategy-grid{display:grid;grid-template-columns:repeat(6,1fr);gap:7px}
+.strategy-btn{
+padding:11px;border-radius:9px;border:1px solid var(--line);
+background:var(--card2);color:var(--text);font-weight:bold
+}
+.strategy-btn.active{border-color:var(--accent);color:var(--accent)}
+.paper-badge{color:var(--yellow);font-size:11px;font-weight:bold}
+.signal-grid{display:grid;grid-template-columns:repeat(3,1fr);gap:8px}
+.signal-grid>div{background:var(--card2);padding:13px;border-radius:9px}
+.signal-grid strong{display:block;margin-top:5px;font-size:18px}
+.form-grid{
+display:grid;grid-template-columns:repeat(2,1fr);gap:12px
+}
+.form-grid label{font-size:10px;font-weight:bold;color:var(--muted)}
+input,select{
+width:100%;margin-top:5px;padding:11px;
+border-radius:8px;border:1px solid var(--line);
+background:var(--card2);color:var(--text);outline:none
+}
+input:focus,select:focus{border-color:var(--accent)}
+.form-grid small{margin-top:4px;font-size:9px}
+.table-wrap{overflow:auto}
+table{width:100%;border-collapse:collapse;min-width:650px}
+th,td{text-align:left;padding:10px;border-bottom:1px solid var(--line);font-size:11px}
+th{color:var(--muted)}
+.win{color:var(--green)}
+.loss{color:var(--red)}
+.pending{color:var(--yellow)}
+.empty-history{text-align:center;color:var(--muted);padding:30px}
+.bottom-nav{
+position:fixed;bottom:0;left:0;right:0;z-index:30;
+display:flex;justify-content:center;
+background:rgba(7,17,31,.97);border-top:1px solid var(--line)
+}
+.nav-btn{
+flex:1;max-width:220px;border:0;background:transparent;
+color:var(--muted);padding:12px 5px;font-size:10px
+}
+.nav-btn span{display:block;margin-top:3px}
+.nav-btn.active{color:var(--accent)}
+footer{text-align:center;color:var(--muted);font-size:9px;padding:18px}
+.hidden{display:none!important}
+
+@media(max-width:700px){
+.topbar{align-items:flex-start}
+.connection-status{display:none}
+.hero{grid-template-columns:1fr}
+.account-card{grid-template-columns:repeat(3,1fr);font-size:11px}
+.auth-details{grid-template-columns:1fr 1fr}
+.cycle-grid{grid-template-columns:repeat(2,1fr)}
+.report-grid{grid-template-columns:repeat(2,1fr)}
+.stats-grid{grid-template-columns:repeat(2,1fr)}
+.strategy-grid{grid-template-columns:repeat(2,1fr)}
+.signal-grid{grid-template-columns:1fr 1fr 1fr}
+.form-grid{grid-template-columns:1fr}
+.digits-grid{grid-template-columns:repeat(5,1fr)}
+}
+
+@media(max-width:430px){
+.brand h1{font-size:16px}
+.brand span{font-size:8px}
+.mode-btn{padding:7px}
+.account-card{gap:5px;padding:5px}
+.auth-details{grid-template-columns:1fr}
+.signal-grid{grid-template-columns:1fr}
 }
-
-/* =========================================================
-   END KRISHWAVE V7.0 STYLE
-   ========================================================= */
