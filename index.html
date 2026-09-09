@@ -2,1673 +2,370 @@
 <html lang="en">
 <head>
 <meta charset="UTF-8">
-
-<meta
-  name="viewport"
-  content="width=device-width, initial-scale=1"
->
-
-<meta
-  name="theme-color"
-  content="#07111f"
->
-
-<title>KRISHWAVE AI BEAST V7.0</title>
-
-<link
-  rel="stylesheet"
-  href="style.css"
->
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<meta name="theme-color" content="#07111f">
+<title>KRISHWAVE AI BEAST V6.2</title>
+<link rel="stylesheet" href="style.css">
 </head>
 
 <body>
 
-<!-- =====================================================
-     TOP BAR
-===================================================== -->
-
 <header class="topbar">
-
   <div class="brand">
-
-    <div class="brand-icon">
-      K
-    </div>
-
+    <div class="brand-icon">K</div>
     <div>
-
-      <h1>
-        KRISHWAVE
-      </h1>
-
-      <span>
-        AI BEAST V7.0
-      </span>
-
+      <h1>KRISHWAVE</h1>
+      <span>AI BEAST V6.2</span>
     </div>
-
   </div>
-
 
   <div class="top-controls">
-
     <span class="connection-status">
-
-      <i
-        id="connectionDot"
-        class="status-dot"
-      ></i>
-
-      <span id="connectionText">
-        CONNECTING...
-      </span>
-
+      <i id="connectionDot" class="status-dot"></i>
+      <span id="connectionText">CONNECTING...</span>
     </span>
-
-
-    <button
-      id="demoModeBtn"
-      class="mode-btn active"
-      type="button"
-    >
-      DEMO
-    </button>
-
-
-    <button
-      id="realModeBtn"
-      class="mode-btn"
-      type="button"
-      disabled
-    >
-      REAL
-    </button>
-
-
-    <button
-      id="themeToggle"
-      class="icon-btn"
-      type="button"
-    >
-      ☀️
-    </button>
-
+    <button id="demoModeBtn" class="mode-btn active">DEMO</button>
+    <button id="realModeBtn" class="mode-btn" disabled>REAL</button>
+    <button id="themeToggle" class="icon-btn">☀️</button>
   </div>
-
 </header>
 
-
-<!-- =====================================================
-     ACCOUNT CARD
-===================================================== -->
-
 <section class="account-card">
-
   <div>
-
-    <small>
-      ACCOUNT MODE
-    </small>
-
-    <strong id="accountMode">
-      DEMO / PAPER
-    </strong>
-
+    <small>ACCOUNT MODE</small>
+    <strong id="accountMode">DEMO</strong>
   </div>
-
-
   <div>
-
-    <small>
-      BALANCE
-    </small>
-
-    <strong id="balance">
-      $1,000.00
-    </strong>
-
+    <small>BALANCE</small>
+    <strong id="balance">—</strong>
   </div>
-
-
   <div>
-
-    <small>
-      DATA
-    </small>
-
-    <strong id="dataStatus">
-      CONNECTING...
-    </strong>
-
+    <small>DATA</small>
+    <strong id="dataStatus">CONNECTING...</strong>
   </div>
-
 </section>
 
+<section class="auth-card">
+  <div>
+    <span class="eyebrow">SECURE CONNECTION</span>
+    <h2>🔐 DERIV ACCOUNT CONNECTION</h2>
+    <p>Connect KRISHWAVE to your Deriv demo account.</p>
+  </div>
+
+  <div class="auth-actions">
+    <button id="connectDerivBtn" class="primary-btn">🔐 CONNECT DERIV</button>
+    <button id="disconnectDerivBtn" class="secondary-btn hidden">DISCONNECT</button>
+  </div>
+
+  <div id="authStatus" class="auth-status">NOT CONNECTED</div>
+
+  <div class="auth-details">
+    <div><small>ACCOUNT</small><strong id="derivAccountId">—</strong></div>
+    <div><small>CURRENCY</small><strong id="derivCurrency">—</strong></div>
+    <div><small>CONNECTION</small><strong id="derivAuthConnection">OFFLINE</strong></div>
+  </div>
+</section>
 
 <main>
 
-
-<!-- =====================================================
-     AI CIRCLE / ANALYSIS PAGE
-===================================================== -->
-
-<section
-  id="analysisPage"
-  class="page"
->
+<section id="analysisPage" class="page active">
 
   <div class="page-header">
-
     <div>
-
-      <span class="eyebrow">
-        DERIV MARKET INTELLIGENCE
-      </span>
-
-      <h2>
-        AI CIRCLE
-      </h2>
-
-      <p>
-        Independent market analysis and
-        statistical intelligence.
-      </p>
-
+      <span class="eyebrow">DERIV MARKET INTELLIGENCE</span>
+      <h2>AI MARKET ANALYSIS</h2>
+      <p>Live volatility intelligence and digit analysis.</p>
     </div>
-
-
-    <span class="live-indicator">
-      ● DERIV LIVE
-    </span>
-
+    <span class="live-indicator">● DERIV LIVE</span>
   </div>
-
-
-  <!-- AI CIRCLE HERO -->
 
   <div class="hero">
-
     <div>
-
-      <span class="ai-badge">
-        AI
-      </span>
-
-      <h2>
-        KRISHWAVE AI CIRCLE
-      </h2>
-
-      <p>
-        MARKET ANALYSIS ENGINE
-      </p>
-
+      <span class="ai-badge">AI</span>
+      <h2>KRISHWAVE AI BEAST</h2>
+      <p>STATISTICAL MARKET INTELLIGENCE ENGINE</p>
     </div>
-
 
     <div class="hero-stats">
-
-      <div>
-
-        <small>
-          STATUS
-        </small>
-
-        <strong id="aiStatus">
-          WAITING
-        </strong>
-
-      </div>
-
-
-      <div>
-
-        <small>
-          MARKET
-        </small>
-
-        <strong id="aiMarket">
-          —
-        </strong>
-
-      </div>
-
-
-      <div>
-
-        <small>
-          PREDICTION
-        </small>
-
-        <strong id="aiPrediction">
-          —
-        </strong>
-
-      </div>
-
-
-      <div>
-
-        <small>
-          TYPE
-        </small>
-
-        <strong id="aiType">
-          —
-        </strong>
-
-      </div>
-
-
-      <div>
-
-        <small>
-          CONFIDENCE
-        </small>
-
-        <strong id="analysisConfidence">
-          —
-        </strong>
-
-      </div>
-
+      <div><small>STATUS</small><strong id="aiStatus">IDLE</strong></div>
+      <div><small>MARKET</small><strong id="aiMarket">—</strong></div>
+      <div><small>PREDICTION</small><strong id="aiPrediction">—</strong></div>
+      <div><small>TYPE</small><strong id="aiType">—</strong></div>
+      <div><small>CONFIDENCE</small><strong id="analysisConfidence">—</strong></div>
     </div>
-
   </div>
-
-
-  <!-- AI CIRCLE -->
 
   <div class="circle-wrap">
-
-    <div
-      id="aiCircle"
-      class="ai-circle"
-    >
-
-      <span id="aiCircleLabel">
-        AI CIRCLE
-      </span>
-
-      <strong id="aiCirclePrediction">
-        --
-      </strong>
-
-      <b id="aiCircleTimer">
-        --
-      </b>
-
-      <small id="aiCircleStatus">
-        WAITING
-      </small>
-
+    <div id="aiCircle" class="ai-circle">
+      <span id="aiCircleLabel">AI READY</span>
+      <strong id="aiCirclePrediction">--</strong>
+      <b id="aiCircleTimer">--</b>
+      <small id="aiCircleStatus">WAITING</small>
     </div>
-
   </div>
 
+  <div class="cycle-card">
+    <div class="section-heading">
+      <div>
+        <span class="eyebrow">AUTOMATIC AI CYCLE</span>
+        <h3>10 → 5 → 3 → REPEAT</h3>
+      </div>
+    </div>
 
-  <!-- CIRCLE PREDICTION -->
+    <div class="cycle-grid">
+      <div id="cycleAnalysis" class="cycle-step"><b>01</b><strong>10s</strong><small>ANALYSIS</small></div>
+      <div id="cyclePrediction" class="cycle-step"><b>02</b><strong>5s</strong><small>PREDICTION</small></div>
+      <div id="cycleTrade" class="cycle-step"><b>03</b><strong>3s</strong><small>TRADE NOW</small></div>
+      <div id="cycleCooldown" class="cycle-step"><b>↻</b><strong>REPEAT</strong><small>NEW CYCLE</small></div>
+    </div>
+
+    <div class="buttons">
+      <button id="startAI" class="primary-btn">▶ START AI</button>
+      <button id="stopAI" class="secondary-btn">■ STOP AI</button>
+    </div>
+  </div>
 
   <div class="prediction-card">
-
     <div class="section-heading">
-
-      <span>
-        AI CIRCLE SIGNAL
-      </span>
-
-      <strong id="entryStatus">
-        WAITING
-      </strong>
-
+      <span>AI NEXT SIGNAL</span>
+      <strong id="entryStatus">WAITING</strong>
     </div>
-
-
-    <div
-      id="aiPredictionLarge"
-      class="big-prediction"
-    >
-      --
-    </div>
-
-
-    <div id="predictionConfidence">
-      CONFIDENCE: --
-    </div>
-
+    <div id="aiPredictionLarge" class="big-prediction">--</div>
+    <div id="predictionConfidence">CONFIDENCE: --</div>
   </div>
-
-
-  <!-- AI REPORT -->
 
   <div class="report-card">
-
     <div class="section-heading">
-
       <div>
-
-        <span class="eyebrow">
-          AI CIRCLE REPORT
-        </span>
-
-        <h3>
-          MARKET INTELLIGENCE
-        </h3>
-
+        <span class="eyebrow">AI REPORT</span>
+        <h3>MARKET INTELLIGENCE REPORT</h3>
       </div>
-
     </div>
-
 
     <div class="report-grid">
-
-      <div>
-
-        <small>
-          MARKET
-        </small>
-
-        <strong id="reportMarket">
-          —
-        </strong>
-
-      </div>
-
-
-      <div>
-
-        <small>
-          SCORE
-        </small>
-
-        <strong id="reportScore">
-          —
-        </strong>
-
-      </div>
-
-
-      <div>
-
-        <small>
-          STRENGTH
-        </small>
-
-        <strong id="reportStrength">
-          —
-        </strong>
-
-      </div>
-
-
-      <div>
-
-        <small>
-          STABILITY
-        </small>
-
-        <strong id="reportStability">
-          —
-        </strong>
-
-      </div>
-
-
-      <div>
-
-        <small>
-          CONCENTRATION
-        </small>
-
-        <strong id="reportConcentration">
-          —
-        </strong>
-
-      </div>
-
-
-      <div>
-
-        <small>
-          STREAK
-        </small>
-
-        <strong id="reportStreak">
-          —
-        </strong>
-
-      </div>
-
-
-      <div>
-
-        <small>
-          AGREEMENT
-        </small>
-
-        <strong id="reportAgreement">
-          —
-        </strong>
-
-      </div>
-
+      <div><small>MARKET</small><strong id="reportMarket">—</strong></div>
+      <div><small>SCORE</small><strong id="reportScore">—</strong></div>
+      <div><small>STRENGTH</small><strong id="reportStrength">—</strong></div>
+      <div><small>STABILITY</small><strong id="reportStability">—</strong></div>
+      <div><small>CONCENTRATION</small><strong id="reportConcentration">—</strong></div>
+      <div><small>STREAK</small><strong id="reportStreak">—</strong></div>
+      <div><small>AGREEMENT</small><strong id="reportAgreement">—</strong></div>
     </div>
 
-
-    <div
-      id="analysisMsg"
-      class="message"
-    >
-      Waiting for sufficient market data.
-    </div>
-
+    <div id="analysisMsg" class="message">Start AI analysis to generate market intelligence.</div>
   </div>
-
-</section>
-
-
-<!-- =====================================================
-     TRADE PAGE
-===================================================== -->
-
-<section
-  id="tradePage"
-  class="page active"
->
-
-
-  <!-- ===================================================
-       LIVE PRICE CHART
-  ==================================================== -->
-
-  <div class="card chart-card">
-
-    <div class="chart-header">
-
-      <h3 id="currentChartMarket">
-        Volatility 10 Index
-      </h3>
-
-      <span
-        id="currentLivePrice"
-        class="live-price-text"
-      >
-        --
-      </span>
-
-    </div>
-
-
-    <div class="canvas-container">
-
-      <canvas
-        id="priceChartCanvas"
-      ></canvas>
-
-    </div>
-
-  </div>
-
-
-  <!-- ===================================================
-       DIGIT STATISTICS
-  ==================================================== -->
-
-  <div class="card digit-stats-card">
-
-    <div class="section-heading">
-
-      <span class="eyebrow">
-        LAST DIGIT STATS
-      </span>
-
-    </div>
-
-
-    <div
-      id="digitStatsGrid"
-      class="digit-stats-grid"
-    >
-
-      <div class="digit-stat-circle">
-        <span class="digit-num">0</span>
-        <span class="digit-pct">--</span>
-      </div>
-
-      <div class="digit-stat-circle">
-        <span class="digit-num">1</span>
-        <span class="digit-pct">--</span>
-      </div>
-
-      <div class="digit-stat-circle">
-        <span class="digit-num">2</span>
-        <span class="digit-pct">--</span>
-      </div>
-
-      <div class="digit-stat-circle">
-        <span class="digit-num">3</span>
-        <span class="digit-pct">--</span>
-      </div>
-
-      <div class="digit-stat-circle">
-        <span class="digit-num">4</span>
-        <span class="digit-pct">--</span>
-      </div>
-
-      <div class="digit-stat-circle">
-        <span class="digit-num">5</span>
-        <span class="digit-pct">--</span>
-      </div>
-
-      <div class="digit-stat-circle">
-        <span class="digit-num">6</span>
-        <span class="digit-pct">--</span>
-      </div>
-
-      <div class="digit-stat-circle">
-        <span class="digit-num">7</span>
-        <span class="digit-pct">--</span>
-      </div>
-
-      <div class="digit-stat-circle">
-        <span class="digit-num">8</span>
-        <span class="digit-pct">--</span>
-      </div>
-
-      <div class="digit-stat-circle">
-        <span class="digit-num">9</span>
-        <span class="digit-pct">--</span>
-      </div>
-
-    </div>
-
-  </div>
-
-
-  <!-- ===================================================
-       TRADING ENGINE
-  ==================================================== -->
-
-  <div class="card engine-card">
-
-    <div class="section-heading space-between">
-
-      <h3>
-        Trading Engine
-      </h3>
-
-      <span class="badge-live">
-        ● PAPER
-      </span>
-
-    </div>
-
-
-    <!-- ENGINE TABS -->
-
-    <div class="engine-tabs">
-
-      <button
-        id="tabAiBot"
-        class="engine-tab-btn active"
-        type="button"
-      >
-        ⚡ AI BOT
-      </button>
-
-
-      <button
-        id="tabManual"
-        class="engine-tab-btn"
-        type="button"
-      >
-        🎮 MANUAL
-      </button>
-
-    </div>
-
-
-    <!-- =================================================
-         AI BOT
-    ================================================== -->
-
-    <div
-      id="aiBotContent"
-      class="engine-content"
-    >
-
-      <div class="bot-identity">
-
-        <span class="ai-badge">
-          BOT
-        </span>
-
-        <div>
-
-          <strong>
-            AUTONOMOUS AI BOT
-          </strong>
-
-          <small>
-            INDEPENDENT DECISION ENGINE
-          </small>
-
-        </div>
-
-      </div>
-
-
-      <div class="engine-status-box">
-
-        <small>
-          AI BOT STATUS
-        </small>
-
-        <div
-          class="status-dash"
-          id="botStatusDash"
-        >
-          READY
-        </div>
-
-        <small
-          id="engineStatusText"
-          class="text-accent"
-        >
-          AI Bot Ready to Start
-        </small>
-
-      </div>
-
-
-      <!-- AI BOT DECISION -->
-
-      <div class="bot-decision-card">
-
-        <div>
-
-          <small>
-            SELECTED MARKET
-          </small>
-
-          <strong id="botSelectedMarket">
-            —
-          </strong>
-
-        </div>
-
-
-        <div>
-
-          <small>
-            STRATEGY
-          </small>
-
-          <strong id="botSelectedStrategy">
-            —
-          </strong>
-
-        </div>
-
-
-        <div>
-
-          <small>
-            TARGET
-          </small>
-
-          <strong id="botSelectedTarget">
-            —
-          </strong>
-
-        </div>
-
-
-        <div>
-
-          <small>
-            CONFIDENCE
-          </small>
-
-          <strong id="botSelectedConfidence">
-            —
-          </strong>
-
-        </div>
-
-      </div>
-
-
-      <!-- AI STRATEGY RANGE -->
-
-      <div class="input-field-group full-width">
-
-        <label>
-          AI ALLOWED STRATEGIES
-        </label>
-
-
-        <div
-          id="aiStrategyGroupTrigger"
-          class="custom-select-trigger"
-        >
-
-          <span
-            id="aiStrategyGroupLabel"
-          >
-            ALL 6 STRATEGIES
-          </span>
-
-          <span class="dropdown-arrow">
-            ❯
-          </span>
-
-        </div>
-
-      </div>
-
-
-      <div class="form-grid-custom">
-
-
-        <div class="input-field-group full-width">
-
-          <label>
-            STAKE ($)
-            <small>
-              Minimum stake 0.35
-            </small>
-          </label>
-
-          <input
-            id="stakeInput"
-            type="number"
-            min="0.35"
-            step="0.01"
-            value="10"
-          >
-
-        </div>
-
-
-        <div class="row-two-col">
-
-          <div class="input-field-group">
-
-            <label>
-              TAKE PROFIT ($)
-            </label>
-
-            <input
-              id="takeProfitInput"
-              type="number"
-              value="50"
-            >
-
-          </div>
-
-
-          <div class="input-field-group">
-
-            <label>
-              STOP LOSS ($)
-            </label>
-
-            <input
-              id="stopLossInput"
-              type="number"
-              value="100"
-            >
-
-          </div>
-
-        </div>
-
-
-        <div class="input-field-group full-width">
-
-          <label>
-            MARTINGALE MULTIPLIER
-          </label>
-
-          <input
-            id="martingaleInput"
-            type="number"
-            step="0.1"
-            value="2.1"
-          >
-
-        </div>
-
-      </div>
-
-
-      <div class="bot-warning">
-        ⚠ AI BOT IS PAPER / DEMO ONLY
-      </div>
-
-
-      <button
-        id="startBotBtn"
-        class="primary-action-btn"
-        type="button"
-      >
-        Start Trading Bot
-      </button>
-
-    </div>
-
-
-    <!-- =================================================
-         MANUAL MODE
-    ================================================== -->
-
-    <div
-      id="manualContent"
-      class="engine-content"
-      style="display:none;"
-    >
-
-      <div class="bot-identity">
-
-        <span class="ai-badge">
-          AI+
-        </span>
-
-        <div>
-
-          <strong>
-            AI-ASSISTED MANUAL
-          </strong>
-
-          <small>
-            YOU CONTROL THE TRADE
-          </small>
-
-        </div>
-
-      </div>
-
-
-      <div class="engine-status-box">
-
-        <small>
-          MANUAL ENGINE
-        </small>
-
-        <div class="status-dash">
-          MANUAL
-        </div>
-
-        <small
-          id="manualStatusText"
-          class="text-accent"
-        >
-          Manual trading active
-        </small>
-
-      </div>
-
-
-      <div class="form-grid-custom">
-
-
-        <!-- MARKET -->
-
-        <div class="input-field-group full-width">
-
-          <label>
-            MARKET
-          </label>
-
-          <select
-            id="manualMarketSelect"
-          >
-
-            <option value="R_10">
-              Volatility 10 Index
-            </option>
-
-            <option value="R_25">
-              Volatility 25 Index
-            </option>
-
-            <option value="R_50">
-              Volatility 50 Index
-            </option>
-
-            <option value="R_75">
-              Volatility 75 Index
-            </option>
-
-            <option value="R_100">
-              Volatility 100 Index
-            </option>
-
-            <option value="1HZ10V">
-              Volatility 10 (1s) Index
-            </option>
-
-            <option value="1HZ25V">
-              Volatility 25 (1s) Index
-            </option>
-
-            <option value="1HZ30V">
-              Volatility 30 (1s) Index
-            </option>
-
-            <option value="1HZ50V">
-              Volatility 50 (1s) Index
-            </option>
-
-            <option value="1HZ75V">
-              Volatility 75 (1s) Index
-            </option>
-
-            <option value="1HZ90V">
-              Volatility 90 (1s) Index
-            </option>
-
-            <option value="1HZ100V">
-              Volatility 100 (1s) Index
-            </option>
-
-            <option value="1HZ150V">
-              Volatility 150 (1s) Index
-            </option>
-
-            <option value="1HZ250V">
-              Volatility 250 (1s) Index
-            </option>
-
-            <option value="1HZ1000V">
-              Volatility 1000 (1s) Index
-            </option>
-
-          </select>
-
-        </div>
-
-
-        <!-- STAKE -->
-
-        <div class="input-field-group full-width">
-
-          <label>
-            STAKE ($)
-            <small>
-              Minimum stake 0.35
-            </small>
-          </label>
-
-          <input
-            id="manualStakeInput"
-            type="number"
-            min="0.35"
-            step="0.01"
-            value="10"
-          >
-
-        </div>
-
-
-        <!-- STRATEGY -->
-
-        <div class="input-field-group full-width">
-
-          <label>
-            STRATEGY
-          </label>
-
-          <div
-            id="manualStrategyTrigger"
-            class="custom-select-trigger"
-          >
-
-            <span
-              id="manualSelectedStrategyLabel"
-            >
-              Matches
-            </span>
-
-            <span class="dropdown-arrow">
-              ❯
-            </span>
-
-          </div>
-
-        </div>
-
-
-        <!-- TARGET -->
-
-        <div
-          id="targetDigitContainer"
-          class="input-field-group full-width"
-        >
-
-          <label>
-            TARGET DIGIT / THRESHOLD
-          </label>
-
-          <input
-            id="manualTargetDigitInput"
-            type="number"
-            min="0"
-            max="9"
-            value="4"
-          >
-
-        </div>
-
-
-        <!-- TAKE / STOP -->
-
-        <div class="row-two-col">
-
-          <div class="input-field-group">
-
-            <label>
-              TAKE PROFIT ($)
-            </label>
-
-            <input
-              id="manualTakeProfitInput"
-              type="number"
-              value="50"
-            >
-
-          </div>
-
-
-          <div class="input-field-group">
-
-            <label>
-              STOP LOSS ($)
-            </label>
-
-            <input
-              id="manualStopLossInput"
-              type="number"
-              value="100"
-            >
-
-          </div>
-
-        </div>
-
-      </div>
-
-
-      <!-- MANUAL AI INTELLIGENCE -->
-
-      <div class="manual-ai-panel">
-
-        <div class="section-heading">
-
-          <div>
-
-            <span class="eyebrow">
-              AI CIRCLE ASSIST
-            </span>
-
-            <h3>
-              MARKET INTELLIGENCE
-            </h3>
-
-          </div>
-
-        </div>
-
-
-        <div class="manual-ai-grid">
-
-          <div>
-
-            <small>
-              AI SIGNAL
-            </small>
-
-            <strong id="manualAISignal">
-              —
-            </strong>
-
-          </div>
-
-
-          <div>
-
-            <small>
-              CONFIDENCE
-            </small>
-
-            <strong id="manualAIConfidence">
-              —
-            </strong>
-
-          </div>
-
-
-          <div>
-
-            <small>
-              STRENGTH
-            </small>
-
-            <strong id="manualAIStrength">
-              —
-            </strong>
-
-          </div>
-
-
-          <div>
-
-            <small>
-              STABILITY
-            </small>
-
-            <strong id="manualAIStability">
-              —
-            </strong>
-
-          </div>
-
-
-          <div>
-
-            <small>
-              CONCENTRATION
-            </small>
-
-            <strong id="manualAIConcentration">
-              —
-            </strong>
-
-          </div>
-
-
-          <div>
-
-            <small>
-              AGREEMENT
-            </small>
-
-            <strong id="manualAIAgreement">
-              —
-            </strong>
-
-          </div>
-
-        </div>
-
-
-        <div
-          id="manualAIReason"
-          class="message"
-        >
-          Select a market to receive
-          AI Circle intelligence.
-        </div>
-
-      </div>
-
-
-      <button
-        id="placeTradeBtn"
-        class="primary-action-btn"
-        type="button"
-      >
-        Place Paper Trade
-      </button>
-
-    </div>
-
-  </div>
-
-
-  <!-- ===================================================
-       PAPER RESULTS
-  ==================================================== -->
 
   <div class="card">
-
     <div class="section-heading">
+      <div>
+        <span class="eyebrow">LIVE DERIV DATA</span>
+        <h3>VOLATILITY MARKET SCANNER</h3>
+      </div>
+      <span class="live-badge">LIVE</span>
+    </div>
+    <div id="markets" class="markets-grid"></div>
+  </div>
 
-      <h3>
-        PAPER RESULTS
-      </h3>
+  <div class="card">
+    <div class="section-heading">
+      <div>
+        <span class="eyebrow">LIVE TICK ANALYSIS</span>
+        <h3>DIGIT DISTRIBUTION</h3>
+      </div>
+    </div>
+    <div id="digits" class="digits-grid"></div>
+  </div>
 
+  <div class="card">
+    <div class="section-heading">
+      <div>
+        <span class="eyebrow">AI STRATEGY ENGINE</span>
+        <h3>STRATEGIES</h3>
+      </div>
     </div>
 
-
-    <div class="stats-grid">
-
-      <div>
-
-        <small>
-          TOTAL
-        </small>
-
-        <strong id="paperTotal">
-          0
-        </strong>
-
-      </div>
-
-
-      <div>
-
-        <small>
-          WINS
-        </small>
-
-        <strong id="paperWins">
-          0
-        </strong>
-
-      </div>
-
-
-      <div>
-
-        <small>
-          LOSSES
-        </small>
-
-        <strong id="paperLosses">
-          0
-        </strong>
-
-      </div>
-
-
-      <div>
-
-        <small>
-          ACCURACY
-        </small>
-
-        <strong id="paperAccuracy">
-          0%
-        </strong>
-
-      </div>
-
+    <div class="strategy-grid">
+      <button class="strategy-btn active" data-strategy="MATCHES">MATCHES</button>
+      <button class="strategy-btn" data-strategy="DIFFERS">DIFFERS</button>
+      <button class="strategy-btn" data-strategy="OVER">OVER</button>
+      <button class="strategy-btn" data-strategy="UNDER">UNDER</button>
+      <button class="strategy-btn" data-strategy="EVEN">EVEN</button>
+      <button class="strategy-btn" data-strategy="ODD">ODD</button>
     </div>
-
   </div>
 
 </section>
 
+<section id="tradePage" class="page">
 
-<!-- =====================================================
-     HISTORY PAGE
-===================================================== -->
-
-<section
-  id="historyPage"
-  class="page"
->
-
-  <div class="history-header">
-
+  <div class="page-header">
     <div>
-
-      <h2>
-        Trading History
-      </h2>
-
-      <div
-        id="totalProfitDisplay"
-        class="total-profit-text"
-      >
-        Total Profit: $0.00
-      </div>
-
+      <span class="eyebrow">PAPER TRADING CONTROL</span>
+      <h2>TRADE CENTER</h2>
+      <p>Test AI signals without placing real trades.</p>
     </div>
-
-
-    <button
-      id="clearLogsBtn"
-      class="clear-logs-btn"
-      type="button"
-    >
-      Clear Logs
-    </button>
-
+    <span class="paper-badge">DEMO / PAPER</span>
   </div>
 
-
-  <div
-    id="historyCardsList"
-    class="history-cards-container"
-  >
-
-    <div class="empty-history-card">
-      No trading history recorded yet.
+  <div class="trade-signal">
+    <div class="section-heading">
+      <div>
+        <span class="eyebrow">AI SIGNAL</span>
+        <h3>TRADE SIGNAL</h3>
+      </div>
+      <strong id="tradeStatus">WAITING</strong>
     </div>
 
+    <div class="signal-grid">
+      <div><small>MARKET</small><strong id="tradeMarket">—</strong></div>
+      <div><small>PREDICTION</small><strong id="tradePrediction">—</strong></div>
+      <div><small>CONFIDENCE</small><strong id="tradeConfidence">—</strong></div>
+    </div>
+  </div>
+
+  <div class="card">
+    <div class="section-heading">
+      <div>
+        <span class="eyebrow">MARKET SELECTOR</span>
+        <h3>SELECT MARKET</h3>
+      </div>
+      <button id="scanMarketsBtn" class="small-btn">🔍 SCAN MARKETS</button>
+    </div>
+
+    <div id="marketScanStatus" class="message">
+      Press SCAN MARKETS to analyze all volatility indices.
+    </div>
+
+    <div id="tradeMarkets" class="trade-markets-grid"></div>
+  </div>
+
+  <div class="card">
+    <div class="section-heading">
+      <div>
+        <span class="eyebrow">PAPER TRADE SETUP</span>
+        <h3>TRADE PARAMETERS</h3>
+      </div>
+    </div>
+
+    <div class="form-grid">
+
+      <label>MARKET
+        <input id="symbol" readonly placeholder="Select market">
+      </label>
+
+      <label>STRATEGY
+        <select id="tradeStrategy">
+          <option value="MATCHES">MATCHES</option>
+          <option value="DIFFERS">DIFFERS</option>
+          <option value="OVER">OVER</option>
+          <option value="UNDER">UNDER</option>
+          <option value="EVEN">EVEN</option>
+          <option value="ODD">ODD</option>
+        </select>
+      </label>
+
+      <label id="manualNumberGroup">MANUAL NUMBER
+        <input id="manualNumber" type="number" min="0" max="9" step="1" placeholder="Enter 0–9 manually">
+        <small>AI prediction will NOT fill this number.</small>
+      </label>
+
+      <label>STAKE
+        <input id="stake" type="number" min="0" step="0.01" value="1">
+      </label>
+
+      <label>TAKE PROFIT
+        <input id="takeProfit" type="number" min="0" step="0.01" value="0">
+      </label>
+
+      <label>STOP LOSS
+        <input id="stopLoss" type="number" min="0" step="0.01" value="0">
+      </label>
+
+      <label>MARTINGALE
+        <select id="martingale">
+          <option value="OFF">OFF</option>
+          <option value="1.2">1.2×</option>
+          <option value="1.5">1.5×</option>
+          <option value="2">2×</option>
+          <option value="2.5">2.5×</option>
+        </select>
+      </label>
+
+    </div>
+
+    <div class="buttons">
+      <button id="startTrading" class="primary-btn">▶ START PAPER TRADING</button>
+      <button id="stopTrading" class="secondary-btn">■ STOP</button>
+    </div>
+  </div>
+
+  <div class="card">
+    <div class="section-heading"><h3>PAPER RESULTS</h3></div>
+    <div class="stats-grid">
+      <div><small>TOTAL</small><strong id="tradeTotal">0</strong></div>
+      <div><small>WINS</small><strong id="tradeWins">0</strong></div>
+      <div><small>LOSSES</small><strong id="tradeLosses">0</strong></div>
+      <div><small>ACCURACY</small><strong id="tradeAccuracy">0%</strong></div>
+    </div>
+  </div>
+
+</section>
+
+<section id="historyPage" class="page">
+
+  <div class="page-header">
+    <div>
+      <span class="eyebrow">PAPER TRADE RECORD</span>
+      <h2>HISTORY</h2>
+      <p>Previous paper signals and results.</p>
+    </div>
+    <button id="clearHistory" class="secondary-btn">🗑 CLEAR</button>
+  </div>
+
+  <div class="stats-grid history-stats">
+    <div><small>TOTAL</small><strong id="historyTotal">0</strong></div>
+    <div><small>WINS</small><strong id="historyWins">0</strong></div>
+    <div><small>LOSSES</small><strong id="historyLosses">0</strong></div>
+    <div><small>PENDING</small><strong id="historyPending">0</strong></div>
+    <div><small>ACCURACY</small><strong id="historyAccuracy">0%</strong></div>
+  </div>
+
+  <div class="history-card">
+    <div class="table-wrap">
+      <table>
+        <thead>
+          <tr>
+            <th>TIME</th>
+            <th>MARKET</th>
+            <th>STRATEGY</th>
+            <th>PREDICTION</th>
+            <th>RESULT</th>
+            <th>STATUS</th>
+          </tr>
+        </thead>
+        <tbody id="historyList">
+          <tr><td colspan="6" class="empty-history">No paper trades yet.</td></tr>
+        </tbody>
+      </table>
+    </div>
   </div>
 
 </section>
 
 </main>
 
-
-<!-- =====================================================
-     MANUAL STRATEGY MODAL
-===================================================== -->
-
-<div
-  id="strategyModal"
-  class="modal-overlay"
-  style="display:none;"
->
-
-  <div class="modal-content">
-
-    <div class="modal-title">
-      <strong>
-        SELECT STRATEGY
-      </strong>
-
-      <small>
-        MANUAL MODE
-      </small>
-    </div>
-
-
-    <div
-      class="strategy-option selected"
-      data-strategy="MATCHES"
-      data-label="Matches"
-    >
-
-      <span>
-        Matches
-      </span>
-
-      <span class="radio-icon"></span>
-
-    </div>
-
-
-    <div
-      class="strategy-option"
-      data-strategy="DIFFERS"
-      data-label="Differs"
-    >
-
-      <span>
-        Differs
-      </span>
-
-      <span class="radio-icon"></span>
-
-    </div>
-
-
-    <div
-      class="strategy-option"
-      data-strategy="EVEN"
-      data-label="Even"
-    >
-
-      <span>
-        Even
-      </span>
-
-      <span class="radio-icon"></span>
-
-    </div>
-
-
-    <div
-      class="strategy-option"
-      data-strategy="ODD"
-      data-label="Odd"
-    >
-
-      <span>
-        Odd
-      </span>
-
-      <span class="radio-icon"></span>
-
-    </div>
-
-
-    <div
-      class="strategy-option"
-      data-strategy="OVER"
-      data-label="Over"
-    >
-
-      <span>
-        Over
-      </span>
-
-      <span class="radio-icon"></span>
-
-    </div>
-
-
-    <div
-      class="strategy-option"
-      data-strategy="UNDER"
-      data-label="Under"
-    >
-
-      <span>
-        Under
-      </span>
-
-      <span class="radio-icon"></span>
-
-    </div>
-
-  </div>
-
-</div>
-
-
-<!-- =====================================================
-     AI BOT STRATEGY GROUP MODAL
-===================================================== -->
-
-<div
-  id="aiStrategyModal"
-  class="modal-overlay"
-  style="display:none;"
->
-
-  <div class="modal-content">
-
-    <div class="modal-title">
-
-      <strong>
-        AI STRATEGY RANGE
-      </strong>
-
-      <small>
-        AI BOT DECIDES
-      </small>
-
-    </div>
-
-
-    <div
-      class="ai-strategy-group-option selected"
-      data-group="ALL"
-      data-label="ALL 6 STRATEGIES"
-    >
-
-      <div>
-
-        <strong>
-          ALL 6
-        </strong>
-
-        <small>
-          Matches • Differs • Even • Odd •
-          Over • Under
-        </small>
-
-      </div>
-
-      <span class="radio-icon"></span>
-
-    </div>
-
-
-    <div
-      class="ai-strategy-group-option"
-      data-group="MATCHES_DIFFERS"
-      data-label="MATCHES / DIFFERS"
-    >
-
-      <div>
-
-        <strong>
-          MATCHES / DIFFERS
-        </strong>
-
-        <small>
-          AI chooses Matches or Differs
-        </small>
-
-      </div>
-
-      <span class="radio-icon"></span>
-
-    </div>
-
-
-    <div
-      class="ai-strategy-group-option"
-      data-group="EVEN_ODD"
-      data-label="EVEN / ODD"
-    >
-
-      <div>
-
-        <strong>
-          EVEN / ODD
-        </strong>
-
-        <small>
-          AI chooses Even or Odd
-        </small>
-
-      </div>
-
-      <span class="radio-icon"></span>
-
-    </div>
-
-
-    <div
-      class="ai-strategy-group-option"
-      data-group="OVER_UNDER"
-      data-label="OVER / UNDER"
-    >
-
-      <div>
-
-        <strong>
-          OVER / UNDER
-        </strong>
-
-        <small>
-          AI chooses Over or Under
-        </small>
-
-      </div>
-
-      <span class="radio-icon"></span>
-
-    </div>
-
-  </div>
-
-</div>
-
-
-<!-- =====================================================
-     BOTTOM NAVIGATION
-===================================================== -->
-
 <nav class="bottom-nav">
-
-  <button
-    class="nav-btn"
-    data-page="analysis"
-    type="button"
-  >
-
-    🤖
-
-    <span>
-      AI CIRCLE
-    </span>
-
-  </button>
-
-
-  <button
-    class="nav-btn active"
-    data-page="trade"
-    type="button"
-  >
-
-    ⚡
-
-    <span>
-      AI BOT
-    </span>
-
-  </button>
-
-
-  <button
-    class="nav-btn"
-    data-page="history"
-    type="button"
-  >
-
-    📜
-
-    <span>
-      HISTORY
-    </span>
-
-  </button>
-
+  <button class="nav-btn active" data-page="analysis">🤖<span>ANALYSIS</span></button>
+  <button class="nav-btn" data-page="trade">📊<span>TRADE</span></button>
+  <button class="nav-btn" data-page="history">📜<span>HISTORY</span></button>
 </nav>
 
-
-<!-- =====================================================
-     FOOTER
-===================================================== -->
-
 <footer>
-
-  KRISHWAVE AI BEAST V7.0
-
-  <br>
-
-  AI CIRCLE • AI BOT • MANUAL
-
-  <br>
-
-  <b>
-    DEMO / PAPER MODE — NO REAL TRADES
-  </b>
-
+  KRISHWAVE AI BEAST V6.2<br>
+  DERIV MARKET INTELLIGENCE<br>
+  <b>DEMO / PAPER MODE — NO REAL TRADES</b>
 </footer>
 
-
 <script src="app.js"></script>
-
 </body>
 </html>
