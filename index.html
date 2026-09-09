@@ -1,590 +1,1002 @@
-<!DOCTYPE html>
-<html lang="en">
+<!DOCTYPE html><html lang="en">
 <head>
   <meta charset="UTF-8">
-  <meta name="viewport" content="width=device-width,initial-scale=1,maximum-scale=1">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
   <meta name="theme-color" content="#07111f">
-  <title>KRISHWAVE AI BEAST V7.1</title>
-  <link rel="stylesheet" href="style.css">
-</head>
-
-<body>
-
+  <meta name="description" content="KRISHWAVE AI BEAST - Deriv Market Intelligence">
+  <title>KRISHWAVE AI BEAST</title>  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800;900&display=swap" rel="stylesheet">  <link rel="stylesheet" href="style.css">
+</head><body>  <!-- =====================================================
+       APP SHELL
+  ====================================================== -->  <div id="app"><!-- TOP BAR -->
 <header class="topbar">
-  <div class="brand">
-    <div class="brand-icon">K</div>
-    <div>
-      <div class="brand-name">KRISHWAVE</div>
-      <div class="brand-sub">AI BEAST V7.1</div>
+
+  <div class="brand-area">
+    <div class="brand">
+      <span class="brand-main">KRISH</span><span class="brand-wave">WAVE</span>
     </div>
+    <div class="version">AI BEAST V7.1</div>
   </div>
 
   <div class="top-actions">
-    <span class="connection">
-      <span id="connectionDot" class="dot offline"></span>
-      <span id="connectionText">OFFLINE</span>
+
+    <div class="connection-status">
+      <span id="connectionDot" class="status-dot offline"></span>
+      <span id="connectionText">CONNECTING</span>
+    </div>
+
+    <span id="modeBadge" class="mode-badge demo-mode">
+      DEMO / PAPER
     </span>
 
-    <span id="modeBadge" class="mode-badge demo-mode">DEMO</span>
+    <button id="themeToggle" class="icon-btn" type="button" aria-label="Toggle theme">
+      ☀️
+    </button>
 
-    <button id="themeToggle" class="icon-btn">☀️</button>
   </div>
 </header>
 
-<main>
 
-<section class="account-card">
-  <div class="account-left">
-    <div class="label">DERIV ACCOUNT</div>
-    <div id="accountId" class="account-id">Not connected</div>
+<!-- ===================================================
+     ACCOUNT PANEL
+==================================================== -->
+<section class="account-strip">
+
+  <div class="account-info">
+
+    <div class="account-item">
+      <span class="label">ACCOUNT</span>
+      <strong id="accountId">NOT CONNECTED</strong>
+    </div>
+
+    <div class="account-item">
+      <span class="label">CURRENCY</span>
+      <strong id="currency">USD</strong>
+    </div>
+
+    <div class="account-item balance-item">
+      <span class="label">BALANCE</span>
+      <strong id="balanceDisplay">$1,000.00</strong>
+    </div>
+
   </div>
 
-  <div class="balance-box">
-    <div class="label">BALANCE</div>
-    <strong id="balanceDisplay">$0.00</strong>
-    <span id="currency">USD</span>
+  <div class="account-actions">
+
+    <button id="demoModeBtn" class="account-mode-btn active" type="button">
+      DEMO
+    </button>
+
+    <button id="realModeBtn" class="account-mode-btn real-btn" type="button">
+      REAL
+    </button>
+
+    <button id="connectDerivBtn" class="primary-btn" type="button">
+      CONNECT DERIV
+    </button>
+
   </div>
 
-  <button id="connectDerivBtn" class="primary-btn">
-    CONNECT DERIV
-  </button>
 </section>
 
-<div id="dataStatus" class="status-bar">
-  Waiting for Deriv connection...
+
+<!-- DATA STATUS -->
+<div class="data-status-bar">
+  <span id="dataStatus">Waiting for live Deriv market data...</span>
 </div>
 
-<!-- ================= ANALYSIS ================= -->
 
-<section id="analysisPage" class="page active">
+<!-- ===================================================
+     MAIN CONTENT
+==================================================== -->
+<main class="main-content">
 
-  <div class="section-title">
-    <div>
-      <h1>AI MARKET ANALYSIS</h1>
-      <p>Live Deriv intelligence engine</p>
-    </div>
-    <select id="analysisMarketSelect" class="market-select"></select>
-  </div>
 
-  <div class="grid-2">
+  <!-- =================================================
+       ANALYSIS PAGE
+  ================================================== -->
+  <section id="analysisPage" class="page active-page">
 
-    <div class="card">
-      <div class="card-head">
-        <span>MARKET</span>
-        <span id="currentChartMarket">R_100</span>
+    <div class="page-heading">
+      <div>
+        <h1>Market Analysis</h1>
+        <p>Live volatility intelligence & AI prediction</p>
       </div>
 
-      <div class="price-main" id="currentLivePrice">0.00000</div>
+      <button id="scanMarketsBtn" class="secondary-btn" type="button">
+        🔎 SCAN MARKETS
+      </button>
+    </div>
 
-      <canvas id="priceChartCanvas"></canvas>
 
-      <div class="mini-grid">
+    <!-- CURRENT MARKET -->
+    <div class="current-market-card">
+
+      <div class="market-header">
+
         <div>
-          <span>TICKS</span>
-          <strong id="digitSampleCount">0</strong>
+          <span class="small-label">SELECTED MARKET</span>
+          <h2 id="currentChartMarket">R_10</h2>
         </div>
+
+        <div class="live-price-box">
+          <span class="small-label">LIVE PRICE</span>
+          <strong id="currentLivePrice">--</strong>
+        </div>
+
+      </div>
+
+      <div class="chart-wrapper">
+        <canvas id="priceChartCanvas"></canvas>
+      </div>
+
+    </div>
+
+
+    <!-- MARKET SCANNER -->
+    <div class="section-title">
+      <h2>AI Market Scanner</h2>
+      <span id="scannerMarketCount">0 MARKETS</span>
+    </div>
+
+    <div id="marketScannerGrid" class="market-scanner-grid">
+      <!-- JS inserts markets -->
+    </div>
+
+
+    <!-- AI PREDICTION -->
+    <div class="ai-analysis-card">
+
+      <div class="ai-card-header">
+
         <div>
-          <span>LAST DIGIT</span>
-          <strong id="lastDigit">-</strong>
+          <span class="small-label">KRISHWAVE AI</span>
+          <h2>Prediction Engine</h2>
         </div>
+
+        <span id="aiStatus" class="ai-status waiting">
+          WAITING
+        </span>
+
+      </div>
+
+      <div class="ai-main-grid">
+
+        <div class="ai-prediction-box">
+
+          <span class="small-label">PREDICTION</span>
+
+          <div id="aiPrediction" class="prediction-value">
+            --
+          </div>
+
+          <div class="prediction-meta">
+            <span>TYPE:</span>
+            <strong id="aiType">--</strong>
+          </div>
+
+        </div>
+
+
+        <div class="confidence-box">
+
+          <span class="small-label">CONFIDENCE</span>
+
+          <div class="confidence-number">
+            <strong id="analysisConfidence">0%</strong>
+          </div>
+
+          <div class="confidence-bar">
+            <div id="confidenceFill" class="confidence-fill"></div>
+          </div>
+
+        </div>
+
+
+        <div class="ai-market-box">
+
+          <span class="small-label">AI SELECTED MARKET</span>
+
+          <strong id="aiMarket">--</strong>
+
+        </div>
+
+      </div>
+
+      <div id="analysisMsg" class="analysis-message">
+        Waiting for sufficient tick data...
+      </div>
+
+    </div>
+
+
+    <!-- DIGIT ANALYSIS -->
+    <div class="digit-card">
+
+      <div class="card-heading">
         <div>
-          <span>AI CONFIDENCE</span>
-          <strong id="analysisConfidence">0%</strong>
+          <span class="small-label">LIVE DIGIT ENGINE</span>
+          <h2>Digit Distribution</h2>
         </div>
+
+        <span id="digitSampleCount">0 TICKS</span>
       </div>
+
+      <div id="digitStatsGrid" class="digit-stats-grid">
+        <!-- JS inserts digit statistics -->
+      </div>
+
     </div>
 
-    <div class="card ai-card">
-      <div class="ai-status" id="aiStatus">
-        AI WAITING
-      </div>
 
-      <div class="ai-circle" id="aiCircle">
-        <div class="circle-ring"></div>
-        <div class="circle-core">
-          <span id="aiCircleLabel">AI</span>
-          <strong id="aiCirclePrediction">--</strong>
+    <!-- =================================================
+         CIRCULAR AI
+    ================================================== -->
+    <div class="circular-ai-card">
+
+      <div class="circular-header">
+
+        <div>
+          <span class="small-label">AI BEAST</span>
+          <h2>Circular AI</h2>
+          <p>Automatic market intelligence cycle</p>
         </div>
+
+        <span id="aiCircleStatus" class="ai-status waiting">
+          STOPPED
+        </span>
+
       </div>
 
-      <div class="prediction-box">
-        <div class="label">AI PREDICTION</div>
-        <div id="aiPrediction" class="prediction">WAITING</div>
-        <div id="aiType" class="prediction-type">DIGIT</div>
-        <div id="analysisMsg" class="analysis-msg">
-          Waiting for enough market data.
+
+      <div class="circular-layout">
+
+        <div class="ai-circle-wrapper">
+
+          <div id="aiCircle" class="ai-circle">
+
+            <div class="circle-inner">
+
+              <span id="aiCircleLabel">READY</span>
+
+              <strong id="aiCirclePrediction">--</strong>
+
+              <span id="aiCircleTimer">10</span>
+
+            </div>
+
+          </div>
+
         </div>
+
+
+        <div class="cycle-info">
+
+          <div class="cycle-step active" id="cycleAnalysis">
+            <span class="step-number">1</span>
+            <div>
+              <strong>ANALYZING</strong>
+              <small>10 seconds</small>
+            </div>
+          </div>
+
+          <div class="cycle-step" id="cyclePrediction">
+            <span class="step-number">2</span>
+            <div>
+              <strong>PREDICTION</strong>
+              <small>Next 5 seconds</small>
+            </div>
+          </div>
+
+          <div class="cycle-step" id="cycleCooldown">
+            <span class="step-number">3</span>
+            <div>
+              <strong>LOCK</strong>
+              <small id="cycleCooldownText">5 seconds</small>
+            </div>
+          </div>
+
+          <div class="cycle-step" id="cycleTrade">
+            <span class="step-number">4</span>
+            <div>
+              <strong>TRADE NOW</strong>
+              <small>3 seconds</small>
+            </div>
+          </div>
+
+          <div class="circular-controls">
+
+            <button id="startAI" class="primary-btn" type="button">
+              START CIRCULAR AI
+            </button>
+
+            <button id="stopAI" class="danger-btn" type="button">
+              STOP
+            </button>
+
+          </div>
+
+        </div>
+
       </div>
+
     </div>
 
-  </div>
+  </section>
 
-  <div class="card">
-    <div class="card-head">
-      <span>DIGIT DISTRIBUTION</span>
-      <span id="aiMarket">R_100</span>
-    </div>
 
-    <div id="digitStatsGrid" class="digit-grid"></div>
-  </div>
+  <!-- =================================================
+       TRADE PAGE
+  ================================================== -->
+  <section id="tradePage" class="page">
 
-  <div class="card">
-    <div class="card-head">
-      <span>CIRCULAR AI ENGINE</span>
-      <span id="aiCircleStatus">IDLE</span>
-    </div>
+    <div class="page-heading">
 
-    <div class="cycle-grid">
       <div>
-        <span>PHASE</span>
-        <strong id="cycleAnalysis">ANALYZING</strong>
+        <h1>Trading Engine</h1>
+        <p>Demo/Paper intelligence engine</p>
       </div>
-      <div>
-        <span>TRADE</span>
-        <strong id="cycleTrade">WAITING</strong>
+
+      <div id="engineStatusText" class="engine-status">
+        READY
       </div>
-      <div>
-        <span>TIMER</span>
-        <strong id="aiCircleTimer">--</strong>
-      </div>
-      <div>
-        <span>COOLDOWN</span>
-        <strong id="cycleCooldown">0</strong>
-      </div>
+
     </div>
 
-    <div class="button-row">
-      <button id="startAI" class="primary-btn">START CIRCULAR AI</button>
-      <button id="stopAI" class="danger-btn">STOP AI</button>
+
+    <!-- ENGINE TABS -->
+    <div class="engine-tabs">
+
+      <button id="tabAiBot" class="engine-tab active" type="button">
+        🤖 AI BOT
+      </button>
+
+      <button id="tabCircularAI" class="engine-tab" type="button">
+        🔄 CIRCULAR AI
+      </button>
+
+      <button id="tabManual" class="engine-tab" type="button">
+        ✋ MANUAL
+      </button>
+
     </div>
-  </div>
 
-</section>
 
-<!-- ================= TRADE ================= -->
-
-<section id="tradePage" class="page">
-
-  <div class="section-title">
-    <div>
-      <h1>TRADING ENGINE</h1>
-      <p>Demo trading control center</p>
-    </div>
-    <span id="engineStatusText" class="engine-status">PAPER MODE</span>
-  </div>
-
-  <div class="trade-tabs">
-    <button id="tabAiBot" class="tab active">AI BOT</button>
-    <button id="tabCircularAI" class="tab">CIRCULAR AI</button>
-    <button id="tabManual" class="tab">MANUAL</button>
-  </div>
-
-  <!-- AI BOT -->
-
-  <div id="aiBotPanel" class="trade-panel active">
-
-    <div class="card">
+    <!-- ===============================================
+         AI BOT PANEL
+    ================================================ -->
+    <div id="aiBotPanel" class="engine-panel active">
 
       <div class="bot-header">
         <div>
-          <span class="label">AI BOT STATUS</span>
-          <strong id="botStatusDash">STOPPED</strong>
+          <span class="small-label">AUTOMATED INTELLIGENCE</span>
+          <h2>AI BOT</h2>
         </div>
 
-        <div>
-          <span class="label">MARKET</span>
-          <strong id="botSelectedMarket">R_100</strong>
-        </div>
+        <span id="botStatusDash" class="bot-status stopped">
+          STOPPED
+        </span>
       </div>
 
-      <div class="ai-result-large">
-        <div class="bot-score">
-          <span>SCORE</span>
+
+      <div class="bot-selection-grid">
+
+        <div class="selection-box">
+          <span class="small-label">MARKET</span>
+          <strong id="botSelectedMarket">R_10</strong>
+        </div>
+
+        <div class="selection-box">
+          <span class="small-label">STRATEGY</span>
+          <strong id="botSelectedStrategy">MATCHES + DIFFERS</strong>
+        </div>
+
+        <div class="selection-box">
+          <span class="small-label">AI SCORE</span>
           <strong id="botScore">0</strong>
         </div>
 
-        <div>
-          <span class="label">PREDICTION</span>
-          <div id="aiPredictionLarge">WAITING</div>
-          <small id="predictionConfidence">0% confidence</small>
+        <div class="selection-box">
+          <span class="small-label">CONFIDENCE</span>
+          <strong id="botConfidence">0%</strong>
         </div>
-      </div>
-
-      <div class="form-grid">
-
-        <label>
-          MARKET
-          <select id="botMarketSelect"></select>
-        </label>
-
-        <label>
-          STRATEGY
-          <button id="botStrategyTrigger" class="select-button">
-            <span id="botStrategyLabel">AUTO</span>
-          </button>
-        </label>
-
-        <label>
-          STAKE
-          <input id="stakeInput" type="number" value="1" min="0.35" step="0.01">
-        </label>
-
-        <label>
-          TAKE PROFIT
-          <input id="takeProfitInput" type="number" value="20" step="0.01">
-        </label>
-
-        <label>
-          STOP LOSS
-          <input id="stopLossInput" type="number" value="20" step="0.01">
-        </label>
-
-        <label>
-          MARTINGALE
-          <input id="martingaleInput" type="number" value="1" min="1" step="0.1">
-        </label>
 
       </div>
 
-      <button id="startBotBtn" class="primary-btn wide">
+
+      <div class="large-prediction">
+
+        <span class="small-label">NEXT SIGNAL</span>
+
+        <strong id="aiPredictionLarge">--</strong>
+
+        <div>
+          <span id="predictionConfidence">0% confidence</span>
+        </div>
+
+      </div>
+
+
+      <button id="botStrategyTrigger" class="strategy-selector" type="button">
+
+        <span>
+          <small>BOT STRATEGIES</small>
+          <strong id="botStrategyLabel">MATCHES + DIFFERS</strong>
+        </span>
+
+        <b>›</b>
+
+      </button>
+
+
+      <div class="parameters-grid">
+
+        <label class="input-card">
+          <span>STAKE</span>
+          <input id="stakeInput" type="number" min="0.25" step="0.01" value="0.25">
+        </label>
+
+        <label class="input-card">
+          <span>TAKE PROFIT</span>
+          <input id="takeProfitInput" type="number" min="0" step="0.01" value="10">
+        </label>
+
+        <label class="input-card">
+          <span>STOP LOSS</span>
+          <input id="stopLossInput" type="number" min="0" step="0.01" value="10">
+        </label>
+
+        <label class="input-card">
+          <span>MARTINGALE</span>
+          <input id="martingaleInput" type="number" min="1" step="0.1" value="1">
+        </label>
+
+      </div>
+
+
+      <button id="startBotBtn" class="primary-btn full-btn" type="button">
         START AI BOT
       </button>
 
     </div>
-  </div>
 
-  <!-- CIRCULAR -->
 
-  <div id="circularPanel" class="trade-panel">
+    <!-- ===============================================
+         CIRCULAR AI TRADE PANEL
+    ================================================ -->
+    <div id="circularTradePanel" class="engine-panel">
 
-    <div class="card circular-card">
+      <div class="bot-header">
 
-      <div class="circular-visual">
-        <div class="ai-circle big">
-          <div class="circle-ring"></div>
-          <div class="circle-core">
-            <span>AI</span>
-            <strong id="circularStatusText">READY</strong>
-          </div>
+        <div>
+          <span class="small-label">AUTOMATIC CYCLE</span>
+          <h2>CIRCULAR AI TRADING</h2>
         </div>
-      </div>
 
-      <div class="form-grid">
-
-        <label>
-          MARKET
-          <select id="circularMarketSelect"></select>
-        </label>
-
-        <label>
-          STRATEGY
-          <button id="circularStrategyTrigger" class="select-button">
-            <span id="circularStrategyLabel">AUTO</span>
-          </button>
-        </label>
-
-        <label>
-          STAKE
-          <input id="circularStakeInput" type="number" value="1" min="0.35" step="0.01">
-        </label>
-
-        <label>
-          TAKE PROFIT
-          <input id="circularTakeProfitInput" type="number" value="20">
-        </label>
-
-        <label>
-          STOP LOSS
-          <input id="circularStopLossInput" type="number" value="20">
-        </label>
+        <span id="circularStatusText" class="bot-status stopped">
+          STOPPED
+        </span>
 
       </div>
 
-      <button id="startCircularTradeBtn" class="primary-btn wide">
+
+      <div class="circular-trade-preview">
+
+        <div>
+          <span class="small-label">SELECTED MARKET</span>
+          <strong id="circularSelectedMarket">R_10</strong>
+        </div>
+
+        <div>
+          <span class="small-label">SELECTED STRATEGY</span>
+          <strong id="circularSelectedStrategy">MATCHES</strong>
+        </div>
+
+        <div>
+          <span class="small-label">PREDICTION</span>
+          <strong id="circularSelectedPrediction">--</strong>
+        </div>
+
+      </div>
+
+
+      <label class="select-card">
+
+        <span>AI MARKET</span>
+
+        <select id="circularMarketSelect">
+          <option value="AUTO">AUTO — BEST MARKET</option>
+        </select>
+
+      </label>
+
+
+      <button id="circularStrategyTrigger" class="strategy-selector" type="button">
+
+        <span>
+          <small>STRATEGY</small>
+          <strong id="circularStrategyLabel">MATCHES</strong>
+        </span>
+
+        <b>›</b>
+
+      </button>
+
+
+      <div class="parameters-grid">
+
+        <label class="input-card">
+          <span>STAKE</span>
+          <input id="circularStakeInput" type="number" min="0.25" step="0.01" value="0.25">
+        </label>
+
+        <label class="input-card">
+          <span>TAKE PROFIT</span>
+          <input id="circularTakeProfitInput" type="number" min="0" step="0.01" value="10">
+        </label>
+
+        <label class="input-card">
+          <span>STOP LOSS</span>
+          <input id="circularStopLossInput" type="number" min="0" step="0.01" value="10">
+        </label>
+
+      </div>
+
+
+      <div class="warning-box">
+        Circular AI predicts independently. Manual target numbers are never automatically inserted.
+      </div>
+
+
+      <button id="startCircularTradeBtn" class="primary-btn full-btn" type="button">
         START CIRCULAR TRADING
       </button>
 
     </div>
 
-  </div>
 
-  <!-- MANUAL -->
+    <!-- ===============================================
+         MANUAL PANEL
+    ================================================ -->
+    <div id="manualPanel" class="engine-panel">
 
-  <div id="manualPanel" class="trade-panel">
+      <div class="bot-header">
 
-    <div class="card">
-
-      <div class="manual-status">
-        <span>MANUAL ENGINE</span>
-        <strong id="manualStatusText">READY</strong>
-      </div>
-
-      <div class="form-grid">
-
-        <label>
-          MARKET
-          <select id="manualMarketSelect"></select>
-        </label>
-
-        <label>
-          STRATEGY
-          <button id="manualStrategyTrigger" class="select-button">
-            <span id="manualSelectedStrategyLabel">MATCHES</span>
-          </button>
-        </label>
-
-        <div id="targetDigitContainer" class="target-container">
-          <label>
-            TARGET DIGIT
-            <input id="manualTargetDigitInput"
-                   type="number"
-                   min="0"
-                   max="9"
-                   value="5">
-          </label>
+        <div>
+          <span class="small-label">MANUAL ENGINE</span>
+          <h2>MANUAL TRADE</h2>
         </div>
 
-        <label>
-          STAKE
-          <input id="manualStakeInput" type="number" value="1" min="0.35" step="0.01">
-        </label>
+        <span id="manualStatusText" class="bot-status stopped">
+          READY
+        </span>
+
+      </div>
+
+
+      <label class="select-card">
+
+        <span>MARKET</span>
+
+        <select id="manualMarketSelect">
+          <option value="R_10">R_10</option>
+        </select>
+
+      </label>
+
+
+      <button id="manualStrategyTrigger" class="strategy-selector" type="button">
+
+        <span>
+          <small>STRATEGY</small>
+          <strong id="manualSelectedStrategyLabel">MATCHES</strong>
+        </span>
+
+        <b>›</b>
+
+      </button>
+
+
+      <div id="targetDigitContainer" class="target-digit-box">
 
         <label>
-          TAKE PROFIT
-          <input id="manualTakeProfitInput" type="number" value="20">
+          <span>TARGET DIGIT</span>
+
+          <input
+            id="manualTargetDigitInput"
+            type="number"
+            min="0"
+            max="9"
+            step="1"
+            placeholder="0 - 9"
+            inputmode="numeric"
+          >
         </label>
 
-        <label>
-          STOP LOSS
-          <input id="manualStopLossInput" type="number" value="20">
+        <small>
+          Required for MATCHES and DIFFERS.
+        </small>
+
+      </div>
+
+
+      <div class="parameters-grid">
+
+        <label class="input-card">
+          <span>STAKE</span>
+          <input id="manualStakeInput" type="number" min="0.25" step="0.01" value="0.25">
+        </label>
+
+        <label class="input-card">
+          <span>TAKE PROFIT</span>
+          <input id="manualTakeProfitInput" type="number" min="0" step="0.01" value="10">
+        </label>
+
+        <label class="input-card">
+          <span>STOP LOSS</span>
+          <input id="manualStopLossInput" type="number" min="0" step="0.01" value="10">
         </label>
 
       </div>
 
-      <button id="placeTradeBtn" class="primary-btn wide">
-        PLACE DEMO TRADE
+
+      <button id="placeTradeBtn" class="primary-btn full-btn" type="button">
+        PLACE PAPER TRADE
+      </button>
+
+    </div>
+
+
+    <!-- ===============================================
+         PAPER STATISTICS
+    ================================================ -->
+    <div class="section-title">
+      <h2>Session Statistics</h2>
+      <span>DEMO / PAPER</span>
+    </div>
+
+    <div class="stats-grid">
+
+      <div class="stat-card">
+        <span>TOTAL TRADES</span>
+        <strong id="paperTotal">0</strong>
+      </div>
+
+      <div class="stat-card positive">
+        <span>WINS</span>
+        <strong id="paperWins">0</strong>
+      </div>
+
+      <div class="stat-card negative">
+        <span>LOSSES</span>
+        <strong id="paperLosses">0</strong>
+      </div>
+
+      <div class="stat-card">
+        <span>ACCURACY</span>
+        <strong id="paperAccuracy">0%</strong>
+      </div>
+
+    </div>
+
+
+    <!-- ACTIVE TRADES -->
+    <div class="active-trades-card">
+
+      <div class="card-heading">
+        <div>
+          <span class="small-label">LIVE</span>
+          <h2>Active Trades</h2>
+        </div>
+
+        <strong id="activeTradeCount">0</strong>
+      </div>
+
+      <div id="activeTradesList" class="active-trades-list">
+        <div class="empty-state">
+          No active paper trades.
+        </div>
+      </div>
+
+    </div>
+
+  </section>
+
+
+  <!-- =================================================
+       HISTORY PAGE
+  ================================================== -->
+  <section id="historyPage" class="page">
+
+    <div class="page-heading">
+
+      <div>
+        <h1>Trade History</h1>
+        <p>Performance, amount won and net profit</p>
+      </div>
+
+      <button id="clearLogsBtn" class="danger-outline-btn" type="button">
+        CLEAR
+      </button>
+
+    </div>
+
+
+    <div class="history-status-card">
+
+      <div>
+        <span class="small-label">TRADING STATUS</span>
+        <strong id="tradingStatusLabel">READY</strong>
+      </div>
+
+      <div>
+        <span class="small-label">SESSION PROFIT</span>
+        <strong id="sessionProfitDisplay">$0.00</strong>
+      </div>
+
+      <button id="stopTradingBtn" class="danger-btn" type="button">
+        STOP ALL
+      </button>
+
+    </div>
+
+
+    <!-- HISTORY SUMMARY -->
+    <div class="history-summary-grid">
+
+      <div class="history-summary-card">
+        <span>TOTAL PROFIT</span>
+        <strong id="totalProfitDisplay">$0.00</strong>
+      </div>
+
+      <div class="history-summary-card">
+        <span>TOTAL STAKE</span>
+        <strong id="historyTotalStake">$0.00</strong>
+      </div>
+
+      <div class="history-summary-card">
+        <span>AMOUNT WON</span>
+        <strong id="historyAmountWon">$0.00</strong>
+      </div>
+
+      <div class="history-summary-card">
+        <span>NET PROFIT</span>
+        <strong id="historyNetProfit">$0.00</strong>
+      </div>
+
+    </div>
+
+
+    <!-- HISTORY CARDS -->
+    <div class="history-list-heading">
+
+      <div>
+        <span class="small-label">RECORDS</span>
+        <h2>Trading History</h2>
+      </div>
+
+      <span id="historyCount">0 TRADES</span>
+
+    </div>
+
+
+    <div id="historyCardsList" class="history-cards-list">
+
+      <div class="empty-state">
+        No trades recorded yet.
+      </div>
+
+    </div>
+
+  </section>
+
+</main>
+
+
+<!-- ===================================================
+     BOTTOM NAVIGATION
+==================================================== -->
+<nav class="bottom-nav">
+
+  <button class="nav-btn active" data-page="analysis" type="button">
+    <span>📊</span>
+    <strong>Analysis</strong>
+  </button>
+
+  <button class="nav-btn" data-page="trade" type="button">
+    <span>⚡</span>
+    <strong>Trade</strong>
+  </button>
+
+  <button class="nav-btn" data-page="history" type="button">
+    <span>📜</span>
+    <strong>History</strong>
+  </button>
+
+</nav>
+
+
+<!-- ===================================================
+     STRATEGY MODAL
+==================================================== -->
+<div id="strategyModal" class="modal">
+
+  <div class="modal-backdrop"></div>
+
+  <div class="modal-card">
+
+    <div class="modal-header">
+      <div>
+        <span class="small-label">SELECT</span>
+        <h2>Strategy</h2>
+      </div>
+
+      <button id="closeStrategyModal" class="modal-close" type="button">
+        ×
+      </button>
+    </div>
+
+    <div id="strategyOptions" class="strategy-options">
+
+      <button class="strategy-option" data-strategy="MATCHES" type="button">
+        <strong>MATCHES</strong>
+        <small>Digit equals target</small>
+      </button>
+
+      <button class="strategy-option" data-strategy="DIFFERS" type="button">
+        <strong>DIFFERS</strong>
+        <small>Digit differs from target</small>
+      </button>
+
+      <button class="strategy-option" data-strategy="OVER" type="button">
+        <strong>OVER</strong>
+        <small>Digit above target</small>
+      </button>
+
+      <button class="strategy-option" data-strategy="UNDER" type="button">
+        <strong>UNDER</strong>
+        <small>Digit below target</small>
+      </button>
+
+      <button class="strategy-option" data-strategy="EVEN" type="button">
+        <strong>EVEN</strong>
+        <small>Even final digit</small>
+      </button>
+
+      <button class="strategy-option" data-strategy="ODD" type="button">
+        <strong>ODD</strong>
+        <small>Odd final digit</small>
       </button>
 
     </div>
 
   </div>
 
-  <!-- STATS -->
-
-  <div class="stats-grid">
-
-    <div class="stat">
-      <span>TRADES</span>
-      <strong id="paperTotal">0</strong>
-    </div>
-
-    <div class="stat">
-      <span>WINS</span>
-      <strong id="paperWins">0</strong>
-    </div>
-
-    <div class="stat">
-      <span>LOSSES</span>
-      <strong id="paperLosses">0</strong>
-    </div>
-
-    <div class="stat">
-      <span>ACCURACY</span>
-      <strong id="paperAccuracy">0%</strong>
-    </div>
-
-  </div>
-
-  <div class="card">
-    <div class="card-head">
-      <span>ACTIVE TRADES</span>
-      <strong id="activeTradeCount">0</strong>
-    </div>
-
-    <div id="activeTradesList" class="list"></div>
-  </div>
-
-</section>
-
-<!-- ================= HISTORY ================= -->
-
-<section id="historyPage" class="page">
-
-  <div class="section-title">
-    <div>
-      <h1>TRADING HISTORY</h1>
-      <p>Performance and completed trades</p>
-    </div>
-
-    <button id="clearLogsBtn" class="danger-btn">
-      CLEAR
-    </button>
-  </div>
-
-  <div class="history-summary">
-
-    <div class="summary-card">
-      <span>TOTAL STAKE</span>
-      <strong id="historyTotalStake">$0.00</strong>
-    </div>
-
-    <div class="summary-card">
-      <span>AMOUNT WON</span>
-      <strong id="historyAmountWon">$0.00</strong>
-    </div>
-
-    <div class="summary-card">
-      <span>NET PROFIT</span>
-      <strong id="historyNetProfit">$0.00</strong>
-    </div>
-
-  </div>
-
-  <div class="card">
-
-    <div class="history-head">
-      <span id="tradingStatusLabel">DEMO SESSION</span>
-      <span id="sessionProfitDisplay">$0.00</span>
-    </div>
-
-    <div class="stop-row">
-      <span>TOTAL PROFIT</span>
-      <strong id="totalProfitDisplay">$0.00</strong>
-      <button id="stopTradingBtn" class="danger-btn">STOP</button>
-    </div>
-
-    <div id="historyCardsList" class="history-list"></div>
-
-  </div>
-
-</section>
-
-</main>
-
-<!-- ================= STRATEGY MODAL ================= -->
-
-<div id="strategyModal" class="modal">
-  <div class="modal-box">
-
-    <div class="modal-head">
-      <h2>SELECT STRATEGY</h2>
-      <button id="closeStrategyModal">×</button>
-    </div>
-
-    <div id="strategyOptions" class="strategy-options">
-
-      <button data-strategy="MATCHES">MATCHES</button>
-      <button data-strategy="DIFFERS">DIFFERS</button>
-      <button data-strategy="OVER">OVER</button>
-      <button data-strategy="UNDER">UNDER</button>
-      <button data-strategy="EVEN">EVEN</button>
-      <button data-strategy="ODD">ODD</button>
-
-    </div>
-
-  </div>
 </div>
 
-<!-- ================= BOT STRATEGY MODAL ================= -->
 
+<!-- ===================================================
+     BOT STRATEGY MODAL
+==================================================== -->
 <div id="botStrategyModal" class="modal">
 
-  <div class="modal-box">
+  <div class="modal-backdrop"></div>
 
-    <div class="modal-head">
-      <h2>AI BOT STRATEGIES</h2>
-      <button id="closeBotStrategyModal">×</button>
+  <div class="modal-card">
+
+    <div class="modal-header">
+
+      <div>
+        <span class="small-label">AI BOT</span>
+        <h2>Bot Strategies</h2>
+      </div>
+
+      <button id="closeBotStrategyModal" class="modal-close" type="button">
+        ×
+      </button>
+
     </div>
 
-    <label class="check-row">
-      <input class="bot-strategy-check" type="checkbox" value="MATCHES">
-      MATCHES
-    </label>
 
-    <label class="check-row">
-      <input class="bot-strategy-check" type="checkbox" value="DIFFERS">
-      DIFFERS
-    </label>
+    <div class="bot-strategy-list">
 
-    <label class="check-row">
-      <input class="bot-strategy-check" type="checkbox" value="OVER">
-      OVER
-    </label>
+      <label class="check-option">
+        <input class="bot-strategy-check" type="checkbox" value="MATCHES" checked>
+        <span>MATCHES</span>
+      </label>
 
-    <label class="check-row">
-      <input class="bot-strategy-check" type="checkbox" value="UNDER">
-      UNDER
-    </label>
+      <label class="check-option">
+        <input class="bot-strategy-check" type="checkbox" value="DIFFERS" checked>
+        <span>DIFFERS</span>
+      </label>
 
-    <label class="check-row">
-      <input class="bot-strategy-check" type="checkbox" value="EVEN">
-      EVEN
-    </label>
+      <label class="check-option">
+        <input class="bot-strategy-check" type="checkbox" value="OVER">
+        <span>OVER</span>
+      </label>
 
-    <label class="check-row">
-      <input class="bot-strategy-check" type="checkbox" value="ODD">
-      ODD
-    </label>
+      <label class="check-option">
+        <input class="bot-strategy-check" type="checkbox" value="UNDER">
+        <span>UNDER</span>
+      </label>
 
-    <button id="applyBotStrategies" class="primary-btn wide">
-      APPLY
+      <label class="check-option">
+        <input class="bot-strategy-check" type="checkbox" value="EVEN">
+        <span>EVEN</span>
+      </label>
+
+      <label class="check-option">
+        <input class="bot-strategy-check" type="checkbox" value="ODD">
+        <span>ODD</span>
+      </label>
+
+    </div>
+
+
+    <button id="applyBotStrategies" class="primary-btn full-btn" type="button">
+      APPLY STRATEGIES
     </button>
 
   </div>
 
 </div>
 
-<!-- ================= REAL CONFIRMATION ================= -->
 
+<!-- ===================================================
+     REAL ACCOUNT CONFIRMATION
+==================================================== -->
 <div id="realConfirmModal" class="modal">
 
-  <div class="modal-box">
+  <div class="modal-backdrop"></div>
 
-    <div class="modal-head">
-      <h2>REAL MONEY MODE</h2>
+  <div class="modal-card danger-modal">
+
+    <div class="modal-header">
+
+      <div>
+        <span class="small-label">REAL ACCOUNT</span>
+        <h2>Confirmation Required</h2>
+      </div>
+
     </div>
 
-    <p class="warning">
-      Real trading can lose money. Confirm only if you understand the risk.
-    </p>
+    <div class="warning-box danger-warning">
 
-    <div class="button-row">
-      <button id="cancelRealBtn" class="danger-btn">CANCEL</button>
-      <button id="confirmRealBtn" class="primary-btn">CONFIRM</button>
+      Real-money trading carries financial risk.
+      KRISHWAVE will not switch to real trading without your confirmation.
+
+    </div>
+
+    <div class="modal-actions">
+
+      <button id="cancelRealBtn" class="secondary-btn" type="button">
+        CANCEL
+      </button>
+
+      <button id="confirmRealBtn" class="danger-btn" type="button">
+        CONFIRM REAL MODE
+      </button>
+
     </div>
 
   </div>
 
 </div>
 
-<!-- ================= TOAST ================= -->
 
+<!-- ===================================================
+     TOAST
+==================================================== -->
 <div id="toast" class="toast">
-  <span id="toastMessage"></span>
+
+  <span>KRISHWAVE</span>
+
+  <strong id="toastMessage">
+    Ready
+  </strong>
+
 </div>
 
-<!-- ================= NAV ================= -->
-
-<nav class="bottom-nav">
-
-  <button data-page="analysis" class="nav-item active">
-    <span>◉</span>
-    <small>Analysis</small>
-  </button>
-
-  <button data-page="trade" class="nav-item">
-    <span>⚡</span>
-    <small>Trade</small>
-  </button>
-
-  <button data-page="history" class="nav-item">
-    <span>▤</span>
-    <small>History</small>
-  </button>
-
-</nav>
-
-<script src="app.js"></script>
-
-</body>
+  </div>  <script src="app.js"></script></body>
 </html>
