@@ -15,6 +15,7 @@
    - Railway PORT support
    - Health check
    - Session validation
+   - Current Deriv OTP response support
 ========================================================= */
 
 "use strict";
@@ -52,10 +53,11 @@ const DERIV_API =
   "https://api.derivws.com/trading/v1/options";
 
 /*
-   Maximum internal session lifetime.
+   Maximum lifetime of our internal session.
 
    The Deriv access token NEVER goes to the browser.
 */
+
 const SESSION_TTL =
   55 * 60 * 1000;
 
@@ -81,10 +83,6 @@ app.use((req, res, next) => {
 
   const origin =
     req.headers.origin;
-
-  /*
-     Allow the KRISHWAVE GitHub Pages origin.
-  */
 
   if (
     !origin ||
@@ -270,11 +268,6 @@ const sessionCleanup =
   }, 5 * 60 * 1000);
 
 
-/*
-   Prevent the cleanup timer from keeping
-   the Node process alive unnecessarily.
-*/
-
 if (
   sessionCleanup &&
   typeof sessionCleanup.unref ===
@@ -325,6 +318,7 @@ function getDerivError(
 ) {
 
   return (
+    data?.errors?.[0]?.message ||
     data?.error?.message ||
     data?.error_description ||
     data?.error ||
@@ -334,7 +328,7 @@ function getDerivError(
 
 
 /* =========================================================
-   ROOT / HEALTH
+   ROOT
 ========================================================= */
 
 app.get(
@@ -369,6 +363,10 @@ app.get(
   }
 );
 
+
+/* =========================================================
+   HEALTH CHECK
+========================================================= */
 
 app.get(
   "/health",
@@ -962,21 +960,34 @@ app.post(
 
       /* ---------------------------------------------------
          FIND WEBSOCKET URL
+         
+         CURRENT DERIV RESPONSE:
+         data.data.url
+
+         BACKWARD COMPATIBILITY:
+         data.websocket_url
+         data.url
+         data.ws_url
       --------------------------------------------------- */
 
       const websocketUrl =
-        data.websocket_url ||
-        data.url ||
-        data.ws_url;
+        data?.data?.url ||
+        data?.websocket_url ||
+        data?.url ||
+        data?.ws_url;
 
+
+      /* ---------------------------------------------------
+         CHECK WEBSOCKET URL
+      --------------------------------------------------- */
 
       if (
-        typeof websocketUrl !==
-        "string"
+        typeof websocketUrl !== "string" ||
+        !websocketUrl.trim()
       ) {
 
         console.error(
-          "No WebSocket URL returned:",
+          "No WebSocket URL returned by Deriv:",
           data
         );
 
@@ -1197,7 +1208,9 @@ app.listen(
     );
 
     console.log(
-      `Client ID configured: ${CLIENT_ID ? "YES" : "NO"}`
+      `Client ID configured: ${
+        CLIENT_ID ? "YES" : "NO"
+      }`
     );
 
     console.log(
@@ -1218,6 +1231,10 @@ app.listen(
 
     console.log(
       "Server-side token storage: ENABLED"
+    );
+
+    console.log(
+      "Authenticated WebSocket OTP: ENABLED"
     );
 
     console.log(
