@@ -5534,4 +5534,4 @@ window.KRISHWAVE =
 
 console.log(
   "KRISHWAVE AI BEAST V7.1 loaded."
-);
+); 
