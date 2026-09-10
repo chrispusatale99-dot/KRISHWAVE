@@ -2,17 +2,30 @@
    KRISHWAVE AI BEAST V7.2
    DERIV OAUTH BACKEND
    RAILWAY SERVER
-   ========================================================= */
 
-"use strict";
+   ---------------------------------------------------------
+   FEATURES
+   - Deriv OAuth 2.0 + PKCE
+   - Secure server-side token storage
+   - Account retrieval
+   - Demo / Real account support
+   - Authenticated WebSocket OTP
+   - Session management
+   - CORS for KRISHWAVE GitHub Pages
+   - Railway PORT support
+   ---------------------------------------------------------
+*/
 
 const express = require("express");
 const crypto = require("crypto");
 
 const app = express();
 
-const PORT =
-  process.env.PORT || 8080;
+/* =========================================================
+   CONFIGURATION
+========================================================= */
+
+const PORT = process.env.PORT || 8080;
 
 const CLIENT_ID =
   process.env.DERIV_CLIENT_ID ||
@@ -26,79 +39,93 @@ const FRONTEND_ORIGIN =
   process.env.FRONTEND_ORIGIN ||
   "https://chrispusatale99-dot.github.io";
 
+const DERIV_AUTH_URL =
+  "https://auth.deriv.com/oauth2/auth";
+
 const DERIV_TOKEN_URL =
   "https://auth.deriv.com/oauth2/token";
 
 const DERIV_API =
   "https://api.derivws.com/trading/v1/options";
 
+/*
+   Maximum lifetime of our internal session.
+
+   The Deriv access token itself is NEVER sent to
+   the browser.
+*/
 const SESSION_TTL =
   55 * 60 * 1000;
 
-app.use(express.json());
+
+/* =========================================================
+   EXPRESS
+========================================================= */
+
+app.use(express.json({ limit: "100kb" }));
+
 
 /* =========================================================
    CORS
 ========================================================= */
 
-app.use(
-  (req, res, next) => {
+app.use((req, res, next) => {
 
-    res.setHeader(
-      "Access-Control-Allow-Origin",
-      FRONTEND_ORIGIN
-    );
+  res.setHeader(
+    "Access-Control-Allow-Origin",
+    FRONTEND_ORIGIN
+  );
 
-    res.setHeader(
-      "Access-Control-Allow-Methods",
-      "GET,POST,OPTIONS"
-    );
+  res.setHeader(
+    "Access-Control-Allow-Methods",
+    "GET,POST,OPTIONS"
+  );
 
-    res.setHeader(
-      "Access-Control-Allow-Headers",
-      "Content-Type"
-    );
+  res.setHeader(
+    "Access-Control-Allow-Headers",
+    "Content-Type"
+  );
 
-    res.setHeader(
-      "Access-Control-Allow-Credentials",
-      "true"
-    );
+  res.setHeader(
+    "Access-Control-Allow-Credentials",
+    "true"
+  );
 
-    if (req.method === "OPTIONS") {
-      return res
-        .status(204)
-        .end();
-    }
-
-    next();
+  if (req.method === "OPTIONS") {
+    return res.status(204).end();
   }
-);
+
+  next();
+});
+
 
 /* =========================================================
-   SESSIONS
+   INTERNAL SESSION STORE
 ========================================================= */
 
-const sessions =
-  new Map();
+const sessions = new Map();
 
-function createSession(
-  accessToken,
-  expiresIn
-) {
+
+/* =========================================================
+   CREATE SESSION
+========================================================= */
+
+function createSession(accessToken, expiresIn) {
 
   const sessionId =
-    crypto
-      .randomBytes(32)
-      .toString("hex");
+    crypto.randomBytes(32).toString("hex");
 
-  const expiry =
+  const requestedLifetime =
+    Number(expiresIn || 3600) * 1000;
+
+  const lifetime =
     Math.min(
-      Number(expiresIn || 3600) * 1000,
+      requestedLifetime,
       SESSION_TTL
     );
 
   const expiresAt =
-    Date.now() + expiry;
+    Date.now() + lifetime;
 
   sessions.set(
     sessionId,
@@ -114,9 +141,12 @@ function createSession(
   };
 }
 
-function getSession(
-  sessionId
-) {
+
+/* =========================================================
+   GET SESSION
+========================================================= */
+
+function getSession(sessionId) {
 
   if (!sessionId) {
     return null;
@@ -129,14 +159,9 @@ function getSession(
     return null;
   }
 
-  if (
-    Date.now() >=
-    session.expiresAt
-  ) {
+  if (Date.now() >= session.expiresAt) {
 
-    sessions.delete(
-      sessionId
-    );
+    sessions.delete(sessionId);
 
     return null;
   }
@@ -144,63 +169,144 @@ function getSession(
   return session;
 }
 
+
 /* =========================================================
-   HEALTH
+   CLEAN EXPIRED SESSIONS
 ========================================================= */
 
-app.get(
-  "/",
-  (req, res) => {
+setInterval(() => {
 
-    res.json({
-      success: true,
-      name:
-        "KRISHWAVE AI BEAST OAuth Backend",
-      version:
-        "7.2.0",
-      status:
-        "online",
-      frontend:
-        FRONTEND_ORIGIN,
-      oauth:
-        true
-    });
+  const now = Date.now();
 
+  for (const [
+    sessionId,
+    session
+  ] of sessions.entries()) {
+
+    if (now >= session.expiresAt) {
+
+      sessions.delete(sessionId);
+    }
   }
-);
+
+}, 5 * 60 * 1000);
+
 
 /* =========================================================
-   CONFIG
+   SAFE JSON RESPONSE
 ========================================================= */
 
-app.get(
-  "/api/config",
-  (req, res) => {
+async function readJsonResponse(response) {
 
-    res.json({
-      success: true,
+  const text =
+    await response.text();
 
-      client_id:
-        CLIENT_ID,
-
-      redirect_uri:
-        REDIRECT_URI,
-
-      frontend_origin:
-        FRONTEND_ORIGIN,
-
-      backend:
-        "railway",
-
-      status:
-        "online"
-    });
-
+  if (!text) {
+    return {};
   }
-);
+
+  try {
+
+    return JSON.parse(text);
+
+  } catch {
+
+    return {
+      raw: text
+    };
+  }
+}
+
 
 /* =========================================================
-   OAUTH TOKEN EXCHANGE
+   HEALTH CHECK
+========================================================= */
+
+app.get("/", (req, res) => {
+
+  res.json({
+
+    success: true,
+
+    name:
+      "KRISHWAVE OAuth Backend",
+
+    version:
+      "7.2.0",
+
+    status:
+      "online",
+
+    backend:
+      "railway",
+
+    frontend:
+      FRONTEND_ORIGIN,
+
+    oauth:
+      true
+  });
+});
+
+
+/* =========================================================
+   CONFIGURATION ENDPOINT
+========================================================= */
+
+app.get("/api/config", (req, res) => {
+
+  res.json({
+
+    success: true,
+
+    client_id:
+      CLIENT_ID,
+
+    redirect_uri:
+      REDIRECT_URI,
+
+    frontend_origin:
+      FRONTEND_ORIGIN,
+
+    backend:
+      "railway",
+
+    status:
+      "online"
+  });
+});
+
+
+/* =========================================================
+   OAUTH INFORMATION
+========================================================= */
+
+app.get("/api/oauth/info", (req, res) => {
+
+  res.json({
+
+    success: true,
+
+    authorization_url:
+      DERIV_AUTH_URL,
+
+    token_url:
+      DERIV_TOKEN_URL,
+
+    client_id:
+      CLIENT_ID,
+
+    redirect_uri:
+      REDIRECT_URI,
+
+    pkce:
+      true
+  });
+});
+
+
+/* =========================================================
+   OAUTH CODE EXCHANGE
 ========================================================= */
 
 app.post(
@@ -214,29 +320,38 @@ app.post(
         code_verifier
       } = req.body || {};
 
+
+      /* ---------------------------------------------------
+         VALIDATE REQUEST
+      --------------------------------------------------- */
+
       if (!code) {
 
-        return res
-          .status(400)
-          .json({
-            success: false,
-            error:
-              "Missing authorization code"
-          });
+        return res.status(400).json({
 
+          success: false,
+
+          error:
+            "Missing authorization code"
+        });
       }
+
 
       if (!code_verifier) {
 
-        return res
-          .status(400)
-          .json({
-            success: false,
-            error:
-              "Missing PKCE code verifier"
-          });
+        return res.status(400).json({
 
+          success: false,
+
+          error:
+            "Missing PKCE code verifier"
+        });
       }
+
+
+      /* ---------------------------------------------------
+         BUILD TOKEN REQUEST
+      --------------------------------------------------- */
 
       const params =
         new URLSearchParams();
@@ -266,6 +381,11 @@ app.post(
         REDIRECT_URI
       );
 
+
+      /* ---------------------------------------------------
+         CALL DERIV
+      --------------------------------------------------- */
+
       const response =
         await fetch(
           DERIV_TOKEN_URL,
@@ -285,57 +405,78 @@ app.post(
           }
         );
 
-      const text =
-        await response.text();
 
-      let data;
+      const data =
+        await readJsonResponse(
+          response
+        );
 
-      try {
-        data =
-          JSON.parse(text);
-      } catch {
-        data = {
-          error: text
-        };
-      }
+
+      /* ---------------------------------------------------
+         HANDLE DERIV ERROR
+      --------------------------------------------------- */
 
       if (!response.ok) {
 
         console.error(
-          "Deriv OAuth error:",
+          "Deriv OAuth exchange error:",
           response.status,
           data
         );
 
-        return res
-          .status(response.status)
-          .json({
-            success: false,
-            error:
-              data.error_description ||
-              data.error ||
-              "Deriv OAuth exchange failed"
-          });
+        return res.status(
+          response.status
+        ).json({
 
+          success: false,
+
+          error:
+            data.error_description ||
+            data.error?.message ||
+            data.error ||
+            "Deriv OAuth exchange failed"
+        });
       }
+
+
+      /* ---------------------------------------------------
+         CHECK TOKEN
+      --------------------------------------------------- */
 
       if (!data.access_token) {
 
-        return res
-          .status(500)
-          .json({
-            success: false,
-            error:
-              "Deriv did not return an access token"
-          });
+        console.error(
+          "Deriv returned no access token:",
+          data
+        );
 
+        return res.status(500).json({
+
+          success: false,
+
+          error:
+            "Deriv did not return an access token"
+        });
       }
+
+
+      /* ---------------------------------------------------
+         CREATE INTERNAL SESSION
+      --------------------------------------------------- */
 
       const session =
         createSession(
           data.access_token,
           data.expires_in
         );
+
+
+      /*
+         IMPORTANT:
+
+         access_token is intentionally NOT returned
+         to the browser.
+      */
 
       return res.json({
 
@@ -351,7 +492,6 @@ app.post(
               Date.now()
             ) / 1000
           )
-
       });
 
     } catch (error) {
@@ -361,21 +501,20 @@ app.post(
         error
       );
 
-      return res
-        .status(500)
-        .json({
-          success: false,
-          error:
-            "KRISHWAVE OAuth backend error"
-        });
+      return res.status(500).json({
 
+        success: false,
+
+        error:
+          "KRISHWAVE OAuth backend error"
+      });
     }
-
   }
 );
 
+
 /* =========================================================
-   ACCOUNTS
+   GET DERIV ACCOUNTS
 ========================================================= */
 
 app.post(
@@ -388,22 +527,28 @@ app.post(
         session_id
       } = req.body || {};
 
+
       const session =
         getSession(
           session_id
         );
 
+
       if (!session) {
 
-        return res
-          .status(401)
-          .json({
-            success: false,
-            error:
-              "Session expired or invalid"
-          });
+        return res.status(401).json({
 
+          success: false,
+
+          error:
+            "Session expired or invalid"
+        });
       }
+
+
+      /* ---------------------------------------------------
+         REQUEST ACCOUNTS
+      --------------------------------------------------- */
 
       const response =
         await fetch(
@@ -412,6 +557,7 @@ app.post(
             method: "GET",
 
             headers: {
+
               Authorization:
                 `Bearer ${session.accessToken}`,
 
@@ -421,44 +567,55 @@ app.post(
           }
         );
 
-      const text =
-        await response.text();
 
-      let data;
+      const data =
+        await readJsonResponse(
+          response
+        );
 
-      try {
-        data =
-          JSON.parse(text);
-      } catch {
-        data = {
-          error: text
-        };
-      }
+
+      /* ---------------------------------------------------
+         HANDLE ERROR
+      --------------------------------------------------- */
 
       if (!response.ok) {
 
-        return res
-          .status(response.status)
-          .json({
-            success: false,
-            error:
-              data.error?.message ||
-              data.error_description ||
-              data.error ||
-              "Unable to get Deriv accounts"
-          });
+        console.error(
+          "Deriv accounts error:",
+          response.status,
+          data
+        );
 
+        return res.status(
+          response.status
+        ).json({
+
+          success: false,
+
+          error:
+            data.error?.message ||
+            data.error_description ||
+            data.error ||
+            "Unable to get Deriv accounts"
+        });
       }
+
+
+      /* ---------------------------------------------------
+         RETURN ACCOUNT DATA
+      --------------------------------------------------- */
+
+      const accounts =
+        data.accounts ||
+        data.data ||
+        data;
+
 
       return res.json({
 
         success: true,
 
-        accounts:
-          data.accounts ||
-          data.data ||
-          data
-
+        accounts
       });
 
     } catch (error) {
@@ -468,21 +625,20 @@ app.post(
         error
       );
 
-      return res
-        .status(500)
-        .json({
-          success: false,
-          error:
-            "Unable to retrieve Deriv accounts"
-        });
+      return res.status(500).json({
 
+        success: false,
+
+        error:
+          "Unable to retrieve Deriv accounts"
+      });
     }
-
   }
 );
 
+
 /* =========================================================
-   OTP / AUTHENTICATED WEBSOCKET
+   CREATE AUTHENTICATED WEBSOCKET OTP
 ========================================================= */
 
 app.post(
@@ -496,38 +652,58 @@ app.post(
         account_id
       } = req.body || {};
 
+
+      /* ---------------------------------------------------
+         VALIDATE SESSION
+      --------------------------------------------------- */
+
       const session =
         getSession(
           session_id
         );
 
+
       if (!session) {
 
-        return res
-          .status(401)
-          .json({
-            success: false,
-            error:
-              "Session expired or invalid"
-          });
+        return res.status(401).json({
 
+          success: false,
+
+          error:
+            "Session expired or invalid"
+        });
       }
+
+
+      /* ---------------------------------------------------
+         VALIDATE ACCOUNT
+      --------------------------------------------------- */
 
       if (!account_id) {
 
-        return res
-          .status(400)
-          .json({
-            success: false,
-            error:
-              "Missing account ID"
-          });
+        return res.status(400).json({
 
+          success: false,
+
+          error:
+            "Missing account ID"
+        });
       }
+
+
+      /* ---------------------------------------------------
+         BUILD OTP ENDPOINT
+      --------------------------------------------------- */
 
       const endpoint =
         `${DERIV_API}/accounts/` +
-        `${encodeURIComponent(account_id)}/otp`;
+        `${encodeURIComponent(account_id)}` +
+        `/otp`;
+
+
+      /* ---------------------------------------------------
+         REQUEST OTP
+      --------------------------------------------------- */
 
       const response =
         await fetch(
@@ -536,6 +712,7 @@ app.post(
             method: "POST",
 
             headers: {
+
               Authorization:
                 `Bearer ${session.accessToken}`,
 
@@ -545,57 +722,70 @@ app.post(
           }
         );
 
-      const text =
-        await response.text();
 
-      let data;
+      const data =
+        await readJsonResponse(
+          response
+        );
 
-      try {
-        data =
-          JSON.parse(text);
-      } catch {
-        data = {
-          error: text
-        };
-      }
+
+      /* ---------------------------------------------------
+         HANDLE ERROR
+      --------------------------------------------------- */
 
       if (!response.ok) {
 
         console.error(
-          "OTP error:",
+          "Deriv OTP error:",
           response.status,
           data
         );
 
-        return res
-          .status(response.status)
-          .json({
-            success: false,
-            error:
-              data.error?.message ||
-              data.error_description ||
-              data.error ||
-              "Unable to create Deriv WebSocket"
-          });
+        return res.status(
+          response.status
+        ).json({
 
+          success: false,
+
+          error:
+            data.error?.message ||
+            data.error_description ||
+            data.error ||
+            "Unable to create Deriv WebSocket"
+        });
       }
+
+
+      /* ---------------------------------------------------
+         FIND WEBSOCKET URL
+      --------------------------------------------------- */
 
       const websocketUrl =
         data.websocket_url ||
         data.url ||
         data.ws_url;
 
+
       if (!websocketUrl) {
 
-        return res
-          .status(500)
-          .json({
-            success: false,
-            error:
-              "Deriv did not return a WebSocket URL"
-          });
+        console.error(
+          "No WebSocket URL returned:",
+          data
+        );
 
+        return res.status(500).json({
+
+          success: false,
+
+          error:
+            "Deriv did not return a WebSocket URL"
+        });
       }
+
+
+      /* ---------------------------------------------------
+         RETURN ONLY WS URL
+      --------------------------------------------------- */
 
       return res.json({
 
@@ -606,7 +796,6 @@ app.post(
 
         expires_in:
           120
-
       });
 
     } catch (error) {
@@ -616,18 +805,17 @@ app.post(
         error
       );
 
-      return res
-        .status(500)
-        .json({
-          success: false,
-          error:
-            "KRISHWAVE WebSocket authentication error"
-        });
+      return res.status(500).json({
 
+        success: false,
+
+        error:
+          "KRISHWAVE WebSocket authentication error"
+      });
     }
-
   }
 );
+
 
 /* =========================================================
    LOGOUT
@@ -637,22 +825,90 @@ app.post(
   "/api/logout",
   (req, res) => {
 
+    try {
+
+      const {
+        session_id
+      } = req.body || {};
+
+
+      if (session_id) {
+
+        sessions.delete(
+          session_id
+        );
+      }
+
+
+      return res.json({
+
+        success: true
+      });
+
+    } catch (error) {
+
+      console.error(
+        "Logout error:",
+        error
+      );
+
+      return res.status(500).json({
+
+        success: false,
+
+        error:
+          "Logout failed"
+      });
+    }
+  }
+);
+
+
+/* =========================================================
+   SESSION CHECK
+========================================================= */
+
+app.post(
+  "/api/session",
+  (req, res) => {
+
     const {
       session_id
     } = req.body || {};
 
-    if (session_id) {
-      sessions.delete(
+
+    const session =
+      getSession(
         session_id
       );
+
+
+    if (!session) {
+
+      return res.status(401).json({
+
+        success: false,
+
+        valid: false,
+
+        error:
+          "Session expired or invalid"
+      });
     }
 
-    res.json({
-      success: true
-    });
 
+    return res.json({
+
+      success: true,
+
+      valid: true,
+
+      expires_at:
+        session.expiresAt
+    });
   }
 );
+
 
 /* =========================================================
    404
@@ -661,77 +917,45 @@ app.post(
 app.use(
   (req, res) => {
 
-    res
-      .status(404)
-      .json({
-        success: false,
-        error:
-          "KRISHWAVE API route not found"
-      });
+    res.status(404).json({
 
+      success: false,
+
+      error:
+        "KRISHWAVE API route not found",
+
+      path:
+        req.path
+    });
   }
 );
 
+
 /* =========================================================
-   ERROR HANDLER
+   GLOBAL ERROR HANDLER
 ========================================================= */
 
 app.use(
-  (
-    error,
-    req,
-    res,
-    next
-  ) => {
+  (error, req, res, next) => {
 
     console.error(
-      "Server error:",
+      "KRISHWAVE server error:",
       error
     );
 
-    res
-      .status(500)
-      .json({
-        success: false,
-        error:
-          "KRISHWAVE server error"
-      });
+    res.status(500).json({
 
+      success: false,
+
+      error:
+        "KRISHWAVE server error"
+    });
   }
 );
 
-/* =========================================================
-   CLEAN EXPIRED SESSIONS
-========================================================= */
-
-setInterval(
-  () => {
-
-    const current =
-      Date.now();
-
-    for (
-      const [
-        id,
-        session
-      ] of sessions
-    ) {
-
-      if (
-        current >=
-        session.expiresAt
-      ) {
-        sessions.delete(id);
-      }
-
-    }
-
-  },
-  60 * 1000
-);
 
 /* =========================================================
-   START
+   START SERVER
 ========================================================= */
 
 app.listen(
@@ -740,19 +964,39 @@ app.listen(
   () => {
 
     console.log(
-      "KRISHWAVE AI BEAST V7.2 backend running on port " +
-      PORT
+      "================================================="
     );
 
     console.log(
-      "Frontend:",
-      FRONTEND_ORIGIN
+      "KRISHWAVE AI BEAST V7.2"
     );
 
     console.log(
-      "OAuth client:",
-      CLIENT_ID
+      "Railway backend is ONLINE"
     );
 
+    console.log(
+      `Port: ${PORT}`
+    );
+
+    console.log(
+      `Client ID: ${CLIENT_ID}`
+    );
+
+    console.log(
+      `Redirect URI: ${REDIRECT_URI}`
+    );
+
+    console.log(
+      `Frontend: ${FRONTEND_ORIGIN}`
+    );
+
+    console.log(
+      "OAuth: ENABLED"
+    );
+
+    console.log(
+      "================================================="
+    );
   }
 );
