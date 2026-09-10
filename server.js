@@ -13,8 +13,11 @@
    - Session management
    - CORS for KRISHWAVE GitHub Pages
    - Railway PORT support
-   ---------------------------------------------------------
-*/
+   - Health check
+   - Session validation
+========================================================= */
+
+"use strict";
 
 const express = require("express");
 const crypto = require("crypto");
@@ -25,11 +28,11 @@ const app = express();
    CONFIGURATION
 ========================================================= */
 
-const PORT = process.env.PORT || 8080;
+const PORT =
+  Number(process.env.PORT) || 8080;
 
 const CLIENT_ID =
-  process.env.DERIV_CLIENT_ID ||
-  "34khasPjsT0PCRR8X3Z70";
+  process.env.DERIV_CLIENT_ID || "";
 
 const REDIRECT_URI =
   process.env.REDIRECT_URI ||
@@ -49,10 +52,9 @@ const DERIV_API =
   "https://api.derivws.com/trading/v1/options";
 
 /*
-   Maximum lifetime of our internal session.
+   Maximum internal session lifetime.
 
-   The Deriv access token itself is NEVER sent to
-   the browser.
+   The Deriv access token NEVER goes to the browser.
 */
 const SESSION_TTL =
   55 * 60 * 1000;
@@ -62,7 +64,13 @@ const SESSION_TTL =
    EXPRESS
 ========================================================= */
 
-app.use(express.json({ limit: "100kb" }));
+app.disable("x-powered-by");
+
+app.use(
+  express.json({
+    limit: "100kb"
+  })
+);
 
 
 /* =========================================================
@@ -71,9 +79,27 @@ app.use(express.json({ limit: "100kb" }));
 
 app.use((req, res, next) => {
 
+  const origin =
+    req.headers.origin;
+
+  /*
+     Allow the KRISHWAVE GitHub Pages origin.
+  */
+
+  if (
+    !origin ||
+    origin === FRONTEND_ORIGIN
+  ) {
+
+    res.setHeader(
+      "Access-Control-Allow-Origin",
+      FRONTEND_ORIGIN
+    );
+  }
+
   res.setHeader(
-    "Access-Control-Allow-Origin",
-    FRONTEND_ORIGIN
+    "Vary",
+    "Origin"
   );
 
   res.setHeader(
@@ -91,8 +117,18 @@ app.use((req, res, next) => {
     "true"
   );
 
-  if (req.method === "OPTIONS") {
-    return res.status(204).end();
+  res.setHeader(
+    "Access-Control-Max-Age",
+    "86400"
+  );
+
+  if (
+    req.method === "OPTIONS"
+  ) {
+
+    return res
+      .status(204)
+      .end();
   }
 
   next();
@@ -103,20 +139,42 @@ app.use((req, res, next) => {
    INTERNAL SESSION STORE
 ========================================================= */
 
-const sessions = new Map();
+const sessions =
+  new Map();
 
 
 /* =========================================================
-   CREATE SESSION
+   CONFIGURATION VALIDATION
 ========================================================= */
 
-function createSession(accessToken, expiresIn) {
+function requireClientConfig() {
+
+  if (!CLIENT_ID) {
+
+    throw new Error(
+      "DERIV_CLIENT_ID is not configured on Railway"
+    );
+  }
+}
+
+
+/* =========================================================
+   CREATE INTERNAL SESSION
+========================================================= */
+
+function createSession(
+  accessToken,
+  expiresIn
+) {
 
   const sessionId =
-    crypto.randomBytes(32).toString("hex");
+    crypto
+      .randomBytes(32)
+      .toString("hex");
 
   const requestedLifetime =
-    Number(expiresIn || 3600) * 1000;
+    Number(expiresIn || 3600) *
+    1000;
 
   const lifetime =
     Math.min(
@@ -125,7 +183,8 @@ function createSession(accessToken, expiresIn) {
     );
 
   const expiresAt =
-    Date.now() + lifetime;
+    Date.now() +
+    lifetime;
 
   sessions.set(
     sessionId,
@@ -143,25 +202,34 @@ function createSession(accessToken, expiresIn) {
 
 
 /* =========================================================
-   GET SESSION
+   GET INTERNAL SESSION
 ========================================================= */
 
-function getSession(sessionId) {
+function getSession(
+  sessionId
+) {
 
   if (!sessionId) {
     return null;
   }
 
   const session =
-    sessions.get(sessionId);
+    sessions.get(
+      sessionId
+    );
 
   if (!session) {
     return null;
   }
 
-  if (Date.now() >= session.expiresAt) {
+  if (
+    Date.now() >=
+    session.expiresAt
+  ) {
 
-    sessions.delete(sessionId);
+    sessions.delete(
+      sessionId
+    );
 
     return null;
   }
@@ -174,29 +242,56 @@ function getSession(sessionId) {
    CLEAN EXPIRED SESSIONS
 ========================================================= */
 
-setInterval(() => {
+const sessionCleanup =
+  setInterval(() => {
 
-  const now = Date.now();
+    const now =
+      Date.now();
 
-  for (const [
-    sessionId,
-    session
-  ] of sessions.entries()) {
+    for (
+      const [
+        sessionId,
+        session
+      ]
+      of sessions.entries()
+    ) {
 
-    if (now >= session.expiresAt) {
+      if (
+        now >=
+        session.expiresAt
+      ) {
 
-      sessions.delete(sessionId);
+        sessions.delete(
+          sessionId
+        );
+      }
     }
-  }
 
-}, 5 * 60 * 1000);
+  }, 5 * 60 * 1000);
+
+
+/*
+   Prevent the cleanup timer from keeping
+   the Node process alive unnecessarily.
+*/
+
+if (
+  sessionCleanup &&
+  typeof sessionCleanup.unref ===
+    "function"
+) {
+
+  sessionCleanup.unref();
+}
 
 
 /* =========================================================
    SAFE JSON RESPONSE
 ========================================================= */
 
-async function readJsonResponse(response) {
+async function readJsonResponse(
+  response
+) {
 
   const text =
     await response.text();
@@ -207,7 +302,9 @@ async function readJsonResponse(response) {
 
   try {
 
-    return JSON.parse(text);
+    return JSON.parse(
+      text
+    );
 
   } catch {
 
@@ -219,90 +316,169 @@ async function readJsonResponse(response) {
 
 
 /* =========================================================
-   HEALTH CHECK
+   DERIV ERROR MESSAGE
 ========================================================= */
 
-app.get("/", (req, res) => {
+function getDerivError(
+  data,
+  fallback
+) {
 
-  res.json({
-
-    success: true,
-
-    name:
-      "KRISHWAVE OAuth Backend",
-
-    version:
-      "7.2.0",
-
-    status:
-      "online",
-
-    backend:
-      "railway",
-
-    frontend:
-      FRONTEND_ORIGIN,
-
-    oauth:
-      true
-  });
-});
+  return (
+    data?.error?.message ||
+    data?.error_description ||
+    data?.error ||
+    fallback
+  );
+}
 
 
 /* =========================================================
-   CONFIGURATION ENDPOINT
+   ROOT / HEALTH
 ========================================================= */
 
-app.get("/api/config", (req, res) => {
+app.get(
+  "/",
+  (req, res) => {
 
-  res.json({
+    res.json({
 
-    success: true,
+      success: true,
 
-    client_id:
-      CLIENT_ID,
+      name:
+        "KRISHWAVE OAuth Backend",
 
-    redirect_uri:
-      REDIRECT_URI,
+      version:
+        "7.2.0",
 
-    frontend_origin:
-      FRONTEND_ORIGIN,
+      status:
+        "online",
 
-    backend:
-      "railway",
+      backend:
+        "railway",
 
-    status:
-      "online"
-  });
-});
+      frontend:
+        FRONTEND_ORIGIN,
+
+      oauth:
+        true,
+
+      timestamp:
+        new Date().toISOString()
+    });
+  }
+);
+
+
+app.get(
+  "/health",
+  (req, res) => {
+
+    res.json({
+
+      success: true,
+
+      status:
+        "healthy",
+
+      service:
+        "KRISHWAVE AI BEAST V7.2",
+
+      backend:
+        "railway",
+
+      timestamp:
+        new Date().toISOString()
+    });
+  }
+);
+
+
+/* =========================================================
+   FRONTEND CONFIGURATION
+========================================================= */
+
+app.get(
+  "/api/config",
+  (req, res) => {
+
+    if (!CLIENT_ID) {
+
+      return res.status(500).json({
+
+        success: false,
+
+        error:
+          "DERIV_CLIENT_ID is missing on Railway"
+      });
+    }
+
+    res.json({
+
+      success: true,
+
+      client_id:
+        CLIENT_ID,
+
+      redirect_uri:
+        REDIRECT_URI,
+
+      frontend_origin:
+        FRONTEND_ORIGIN,
+
+      backend:
+        "railway",
+
+      status:
+        "online",
+
+      version:
+        "7.2.0"
+    });
+  }
+);
 
 
 /* =========================================================
    OAUTH INFORMATION
 ========================================================= */
 
-app.get("/api/oauth/info", (req, res) => {
+app.get(
+  "/api/oauth/info",
+  (req, res) => {
 
-  res.json({
+    if (!CLIENT_ID) {
 
-    success: true,
+      return res.status(500).json({
 
-    authorization_url:
-      DERIV_AUTH_URL,
+        success: false,
 
-    token_url:
-      DERIV_TOKEN_URL,
+        error:
+          "DERIV_CLIENT_ID is missing on Railway"
+      });
+    }
 
-    client_id:
-      CLIENT_ID,
+    res.json({
 
-    redirect_uri:
-      REDIRECT_URI,
+      success: true,
 
-    pkce:
-      true
-  });
-});
+      authorization_url:
+        DERIV_AUTH_URL,
+
+      token_url:
+        DERIV_TOKEN_URL,
+
+      client_id:
+        CLIENT_ID,
+
+      redirect_uri:
+        REDIRECT_URI,
+
+      pkce:
+        true
+    });
+  }
+);
 
 
 /* =========================================================
@@ -315,17 +491,23 @@ app.post(
 
     try {
 
+      requireClientConfig();
+
       const {
         code,
         code_verifier
-      } = req.body || {};
+      } =
+        req.body || {};
 
 
       /* ---------------------------------------------------
-         VALIDATE REQUEST
+         VALIDATE AUTHORIZATION CODE
       --------------------------------------------------- */
 
-      if (!code) {
+      if (
+        typeof code !== "string" ||
+        !code.trim()
+      ) {
 
         return res.status(400).json({
 
@@ -337,7 +519,14 @@ app.post(
       }
 
 
-      if (!code_verifier) {
+      /* ---------------------------------------------------
+         VALIDATE PKCE VERIFIER
+      --------------------------------------------------- */
+
+      if (
+        typeof code_verifier !== "string" ||
+        !code_verifier.trim()
+      ) {
 
         return res.status(400).json({
 
@@ -383,7 +572,7 @@ app.post(
 
 
       /* ---------------------------------------------------
-         CALL DERIV
+         CALL DERIV TOKEN ENDPOINT
       --------------------------------------------------- */
 
       const response =
@@ -416,7 +605,9 @@ app.post(
          HANDLE DERIV ERROR
       --------------------------------------------------- */
 
-      if (!response.ok) {
+      if (
+        !response.ok
+      ) {
 
         console.error(
           "Deriv OAuth exchange error:",
@@ -431,19 +622,22 @@ app.post(
           success: false,
 
           error:
-            data.error_description ||
-            data.error?.message ||
-            data.error ||
-            "Deriv OAuth exchange failed"
+            getDerivError(
+              data,
+              "Deriv OAuth exchange failed"
+            )
         });
       }
 
 
       /* ---------------------------------------------------
-         CHECK TOKEN
+         CHECK ACCESS TOKEN
       --------------------------------------------------- */
 
-      if (!data.access_token) {
+      if (
+        typeof data.access_token !==
+        "string"
+      ) {
 
         console.error(
           "Deriv returned no access token:",
@@ -461,7 +655,7 @@ app.post(
 
 
       /* ---------------------------------------------------
-         CREATE INTERNAL SESSION
+         CREATE SERVER SESSION
       --------------------------------------------------- */
 
       const session =
@@ -474,8 +668,8 @@ app.post(
       /*
          IMPORTANT:
 
-         access_token is intentionally NOT returned
-         to the browser.
+         The access token is deliberately
+         NOT returned to the browser.
       */
 
       return res.json({
@@ -506,6 +700,7 @@ app.post(
         success: false,
 
         error:
+          error.message ||
           "KRISHWAVE OAuth backend error"
       });
     }
@@ -525,7 +720,8 @@ app.post(
 
       const {
         session_id
-      } = req.body || {};
+      } =
+        req.body || {};
 
 
       const session =
@@ -547,7 +743,7 @@ app.post(
 
 
       /* ---------------------------------------------------
-         REQUEST ACCOUNTS
+         REQUEST DERIV ACCOUNTS
       --------------------------------------------------- */
 
       const response =
@@ -575,10 +771,12 @@ app.post(
 
 
       /* ---------------------------------------------------
-         HANDLE ERROR
+         HANDLE DERIV ERROR
       --------------------------------------------------- */
 
-      if (!response.ok) {
+      if (
+        !response.ok
+      ) {
 
         console.error(
           "Deriv accounts error:",
@@ -593,16 +791,16 @@ app.post(
           success: false,
 
           error:
-            data.error?.message ||
-            data.error_description ||
-            data.error ||
-            "Unable to get Deriv accounts"
+            getDerivError(
+              data,
+              "Unable to get Deriv accounts"
+            )
         });
       }
 
 
       /* ---------------------------------------------------
-         RETURN ACCOUNT DATA
+         ACCOUNT DATA
       --------------------------------------------------- */
 
       const accounts =
@@ -650,7 +848,8 @@ app.post(
       const {
         session_id,
         account_id
-      } = req.body || {};
+      } =
+        req.body || {};
 
 
       /* ---------------------------------------------------
@@ -679,7 +878,10 @@ app.post(
          VALIDATE ACCOUNT
       --------------------------------------------------- */
 
-      if (!account_id) {
+      if (
+        typeof account_id !== "string" ||
+        !account_id.trim()
+      ) {
 
         return res.status(400).json({
 
@@ -702,7 +904,7 @@ app.post(
 
 
       /* ---------------------------------------------------
-         REQUEST OTP
+         REQUEST OTP FROM DERIV
       --------------------------------------------------- */
 
       const response =
@@ -730,10 +932,12 @@ app.post(
 
 
       /* ---------------------------------------------------
-         HANDLE ERROR
+         HANDLE DERIV ERROR
       --------------------------------------------------- */
 
-      if (!response.ok) {
+      if (
+        !response.ok
+      ) {
 
         console.error(
           "Deriv OTP error:",
@@ -748,10 +952,10 @@ app.post(
           success: false,
 
           error:
-            data.error?.message ||
-            data.error_description ||
-            data.error ||
-            "Unable to create Deriv WebSocket"
+            getDerivError(
+              data,
+              "Unable to create Deriv WebSocket"
+            )
         });
       }
 
@@ -766,7 +970,10 @@ app.post(
         data.ws_url;
 
 
-      if (!websocketUrl) {
+      if (
+        typeof websocketUrl !==
+        "string"
+      ) {
 
         console.error(
           "No WebSocket URL returned:",
@@ -784,7 +991,7 @@ app.post(
 
 
       /* ---------------------------------------------------
-         RETURN ONLY WS URL
+         RETURN WEBSOCKET URL
       --------------------------------------------------- */
 
       return res.json({
@@ -818,53 +1025,6 @@ app.post(
 
 
 /* =========================================================
-   LOGOUT
-========================================================= */
-
-app.post(
-  "/api/logout",
-  (req, res) => {
-
-    try {
-
-      const {
-        session_id
-      } = req.body || {};
-
-
-      if (session_id) {
-
-        sessions.delete(
-          session_id
-        );
-      }
-
-
-      return res.json({
-
-        success: true
-      });
-
-    } catch (error) {
-
-      console.error(
-        "Logout error:",
-        error
-      );
-
-      return res.status(500).json({
-
-        success: false,
-
-        error:
-          "Logout failed"
-      });
-    }
-  }
-);
-
-
-/* =========================================================
    SESSION CHECK
 ========================================================= */
 
@@ -874,7 +1034,8 @@ app.post(
 
     const {
       session_id
-    } = req.body || {};
+    } =
+      req.body || {};
 
 
     const session =
@@ -911,7 +1072,58 @@ app.post(
 
 
 /* =========================================================
-   404
+   LOGOUT
+========================================================= */
+
+app.post(
+  "/api/logout",
+  (req, res) => {
+
+    try {
+
+      const {
+        session_id
+      } =
+        req.body || {};
+
+
+      if (
+        typeof session_id ===
+        "string"
+      ) {
+
+        sessions.delete(
+          session_id
+        );
+      }
+
+
+      return res.json({
+
+        success: true
+      });
+
+    } catch (error) {
+
+      console.error(
+        "Logout error:",
+        error
+      );
+
+      return res.status(500).json({
+
+        success: false,
+
+        error:
+          "Logout failed"
+      });
+    }
+  }
+);
+
+
+/* =========================================================
+   404 HANDLER
 ========================================================= */
 
 app.use(
@@ -936,7 +1148,12 @@ app.use(
 ========================================================= */
 
 app.use(
-  (error, req, res, next) => {
+  (
+    error,
+    req,
+    res,
+    next
+  ) => {
 
     console.error(
       "KRISHWAVE server error:",
@@ -972,7 +1189,7 @@ app.listen(
     );
 
     console.log(
-      "Railway backend is ONLINE"
+      "RAILWAY BACKEND ONLINE"
     );
 
     console.log(
@@ -980,7 +1197,7 @@ app.listen(
     );
 
     console.log(
-      `Client ID: ${CLIENT_ID}`
+      `Client ID configured: ${CLIENT_ID ? "YES" : "NO"}`
     );
 
     console.log(
@@ -993,6 +1210,14 @@ app.listen(
 
     console.log(
       "OAuth: ENABLED"
+    );
+
+    console.log(
+      "PKCE: ENABLED"
+    );
+
+    console.log(
+      "Server-side token storage: ENABLED"
     );
 
     console.log(
