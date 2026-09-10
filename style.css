@@ -1,406 +1,640 @@
-/* =========================================================
-   KRISHWAVE AI BEAST V7.3
-   MOBILE PREMIUM UI
-   ========================================================= */
-
-:root {
-  --bg: #07101d;
-  --card: #0d1929;
-  --card2: #111f32;
-  --border: #203249;
-  --text: #f4f7fb;
-  --muted: #8292a8;
-  --accent: #19e6a5;
-  --accent2: #0fbf8a;
-  --danger: #ff5571;
-  --warning: #ffbf55;
-  --blue: #4e9cff;
-  --shadow: 0 12px 30px rgba(0,0,0,.25);
-}
-
 * {
   box-sizing: border-box;
-  -webkit-tap-highlight-color: transparent;
-}
-
-html,
-body {
   margin: 0;
   padding: 0;
-  background: var(--bg);
-  color: var(--text);
-  font-family: Arial, Helvetica, sans-serif;
-  min-height: 100%;
+}
+
+:root {
+  --bg: #070b12;
+  --card: #101722;
+  --card2: #151e2b;
+  --text: #f4f7fb;
+  --muted: #8e9aaa;
+  --line: #243142;
+  --green: #18e58c;
+  --red: #ff4d67;
+  --blue: #3b8cff;
+  --yellow: #ffd166;
 }
 
 body.light {
-  --bg: #eef3f8;
+  --bg: #eef2f7;
   --card: #ffffff;
-  --card2: #f6f9fc;
-  --border: #dce5ef;
-  --text: #142235;
-  --muted: #68798e;
-  --shadow: 0 8px 24px rgba(30,50,80,.10);
+  --card2: #f4f6fa;
+  --text: #101722;
+  --muted: #657083;
+  --line: #dce2ea;
+}
+
+body {
+  background: var(--bg);
+  color: var(--text);
+  font-family: Arial, Helvetica, sans-serif;
+  min-height: 100vh;
+  padding-bottom: 80px;
 }
 
 button,
-input,
-select {
+select,
+input {
   font: inherit;
 }
 
 button {
+  border: 0;
   cursor: pointer;
 }
 
-#app {
-  min-height: 100vh;
-  padding-bottom: 82px;
-}
-
-/* TOP BAR */
-
 .topbar {
-  position: sticky;
-  top: 0;
-  z-index: 20;
-  min-height: 66px;
   display: flex;
   align-items: center;
   justify-content: space-between;
-  padding: 10px 13px;
-  background: rgba(7,16,29,.94);
-  border-bottom: 1px solid var(--border);
-  backdrop-filter: blur(14px);
-}
-
-body.light .topbar {
-  background: rgba(255,255,255,.94);
+  padding: 16px;
+  border-bottom: 1px solid var(--line);
+  background: var(--card);
+  position: sticky;
+  top: 0;
+  z-index: 20;
 }
 
 .brand {
   display: flex;
   align-items: center;
-  gap: 9px;
+  gap: 10px;
 }
 
-.brand-logo {
-  width: 40px;
-  height: 40px;
+.logo {
+  width: 45px;
+  height: 45px;
+  border-radius: 12px;
   display: grid;
   place-items: center;
-  border-radius: 12px;
-  background: var(--accent);
-  color: #04130e;
-  font-size: 14px;
   font-weight: 900;
+  background: var(--green);
+  color: #03100b;
 }
 
-.brand-name {
-  font-size: 16px;
-  font-weight: 900;
-  letter-spacing: .5px;
-}
-
-.brand-version {
-  margin-top: 2px;
-  color: var(--muted);
-  font-size: 9px;
-  letter-spacing: 1px;
-}
-
-.top-actions {
-  display: flex;
-  align-items: center;
-  gap: 5px;
-}
-
-.mode-btn,
-.icon-btn {
-  border: 1px solid var(--border);
-  background: var(--card);
-  color: var(--muted);
-  border-radius: 8px;
-  min-height: 32px;
-  padding: 0 9px;
-  font-size: 10px;
-  font-weight: 800;
-}
-
-.mode-btn.active {
-  background: var(--accent);
-  border-color: var(--accent);
-  color: #04130e;
-}
-
-.icon-btn {
-  width: 34px;
-  padding: 0;
-  font-size: 15px;
-}
-
-/* ACCOUNT */
-
-.account-card {
-  margin: 12px;
-  padding: 13px;
-  border: 1px solid var(--border);
-  border-radius: 15px;
-  background: var(--card);
-  box-shadow: var(--shadow);
-}
-
-.account-card > div:first-child {
-  font-size: 10px;
-  color: var(--muted);
-  font-weight: 800;
-}
-
-.status-dot {
-  width: 7px;
-  height: 7px;
-  display: inline-block;
-  border-radius: 50%;
-  background: var(--danger);
-  margin-right: 5px;
-}
-
-.status-dot.online {
-  background: var(--accent);
-  box-shadow: 0 0 9px var(--accent);
-}
-
-.account-info {
-  display: flex;
-  justify-content: space-between;
-  align-items: center;
-  margin: 10px 0;
-}
-
-.account-info span {
-  color: var(--muted);
-  font-size: 11px;
-}
-
-.account-info strong {
+.brand h1 {
   font-size: 18px;
 }
 
-.connect-btn {
-  width: 100%;
-  border: 0;
-  border-radius: 10px;
-  min-height: 39px;
-  background: var(--blue);
-  color: white;
-  font-weight: 900;
+.brand span {
   font-size: 11px;
+  color: var(--muted);
 }
 
-/* PAGES */
+.connection {
+  display: flex;
+  align-items: center;
+  gap: 7px;
+  font-size: 11px;
+  font-weight: 800;
+}
+
+.dot {
+  width: 9px;
+  height: 9px;
+  border-radius: 50%;
+  display: inline-block;
+}
+
+.dot.online {
+  background: var(--green);
+  box-shadow: 0 0 10px var(--green);
+}
+
+.dot.offline {
+  background: var(--red);
+}
 
 main {
   width: 100%;
+  max-width: 900px;
+  margin: auto;
+  padding: 12px;
+}
+
+.account-card,
+.connection-card,
+.card,
+.market-card,
+.trade-card,
+.history-stats {
+  background: var(--card);
+  border: 1px solid var(--line);
+  border-radius: 16px;
+  margin-bottom: 12px;
+}
+
+.account-card {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 12px;
+  padding: 15px;
+}
+
+.account-card small,
+.connection-card small,
+.card small,
+.market-card small,
+.trade-card label,
+.history-stats small {
+  display: block;
+  color: var(--muted);
+  font-size: 10px;
+  font-weight: 700;
+  margin-bottom: 5px;
+}
+
+.account-card strong {
+  font-size: 14px;
+}
+
+.mode-buttons {
+  display: flex;
+  gap: 5px;
+}
+
+.mode {
+  padding: 7px 10px;
+  border-radius: 8px;
+  background: var(--card2);
+  color: var(--muted);
+  font-size: 11px;
+  font-weight: bold;
+}
+
+.mode.active {
+  background: var(--green);
+  color: #00150c;
+}
+
+.theme {
+  position: absolute;
+  right: 15px;
+  top: 120px;
+  border-radius: 50%;
+  width: 40px;
+  height: 40px;
+  background: var(--card2);
+  color: var(--text);
+}
+
+.connection-card {
+  padding: 15px;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+}
+
+.connection-card h3 {
+  font-size: 14px;
+}
+
+.primary,
+.danger,
+.trade-button {
+  padding: 11px 15px;
+  border-radius: 10px;
+  font-weight: 800;
+}
+
+.primary {
+  background: var(--green);
+  color: #00150c;
+}
+
+.danger {
+  background: var(--red);
+  color: white;
+}
+
+.small {
+  padding: 8px 11px;
+  font-size: 11px;
 }
 
 .page {
   display: none;
-  padding: 0 12px;
-  animation: pageIn .18s ease;
 }
 
-.page.active-page {
+.page.active {
   display: block;
-}
-
-@keyframes pageIn {
-  from {
-    opacity: 0;
-    transform: translateY(5px);
-  }
-  to {
-    opacity: 1;
-    transform: translateY(0);
-  }
-}
-
-.page-heading {
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-  margin: 17px 2px 12px;
-}
-
-.page-heading h1 {
-  margin: 0;
-  font-size: 20px;
-}
-
-.page-heading p {
-  margin: 4px 0 0;
-  color: var(--muted);
-  font-size: 11px;
-}
-
-.live-badge,
-.paper-badge {
-  padding: 6px 8px;
-  border-radius: 7px;
-  font-size: 9px;
-  font-weight: 900;
-}
-
-.live-badge {
-  color: var(--accent);
-  background: rgba(25,230,165,.09);
-}
-
-.paper-badge {
-  color: var(--warning);
-  background: rgba(255,191,85,.10);
-}
-
-/* CARDS */
-
-.section-card,
-.hero-market {
-  margin-bottom: 12px;
-  padding: 14px;
-  border: 1px solid var(--border);
-  border-radius: 15px;
-  background: var(--card);
-  box-shadow: var(--shadow);
 }
 
 .section-title {
   display: flex;
   justify-content: space-between;
   align-items: center;
-  margin-bottom: 12px;
+  margin: 18px 3px 12px;
 }
 
-.section-title h3 {
-  margin: 0;
-  font-size: 13px;
+.section-title h2 {
+  font-size: 20px;
 }
 
-.section-title span {
+.section-title p {
   color: var(--muted);
-  font-size: 9px;
+  font-size: 12px;
+  margin-top: 4px;
 }
 
-/* HERO */
-
-.hero-market {
-  background:
-    radial-gradient(circle at 90% 10%, rgba(25,230,165,.10), transparent 35%),
-    var(--card);
+.live-badge,
+.paper-badge {
+  color: var(--green);
+  font-size: 10px;
+  font-weight: 900;
 }
 
-.hero-top,
-.price-row {
+.market-card {
+  padding: 16px;
+}
+
+.market-header {
   display: flex;
   justify-content: space-between;
   align-items: center;
 }
 
-.hero-top small,
-.price-row small,
-.score-box small,
-.signal-box span,
-.prediction-card small {
-  color: var(--muted);
-  font-size: 8px;
-  font-weight: 800;
-  letter-spacing: .7px;
+.market-header h2 {
+  font-size: 24px;
 }
 
-.hero-top h2 {
-  margin: 4px 0 0;
-  font-size: 23px;
-}
-
-.score-box {
-  text-align: right;
-}
-
-.score-box strong {
-  display: block;
-  margin-top: 3px;
-  color: var(--accent);
-  font-size: 21px;
-}
-
-.price-row {
-  margin-top: 18px;
-}
-
-.price-row strong {
-  display: block;
-  margin-top: 4px;
-  font-size: 17px;
-}
-
-.signal-box {
-  margin-top: 14px;
-  padding: 11px;
-  border-radius: 11px;
+select,
+input {
+  width: 100%;
   background: var(--card2);
+  border: 1px solid var(--line);
+  color: var(--text);
+  border-radius: 9px;
+  padding: 11px;
+  outline: none;
 }
 
-.signal-box strong {
+.market-header select {
+  width: 120px;
+}
+
+.price {
+  padding: 25px 0;
+}
+
+.price strong {
   display: block;
-  margin-top: 4px;
-  color: var(--accent);
-  font-size: 15px;
+  font-size: 34px;
 }
 
-.signal-box p {
-  margin: 4px 0 0;
-  color: var(--muted);
-  font-size: 10px;
-}
-
-/* MARKET LIST */
-
-.market-list {
+.stats-grid,
+.history-stats {
   display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 10px;
+}
+
+.stats-grid > div {
+  background: var(--card2);
+  padding: 11px;
+  border-radius: 10px;
+}
+
+.stats-grid strong {
+  font-size: 14px;
+}
+
+.card {
+  padding: 16px;
+}
+
+.card-title,
+.ai-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 15px;
+}
+
+.card-title h3,
+.ai-header h3 {
+  font-size: 14px;
+}
+
+.card-title span,
+.ai-header span {
+  color: var(--muted);
+  font-size: 11px;
+}
+
+.prediction {
+  display: grid;
+  grid-template-columns: 1fr 1fr 1fr;
+  gap: 8px;
+  text-align: center;
+}
+
+.prediction > div {
+  background: var(--card2);
+  padding: 13px 5px;
+  border-radius: 10px;
+}
+
+.prediction strong {
+  display: block;
+  font-size: 16px;
+}
+
+.prediction-number strong {
+  color: var(--green);
+  font-size: 30px;
+}
+
+.card p {
+  color: var(--muted);
+  font-size: 12px;
+  line-height: 1.5;
+  margin-top: 12px;
+}
+
+.digits {
+  display: grid;
+  grid-template-columns: repeat(5, 1fr);
   gap: 7px;
 }
 
-.market-item {
-  display: grid;
-  grid-template-columns: 1fr auto auto;
-  gap: 8px;
-  align-items: center;
-  padding: 10px;
-  border: 1px solid var(--border);
-  border-radius: 10px;
+.digit {
   background: var(--card2);
+  border-radius: 9px;
+  padding: 9px 4px;
+  text-align: center;
 }
 
-.market-item.selected {
-  border-color: var(--accent);
-}
-
-.market-name {
-  font-size: 11px;
+.digit-number {
+  font-size: 16px;
   font-weight: 900;
 }
 
-.market-price {
+.digit-percent {
+  font-size: 10px;
+  color: var(--muted);
+  margin-top: 4px;
+}
+
+.ai-header strong {
+  color: var(--red);
+  font-size: 11px;
+}
+
+.ai-display {
+  display: grid;
+  grid-template-columns: 1fr 1fr 1fr;
+  gap: 8px;
+}
+
+.ai-display > div {
+  background: var(--card2);
+  padding: 12px;
+  text-align: center;
+  border-radius: 10px;
+}
+
+.ai-display strong {
+  display: block;
+  margin-top: 5px;
+}
+
+.cycle-steps {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 7px;
+  margin-top: 12px;
+}
+
+.cycle-steps > div {
+  background: var(--card2);
+  padding: 10px;
+  border-radius: 10px;
+  text-align: center;
+}
+
+.cycle-steps b,
+.cycle-steps span,
+.cycle-steps small {
+  display: block;
+}
+
+.cycle-steps b {
+  color: var(--green);
+}
+
+.cycle-steps span {
+  font-size: 10px;
+  font-weight: 800;
+  margin-top: 4px;
+}
+
+.cycle-steps small {
   color: var(--muted);
   font-size: 9px;
+  margin-top: 4px;
 }
 
-.market-score {
-  min-width: 42px;
+.button-row {
+  display: flex;
+  gap: 8px;
+  margin-top: 15px;
+}
+
+.button-row button {
+  flex: 1;
+}
+
+.warning {
   text-align: center;
-  color: var(--accent);
-  font-size: 10px;
-  font-weight: 900;
 }
 
-/* DIGITS */
+.trade-card {
+  padding: 17px;
+}
 
-.digit-grid {
+.trade-card label {
+  margin-top: 13px;
+}
+
+.trade-card select,
+.trade-card input {
+  margin-bottom: 3px;
+}
+
+.trade-summary {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 8px;
+  margin: 15px 0;
+}
+
+.trade-summary > div {
+  background: var(--card2);
+  padding: 12px;
+  border-radius: 10px;
+}
+
+.trade-summary strong {
+  display: block;
+  margin-top: 5px;
+}
+
+.trade-button {
+  width: 100%;
+  background: var(--green);
+  color: #00150c;
+  font-size: 16px;
+}
+
+.rules {
+  padding-left: 20px;
+  color: var(--muted);
+  font-size: 12px;
+  line-height: 2;
+}
+
+.history-stats {
+  grid-template-columns: repeat(4, 1fr);
+  padding: 12px;
+}
+
+.history-stats > div {
+  text-align: center;
+}
+
+.history-stats strong {
+  display: block;
+  margin-top: 5px;
+}
+
+.history-list {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.history-item {
+  background: var(--card);
+  border: 1px solid var(--line);
+  border-radius: 12px;
+  padding: 13px;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+}
+
+.history-item strong {
+  font-size: 13px;
+}
+
+.history-item small {
+  display: block;
+  color: var(--muted);
+  margin-top: 4px;
+  font-size: 10px;
+}
+
+.win {
+  color: var(--green);
+}
+
+.loss {
+  color: var(--red);
+}
+
+.empty-history {
+  background: var(--card);
+  border: 1px solid var(--line);
+  border-radius: 12px;
+  padding: 30px;
+  text-align: center;
+  color: var(--muted);
+}
+
+.bottom-nav {
+  position: fixed;
+  bottom: 0;
+  left: 0;
+  right: 0;
+  height: 70px;
+  background: var(--card);
+  border-top: 1px solid var(--line);
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  z-index: 50;
+}
+
+.nav-btn {
+  background: transparent;
+  color: var(--muted);
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  align-items: center;
+  gap: 4px;
+}
+
+.nav-btn span {
+  font-size: 21px;
+}
+
+.nav-btn small {
+  font-size: 10px;
+}
+
+.nav-btn.active {
+  color: var(--green);
+}
+
+.toast {
+  position: fixed;
+  left: 50%;
+  bottom: 85px;
+  transform: translateX(-50%);
+  background: #111923;
+  color: white;
+  border: 1px solid var(--line);
+  padding: 11px 15px;
+  border-radius: 10px;
+  font-size: 12px;
+  display: none;
+  z-index: 100;
+  max-width: 90%;
+  text-align: center;
+}
+
+@media (min-width: 700px) {
+
+  .account-card {
+    grid-template-columns: repeat(5, 1fr);
+    align-items: center;
+  }
+
+  .theme {
+    position: static;
+  }
+
+}
+
+@media (max-width: 430px) {
+
+  .topbar {
+    padding: 12px;
+  }
+
+  .brand h1 {
+    font-size: 16px;
+  }
+
+  .account-card {
+    padding-right: 60px;
+  }
+
+  .theme {
+    top: 105px;
+  }
+
+}
