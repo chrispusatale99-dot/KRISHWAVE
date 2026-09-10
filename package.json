@@ -1,12 +1,15 @@
 {
   "name": "krishwave-oauth",
-  "version": "1.0.0",
-  "description": "KRISHWAVE AI BEAST Deriv OAuth backend",
+  "version": "7.2.0",
+  "description": "KRISHWAVE AI Beast V7.2 Deriv OAuth Backend",
   "main": "server.js",
   "scripts": {
     "start": "node server.js"
   },
+  "engines": {
+    "node": ">=18.0.0"
+  },
   "dependencies": {
-    "express": "^5.1.0"
+    "express": "^4.19.2"
   }
 }
