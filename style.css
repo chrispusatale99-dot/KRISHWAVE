@@ -30,6 +30,7 @@
 
   --radius:18px;
   --radius-sm:11px;
+  --topbar-height:72px;
   --nav-height:72px;
 
   --input-bg:#0b1b2d;
@@ -64,7 +65,7 @@ body.light{
 }
 
 /* =========================================================
-   RESET
+   RESET & TRANSITIONS
    ========================================================= */
 
 *{
@@ -104,6 +105,21 @@ body.light{
     radial-gradient(circle at 5% 0%,rgba(0,170,200,.055),transparent 28%),
     radial-gradient(circle at 95% 10%,rgba(99,102,241,.045),transparent 30%),
     var(--bg);
+}
+
+.card,
+.summary-card,
+.stat,
+.modal-box,
+.topbar,
+.bottom-nav,
+.status-bar,
+.icon-btn{
+  transition:
+    background-color .25s ease,
+    border-color .25s ease,
+    color .25s ease,
+    box-shadow .25s ease;
 }
 
 button,
@@ -154,7 +170,7 @@ select{
    ========================================================= */
 
 .topbar{
-  height:72px;
+  height:var(--topbar-height);
   display:flex;
   align-items:center;
   justify-content:space-between;
@@ -166,7 +182,6 @@ select{
   z-index:30;
   backdrop-filter:blur(18px);
   -webkit-backdrop-filter:blur(18px);
-  transition:.25s ease;
 }
 
 body.light .topbar{
@@ -188,7 +203,7 @@ body.light .topbar{
   display:grid;
   place-items:center;
   background:linear-gradient(135deg,var(--accent),var(--accent2));
-  color:#fff;
+  color:#050b14;
   font-weight:950;
   font-size:21px;
   box-shadow:
@@ -278,7 +293,6 @@ body.light .topbar{
   color:var(--text);
   border:1px solid var(--line);
   box-shadow:var(--shadow-soft);
-  transition:.2s ease;
 }
 
 .icon-btn:hover{
@@ -384,16 +398,16 @@ main{
 
 .primary-btn{
   background:linear-gradient(135deg,var(--accent),var(--accent2));
-  color:#fff;
+  color:#050b14;
   box-shadow:
     0 8px 22px rgba(0,229,255,.12),
-    inset 0 1px 0 rgba(255,255,255,.18);
+    inset 0 1px 0 rgba(255,255,255,.25);
 }
 
 .primary-btn:hover{
   box-shadow:
     0 10px 28px rgba(0,229,255,.20),
-    inset 0 1px 0 rgba(255,255,255,.20);
+    inset 0 1px 0 rgba(255,255,255,.35);
 }
 
 .danger-btn{
@@ -539,10 +553,6 @@ select option{
   padding:17px;
   margin-bottom:15px;
   box-shadow:var(--shadow);
-  transition:
-    background .25s ease,
-    border-color .25s ease,
-    box-shadow .25s ease;
 }
 
 .card:hover{
@@ -823,7 +833,7 @@ body.light .digit-cell{
   gap:8px;
   margin-bottom:15px;
   position:sticky;
-  top:72px;
+  top:var(--topbar-height);
   z-index:10;
   padding:5px 0;
   background:var(--bg);
@@ -1542,7 +1552,7 @@ body.light .bottom-nav{
   }
 
   .trade-tabs{
-    top:72px;
+    top:var(--topbar-height);
   }
 
 }
