@@ -1,20 +1,25 @@
 /* =========================================================
-   KRISHWAVE AI BEAST V7.2
-   DERIV + CLOUDFLARE CONNECTED EDITION
+   KRISHWAVE AI BEAST V8.0
+   PREMIUM DEMO / PAPER INTELLIGENCE ENGINE
 
-   DEMO / PAPER ENGINE
+   IMPORTANT
+   ---------------------------------------------------------
+   DEMO / PAPER ONLY
+   NO REAL DERIV TRADES ARE EXECUTED.
 
-   - Deriv OAuth 2.0 + PKCE
-   - Cloudflare Worker session
-   - Public live market data
-   - Authenticated Deriv DEMO WebSocket
-   - Demo balance display
-   - AI analysis
-   - Circular AI
-   - AI Bot
-   - Manual paper trading
-   - Local history
-   - No real Deriv trades
+   ENGINES
+   ---------------------------------------------------------
+   AI BOT:
+   3 SEC SCAN -> DECISION -> PAPER TRADE -> SETTLE
+
+   CIRCULAR AI:
+   10 SEC ANALYSIS
+   -> 5 SEC PREDICTION
+   -> 3 SEC TRADE WINDOW
+   -> 3 SEC COOLDOWN
+   -> REPEAT
+
+   CIRCULAR AI NEVER FORCES A WEAK TRADE.
    ========================================================= */
 
 "use strict";
@@ -24,6 +29,8 @@
    ========================================================= */
 
 const CONFIG = {
+
+  VERSION: "8.0",
 
   CLIENT_ID:
     "34khasPjsT0PCRR8X3Z70",
@@ -56,30 +63,47 @@ const CONFIG = {
   ],
 
   MAX_TICKS: 250,
+
   MIN_ANALYSIS_TICKS: 20,
 
+  SCAN_TICKS: 60,
+
   CIRCULAR_ANALYSIS_SECONDS: 10,
+
   CIRCULAR_PREDICT_SECONDS: 5,
+
   CIRCULAR_TRADE_SECONDS: 3,
+
   CIRCULAR_COOLDOWN_SECONDS: 3,
 
   BOT_INTERVAL_MS: 3000,
 
-  START_BALANCE: 1000,
+  START_PAPER_BALANCE: 1000,
 
   MIN_STAKE: 0.25,
 
   MAX_ACTIVE_TRADES: 10,
 
-  BOT_MIN_CONFIDENCE: 58,
+  BOT_MIN_CONFIDENCE: 60,
+
+  STRONG_SIGNAL: 75,
+
+  BEAST_SIGNAL: 85,
 
   PAYOUT: {
+
     MATCHES: 8.5,
+
     DIFFERS: 0.09,
+
     OVER: 0.95,
+
     UNDER: 0.95,
+
     EVEN: 0.95,
+
     ODD: 0.95
+
   }
 
 };
@@ -110,11 +134,19 @@ const state = {
 
   currentMarket: "R_100",
 
+  subscribedMarket: null,
+
   ticks: {},
 
   chartPrices: [],
 
   lastDigit: null,
+
+  currentAnalysis: null,
+
+  marketScanner: [],
+
+  strongestMarket: null,
 
   strategy: "MATCHES",
 
@@ -141,21 +173,33 @@ const state = {
 
   publicReconnectTimer: null,
 
-  authReconnectTimer: null,
-
   tradeCounter: 0,
+
+  paperBalance:
+    Number(
+      localStorage.getItem(
+        "krishwave_paper_balance"
+      )
+    ) || CONFIG.START_PAPER_BALANCE,
 
   paperTrades: [],
 
   activeTrades: [],
 
   stats: {
+
     total: 0,
+
     wins: 0,
+
     losses: 0,
+
     stake: 0,
+
     won: 0,
+
     profit: 0
+
   },
 
   takeProfit: 20,
@@ -303,11 +347,6 @@ const els = {
 
   botSelectedMarket:
     $("botSelectedMarket"),
-
-  /*
-   * This element does not exist in the current HTML.
-   * We therefore intentionally do NOT depend on it.
-   */
 
   botScore:
     $("botScore"),
@@ -481,16 +520,12 @@ const els = {
 
 
 /* =========================================================
-   INITIALIZATION
+   START
    ========================================================= */
 
 document.addEventListener(
   "DOMContentLoaded",
-  () => {
-
-    initializeApp();
-
-  }
+  initializeApp
 );
 
 
@@ -514,11 +549,17 @@ function initializeApp() {
 
   updateStatsUI();
 
+  updatePaperBalance();
+
   updateModeUI();
 
   updateConnectionUI();
 
+  updateAccountUI();
+
   connectPublicMarket();
+
+  drawChart();
 
   handleOAuthCallback();
 
@@ -528,13 +569,15 @@ function initializeApp() {
 
   }
 
-  drawChart();
+  updateStatus(
+    "KRISHWAVE BEAST is scanning for market data..."
+  );
 
 }
 
 
 /* =========================================================
-   MARKET LIST
+   MARKETS
    ========================================================= */
 
 function populateMarkets() {
@@ -557,36 +600,23 @@ function populateMarkets() {
 
     select.innerHTML = "";
 
-    CONFIG.MARKETS.forEach(
-      symbol => {
+    CONFIG.MARKETS.forEach(symbol => {
 
-        const option =
-          document.createElement(
-            "option"
-          );
-
-        option.value =
-          symbol;
-
-        option.textContent =
-          symbol;
-
-        if (
-          symbol ===
-          state.currentMarket
-        ) {
-
-          option.selected =
-            true;
-
-        }
-
-        select.appendChild(
-          option
+      const option =
+        document.createElement(
+          "option"
         );
 
-      }
-    );
+      option.value = symbol;
+
+      option.textContent = symbol;
+
+      option.selected =
+        symbol === state.currentMarket;
+
+      select.appendChild(option);
+
+    });
 
   });
 
@@ -594,7 +624,7 @@ function populateMarkets() {
 
 
 /* =========================================================
-   PUBLIC DERIV MARKET
+   PUBLIC WEBSOCKET
    ========================================================= */
 
 function connectPublicMarket() {
@@ -633,18 +663,12 @@ function connectPublicMarket() {
           "LIVE"
         );
 
-        sendPublic({
-          active_symbols:
-            "brief",
-          req_id: 100
-        });
-
         subscribeMarket(
           state.currentMarket
         );
 
         updateStatus(
-          "Deriv public market feed connected."
+          "BEAST market scanner connected."
         );
 
       };
@@ -667,9 +691,7 @@ function connectPublicMarket() {
 
         }
 
-        processPublicMessage(
-          data
-        );
+        processPublicMessage(data);
 
       };
 
@@ -687,7 +709,7 @@ function connectPublicMarket() {
         );
 
         updateStatus(
-          "Deriv public market connection error."
+          "Market feed connection error."
         );
 
       };
@@ -695,20 +717,21 @@ function connectPublicMarket() {
     state.publicWs.onclose =
       () => {
 
+        state.publicWs =
+          null;
+
         setConnection(
           false,
           "OFFLINE"
         );
 
-        if (
+        updateStatus(
+          "Market feed disconnected. Reconnecting..."
+        );
+
+        clearTimeout(
           state.publicReconnectTimer
-        ) {
-
-          clearTimeout(
-            state.publicReconnectTimer
-          );
-
-        }
+        );
 
         state.publicReconnectTimer =
           setTimeout(
@@ -727,9 +750,7 @@ function connectPublicMarket() {
 
   } catch(error) {
 
-    console.error(
-      error
-    );
+    console.error(error);
 
     setConnection(
       false,
@@ -766,45 +787,90 @@ function sendPublic(payload) {
    MARKET SUBSCRIPTION
    ========================================================= */
 
-function subscribeMarket(
-  symbol
-) {
+function subscribeMarket(symbol) {
 
   if (
-    !CONFIG.MARKETS.includes(
-      symbol
-    )
+    !CONFIG.MARKETS.includes(symbol)
   ) {
 
     return;
 
   }
 
+  const previous =
+    state.currentMarket;
+
   state.currentMarket =
     symbol;
 
-  resetMarketState(
-    symbol
-  );
+  resetMarketState(symbol);
 
-  if (state.publicWs) {
+  /*
+   * Prevent old subscriptions from
+   * continuously feeding unwanted markets.
+   */
+
+  if (
+    state.publicWs &&
+    state.publicWs.readyState ===
+      WebSocket.OPEN
+  ) {
+
+    if (
+      state.subscribedMarket &&
+      state.subscribedMarket !== symbol
+    ) {
+
+      sendPublic({
+
+        forget_all:
+          "ticks",
+
+        req_id:
+          900
+
+      });
+
+    }
 
     sendPublic({
-      ticks: symbol,
-      subscribe: 1,
-      req_id: 200
+
+      ticks:
+        symbol,
+
+      subscribe:
+        1,
+
+      req_id:
+        901
+
     });
 
     sendPublic({
-      ticks_history: symbol,
+
+      ticks_history:
+        symbol,
+
       count:
         CONFIG.MAX_TICKS,
-      end: "latest",
-      style: "ticks",
-      req_id: 201
+
+      end:
+        "latest",
+
+      style:
+        "ticks",
+
+      req_id:
+        902
+
     });
 
+    state.subscribedMarket =
+      symbol;
+
   }
+
+  syncMarketSelectors();
 
   if (
     state.authWs &&
@@ -819,8 +885,46 @@ function subscribeMarket(
   }
 
   if (
-    els.currentChartMarket
+    previous !== symbol
   ) {
+
+    updateStatus(
+      `BEAST switched to ${symbol}. Collecting intelligence...`
+    );
+
+  }
+
+}
+
+
+function resetMarketState(symbol) {
+
+  state.ticks[symbol] =
+    state.ticks[symbol] || [];
+
+  state.chartPrices = [];
+
+  const list =
+    state.ticks[symbol];
+
+  list
+    .slice(-80)
+    .forEach(
+      tick =>
+        state.chartPrices.push(
+          tick.price
+        )
+    );
+
+  const latest =
+    list[list.length - 1];
+
+  state.lastDigit =
+    latest
+      ? latest.digit
+      : null;
+
+  if (els.currentChartMarket) {
 
     els.currentChartMarket.textContent =
       symbol;
@@ -834,65 +938,73 @@ function subscribeMarket(
 
   }
 
-  if (
-    els.botSelectedMarket
-  ) {
+  if (els.botSelectedMarket) {
 
     els.botSelectedMarket.textContent =
       symbol;
 
   }
 
-  updateStatus(
-    `Analyzing ${symbol}...`
-  );
-
-}
-
-
-function resetMarketState(
-  symbol
-) {
-
-  state.ticks[symbol] = [];
-
-  state.chartPrices = [];
-
-  state.lastDigit = null;
-
   if (els.currentLivePrice) {
 
     els.currentLivePrice.textContent =
-      "--";
+      latest
+        ? formatPrice(
+            latest.price
+          )
+        : "--";
 
   }
 
   if (els.lastDigit) {
 
     els.lastDigit.textContent =
-      "--";
+      latest
+        ? latest.digit
+        : "--";
 
   }
 
   if (els.digitSampleCount) {
 
     els.digitSampleCount.textContent =
-      "0";
+      list.length;
 
   }
 
   drawChart();
 
+  updateAnalysis();
+
+}
+
+
+function syncMarketSelectors() {
+
+  [
+    els.analysisMarketSelect,
+    els.botMarketSelect,
+    els.circularMarketSelect,
+    els.manualMarketSelect
+  ].forEach(select => {
+
+    if (select) {
+
+      select.value =
+        state.currentMarket;
+
+    }
+
+  });
+
 }
 
 
 /* =========================================================
-   PUBLIC MESSAGE PROCESSOR
+   PUBLIC DATA
    ========================================================= */
 
-function processPublicMessage(
-  data
-) {
+function processPublicMessage(data) {
 
   if (
     data.msg_type ===
@@ -904,19 +1016,20 @@ function processPublicMessage(
 
     if (!tick) return;
 
-    const symbol =
-      tick.symbol ||
-      state.currentMarket;
-
     addTick(
-      symbol,
+
+      tick.symbol ||
+      state.currentMarket,
+
       Number(
         tick.quote
       ),
+
       Number(
         tick.epoch ||
         Date.now() / 1000
       )
+
     );
 
   }
@@ -926,9 +1039,7 @@ function processPublicMessage(
     "history"
   ) {
 
-    processHistory(
-      data
-    );
+    processHistory(data);
 
   }
 
@@ -936,7 +1047,7 @@ function processPublicMessage(
 
     updateStatus(
       data.error.message ||
-      "Deriv API error."
+      "Deriv market error."
     );
 
   }
@@ -944,21 +1055,13 @@ function processPublicMessage(
 }
 
 
-/* =========================================================
-   HISTORY FROM DERIV
-   ========================================================= */
-
-function processHistory(
-  data
-) {
+function processHistory(data) {
 
   const prices =
-    data.history?.prices ||
-    [];
+    data.history?.prices || [];
 
   const times =
-    data.history?.times ||
-    [];
+    data.history?.times || [];
 
   const symbol =
     data.echo_req?.ticks_history ||
@@ -968,27 +1071,44 @@ function processHistory(
     [];
 
   prices.forEach(
-    (
-      price,
-      index
-    ) => {
+    (price, index) => {
 
       addTick(
+
         symbol,
+
         Number(price),
+
         Number(
           times[index] ||
           Date.now() / 1000
         ),
+
         false
+
       );
 
     }
   );
 
-  updateAnalysis();
+  if (
+    symbol ===
+    state.currentMarket
+  ) {
 
-  drawChart();
+    state.chartPrices =
+      state.ticks[symbol]
+        .slice(-80)
+        .map(
+          tick =>
+            tick.price
+        );
+
+    updateAnalysis();
+
+    drawChart();
+
+  }
 
 }
 
@@ -1005,9 +1125,7 @@ function addTick(
 ) {
 
   if (
-    !Number.isFinite(
-      price
-    )
+    !Number.isFinite(price)
   ) {
 
     return;
@@ -1037,9 +1155,7 @@ function addTick(
 
   };
 
-  list.push(
-    tick
-  );
+  list.push(tick);
 
   while (
     list.length >
@@ -1071,32 +1187,24 @@ function addTick(
 
     }
 
-    if (
-      els.currentLivePrice
-    ) {
+    if (els.currentLivePrice) {
 
       els.currentLivePrice.textContent =
-        formatPrice(
-          price
-        );
+        formatPrice(price);
 
     }
 
-    if (
-      els.digitSampleCount
-    ) {
-
-      els.digitSampleCount.textContent =
-        list.length;
-
-    }
-
-    if (
-      els.lastDigit
-    ) {
+    if (els.lastDigit) {
 
       els.lastDigit.textContent =
         tick.digit;
+
+    }
+
+    if (els.digitSampleCount) {
+
+      els.digitSampleCount.textContent =
+        list.length;
 
     }
 
@@ -1118,35 +1226,42 @@ function addTick(
 }
 
 
-/*
- * Keep the existing digit model used by
- * the KRISHWAVE paper engine.
- */
+/* =========================================================
+   DIGIT EXTRACTION
+   ========================================================= */
 
-function getLastDigit(
-  price
-) {
+function getLastDigit(price) {
+
+  const value =
+    Number(price);
+
+  if (
+    !Number.isFinite(value)
+  ) {
+
+    return 0;
+
+  }
 
   const text =
-    Number(price)
-      .toFixed(5)
-      .replace(
-        ".",
-        ""
-      );
+    value.toFixed(5);
+
+  const digits =
+    text.replace(
+      /\D/g,
+      ""
+    );
 
   return Number(
-    text.charAt(
-      text.length - 1
+    digits.charAt(
+      digits.length - 1
     )
   );
 
 }
 
 
-function formatPrice(
-  price
-) {
+function formatPrice(price) {
 
   return Number(
     price
@@ -1156,91 +1271,98 @@ function formatPrice(
 
 
 /* =========================================================
-   ANALYSIS
+   MASTER ANALYSIS
    ========================================================= */
 
 function updateAnalysis() {
 
-  const data =
-    state.ticks[
-      state.currentMarket
-    ] || [];
+  const analysis =
+    analyzeCurrent();
 
-  if (
-    data.length <
-    CONFIG.MIN_ANALYSIS_TICKS
-  ) {
+  state.currentAnalysis =
+    analysis;
 
-    if (els.aiStatus) {
+  if (!analysis) {
 
-      els.aiStatus.textContent =
-        "COLLECTING DATA";
-
-    }
-
-    if (els.aiPrediction) {
-
-      els.aiPrediction.textContent =
-        "WAITING";
-
-    }
-
-    if (
-      els.aiCirclePrediction
-    ) {
-
-      els.aiCirclePrediction.textContent =
-        "--";
-
-    }
-
-    if (
-      els.analysisConfidence
-    ) {
-
-      els.analysisConfidence.textContent =
-        "0%";
-
-    }
+    showWaitingAnalysis();
 
     return;
 
   }
 
-  const digits =
-    data.map(
-      t => t.digit
-    );
-
-  const counts =
-    Array(10).fill(0);
-
-  digits.forEach(
-    digit =>
-      counts[digit]++
+  renderAnalysis(
+    analysis
   );
 
-  renderDigitStats(
-    counts,
-    digits.length
-  );
+}
 
-  const analysis =
-    analyzeDigits(
-      digits
-    );
+
+function showWaitingAnalysis() {
 
   if (els.aiStatus) {
 
     els.aiStatus.textContent =
-      "AI ANALYSIS ACTIVE";
+      "COLLECTING DATA";
 
   }
 
   if (els.aiPrediction) {
 
     els.aiPrediction.textContent =
-      analysis.prediction;
+      "WAITING";
+
+  }
+
+  if (els.aiCirclePrediction) {
+
+    els.aiCirclePrediction.textContent =
+      "--";
+
+  }
+
+  if (els.analysisConfidence) {
+
+    els.analysisConfidence.textContent =
+      "0%";
+
+  }
+
+  if (els.analysisMsg) {
+
+    els.analysisMsg.textContent =
+      "Waiting for enough market data.";
+
+  }
+
+  if (els.aiType) {
+
+    els.aiType.textContent =
+      "WAIT";
+
+  }
+
+}
+
+
+function renderAnalysis(analysis) {
+
+  const signal =
+    analysis.signal;
+
+  const prediction =
+    analysis.prediction;
+
+  if (els.aiStatus) {
+
+    els.aiStatus.textContent =
+      signal;
+
+  }
+
+  if (els.aiPrediction) {
+
+    els.aiPrediction.textContent =
+      prediction;
 
   }
 
@@ -1251,9 +1373,7 @@ function updateAnalysis() {
 
   }
 
-  if (
-    els.analysisConfidence
-  ) {
+  if (els.analysisConfidence) {
 
     els.analysisConfidence.textContent =
       `${analysis.confidence}%`;
@@ -1267,59 +1387,118 @@ function updateAnalysis() {
 
   }
 
-  if (
-    els.aiCirclePrediction
-  ) {
+  if (els.aiCirclePrediction) {
 
     els.aiCirclePrediction.textContent =
-      analysis.prediction;
+      prediction;
 
   }
 
-  if (
-    els.botSelectedMarket
-  ) {
+  if (els.aiMarket) {
+
+    els.aiMarket.textContent =
+      analysis.market;
+
+  }
+
+  if (els.botSelectedMarket) {
 
     els.botSelectedMarket.textContent =
-      state.currentMarket;
+      analysis.market;
 
   }
 
   if (els.botScore) {
 
     els.botScore.textContent =
-      analysis.score;
+      analysis.beastScore;
 
   }
 
-  if (
-    els.aiPredictionLarge
-  ) {
+  if (els.aiPredictionLarge) {
 
     els.aiPredictionLarge.textContent =
-      analysis.prediction;
+      prediction;
 
   }
 
-  if (
-    els.predictionConfidence
-  ) {
+  if (els.predictionConfidence) {
 
     els.predictionConfidence.textContent =
       `${analysis.confidence}% confidence`;
 
   }
 
+  renderDigitStats(
+    analysis.counts,
+    analysis.total
+  );
+
 }
 
 
 /* =========================================================
-   DIGIT ANALYSIS
+   CURRENT MARKET ANALYSIS
    ========================================================= */
 
-function analyzeDigits(
-  digits
+function analyzeCurrent() {
+
+  const list =
+    state.ticks[
+      state.currentMarket
+    ] || [];
+
+  if (
+    list.length <
+    CONFIG.MIN_ANALYSIS_TICKS
+  ) {
+
+    return null;
+
+  }
+
+  return analyzeMarket(
+    state.currentMarket,
+    list
+  );
+
+}
+
+
+/* =========================================================
+   BEAST MARKET ANALYZER
+   ========================================================= */
+
+function analyzeMarket(
+  market,
+  list
 ) {
+
+  const recent =
+    list.slice(
+      -Math.min(
+        CONFIG.SCAN_TICKS,
+        list.length
+      )
+    );
+
+  if (
+    recent.length <
+    CONFIG.MIN_ANALYSIS_TICKS
+  ) {
+
+    return null;
+
+  }
+
+  const digits =
+    recent.map(
+      tick =>
+        tick.digit
+    );
+
+  const total =
+    digits.length;
 
   const counts =
     Array(10).fill(0);
@@ -1329,42 +1508,41 @@ function analyzeDigits(
       counts[digit]++
   );
 
-  const total =
-    digits.length;
+  const sortedDigits =
+    counts
+      .map(
+        (
+          count,
+          digit
+        ) => ({
+          digit,
+          count
+        })
+      )
+      .sort(
+        (
+          a,
+          b
+        ) =>
+          b.count -
+          a.count
+      );
 
-  let hottest =
+  const hottest =
+    sortedDigits[0]?.digit ??
     0;
 
-  let coldest =
+  const coldest =
+    sortedDigits[9]?.digit ??
     0;
 
-  for (
-    let i = 1;
-    i < 10;
-    i++
-  ) {
+  const hotRate =
+    counts[hottest] /
+    total;
 
-    if (
-      counts[i] >
-      counts[hottest]
-    ) {
-
-      hottest =
-        i;
-
-    }
-
-    if (
-      counts[i] <
-      counts[coldest]
-    ) {
-
-      coldest =
-        i;
-
-    }
-
-  }
+  const coldRate =
+    counts[coldest] /
+    total;
 
   const even =
     digits.filter(
@@ -1396,206 +1574,564 @@ function analyzeDigits(
   const underPct =
     under / total;
 
-  let strategy =
-    "EVEN";
+  const recentDigits =
+    digits.slice(
+      -10
+    );
 
-  let prediction =
-    "EVEN";
+  const recentEven =
+    recentDigits.filter(
+      d =>
+        d % 2 === 0
+    ).length /
+    Math.max(
+      recentDigits.length,
+      1
+    );
 
-  let score =
-    50;
+  const recentOver =
+    recentDigits.filter(
+      d =>
+        d > 4
+    ).length /
+    Math.max(
+      recentDigits.length,
+      1
+    );
+
+  const firstHalf =
+    digits.slice(
+      0,
+      Math.floor(
+        total / 2
+      )
+    );
+
+  const secondHalf =
+    digits.slice(
+      Math.floor(
+        total / 2
+      )
+    );
+
+  const firstAverage =
+    average(firstHalf);
+
+  const secondAverage =
+    average(secondHalf);
+
+  const momentumRaw =
+    secondAverage -
+    firstAverage;
+
+  const momentum =
+    clamp(
+      50 +
+      momentumRaw * 12,
+      0,
+      100
+    );
+
+  const range =
+    Math.max(
+      ...recent.map(
+        t =>
+          t.price
+      )
+    ) -
+    Math.min(
+      ...recent.map(
+        t =>
+          t.price
+      )
+    );
+
+  const volatility =
+    normalizeVolatility(
+      range,
+      recent
+    );
+
+  const digitPressureValues = [
+
+    Math.abs(
+      evenPct -
+      oddPct
+    ),
+
+    Math.abs(
+      overPct -
+      underPct
+    ),
+
+    Math.abs(
+      hotRate -
+      0.10
+    ) * 2,
+
+    Math.abs(
+      recentEven -
+      0.50
+    )
+
+  ];
+
+  const pressure =
+    average(
+      digitPressureValues
+    );
+
+  /*
+   * Signal candidates.
+   */
+
+  const candidates = [
+
+    {
+      strategy:
+        "OVER",
+
+      strength:
+        Math.abs(
+          overPct -
+          underPct
+        ) * 100,
+
+      prediction:
+        "OVER"
+
+    },
+
+    {
+      strategy:
+        "UNDER",
+
+      strength:
+        Math.abs(
+          overPct -
+          underPct
+        ) * 100,
+
+      prediction:
+        "UNDER"
+
+    },
+
+    {
+      strategy:
+        "EVEN",
+
+      strength:
+        Math.abs(
+          evenPct -
+          oddPct
+        ) * 100,
+
+      prediction:
+        "EVEN"
+
+    },
+
+    {
+      strategy:
+        "ODD",
+
+      strength:
+        Math.abs(
+          evenPct -
+          oddPct
+        ) * 100,
+
+      prediction:
+        "ODD"
+
+    },
+
+    {
+      strategy:
+        "MATCHES",
+
+      strength:
+        Math.max(
+          0,
+          (
+            hotRate -
+            0.10
+          ) * 100
+        ),
+
+      prediction:
+        String(hottest)
+
+    },
+
+    {
+      strategy:
+        "DIFFERS",
+
+      strength:
+        Math.max(
+          0,
+          (
+            0.10 -
+            coldRate
+          ) * 100
+        ),
+
+      prediction:
+        String(coldest)
+
+    }
+
+  ];
+
+  candidates.sort(
+    (
+      a,
+      b
+    ) =>
+      b.strength -
+      a.strength
+  );
+
+  let best =
+    candidates[0];
+
+  /*
+   * Prefer agreement between signals.
+   */
+
+  const overBias =
+    overPct >
+    underPct;
+
+  const evenBias =
+    evenPct >
+    oddPct;
+
+  const digitBias =
+    hotRate >
+    0.10;
+
+  let agreement = 0;
 
   if (
     Math.abs(
       overPct -
       underPct
-    ) > .12
+    ) >=
+    0.10
   ) {
 
-    strategy =
-      overPct >
-      underPct
-        ? "OVER"
-        : "UNDER";
-
-    prediction =
-      strategy;
-
-    score =
-      Math.round(
-        50 +
-        Math.abs(
-          overPct -
-          underPct
-        ) * 100
-      );
-
-  } else if (
-    Math.abs(
-      evenPct -
-      oddPct
-    ) > .12
-  ) {
-
-    strategy =
-      evenPct >
-      oddPct
-        ? "EVEN"
-        : "ODD";
-
-    prediction =
-      strategy;
-
-    score =
-      Math.round(
-        50 +
-        Math.abs(
-          evenPct -
-          oddPct
-        ) * 100
-      );
-
-  } else {
-
-    strategy =
-      "MATCHES";
-
-    prediction =
-      String(
-        hottest
-      );
-
-    score =
-      Math.round(
-        45 +
-        (
-          counts[hottest] /
-          total
-        ) * 100
-      );
+    agreement += 25;
 
   }
 
-  score =
-    Math.max(
-      1,
-      Math.min(
-        99,
-        score
+  if (
+    Math.abs(
+      evenPct -
+      oddPct
+    ) >=
+    0.10
+  ) {
+
+    agreement += 25;
+
+  }
+
+  if (
+    hotRate >=
+    0.14
+  ) {
+
+    agreement += 25;
+
+  }
+
+  if (
+    Math.abs(
+      momentumRaw
+    ) >=
+    0.30
+  ) {
+
+    agreement += 25;
+
+  }
+
+  const dataQuality =
+    clamp(
+      (
+        total /
+        60
+      ) * 100,
+      0,
+      100
+    );
+
+  /*
+   * Beast score.
+   *
+   * Multiple independent factors
+   * are combined rather than relying
+   * on one digit frequency.
+   */
+
+  let beastScore =
+    40;
+
+  beastScore +=
+    Math.min(
+      25,
+      best.strength *
+      0.70
+    );
+
+  beastScore +=
+    agreement *
+    0.22;
+
+  beastScore +=
+    Math.abs(
+      momentum -
+      50
+    ) *
+    0.12;
+
+  beastScore +=
+    volatility *
+    0.08;
+
+  beastScore +=
+    dataQuality *
+    0.05;
+
+  beastScore =
+    Math.round(
+      clamp(
+        beastScore,
+        1,
+        99
       )
     );
 
-  const confidence =
-    Math.max(
-      1,
-      Math.min(
-        99,
-        score - 3
+  /*
+   * Confidence is deliberately stricter
+   * than the raw score.
+   */
+
+  let confidence =
+    Math.round(
+      (
+        beastScore * 0.55
+      ) +
+      (
+        agreement * 0.20
+      ) +
+      (
+        dataQuality * 0.15
+      ) +
+      (
+        pressure * 100 * 0.10
       )
     );
 
-  const reason =
-    `Hot digit ${hottest} appears ` +
-    `${counts[hottest]}/${total} ticks. ` +
+  confidence =
+    Math.round(
+      clamp(
+        confidence,
+        1,
+        99
+      )
+    );
+
+  let signal =
+    "WEAK";
+
+  if (
+    beastScore >=
+    CONFIG.BEAST_SIGNAL
+  ) {
+
+    signal =
+      "BEAST";
+
+  } else if (
+    beastScore >=
+    CONFIG.STRONG_SIGNAL
+  ) {
+
+    signal =
+      "STRONG";
+
+  } else if (
+    beastScore >=
+    60
+  ) {
+
+    signal =
+      "MODERATE";
+
+  }
+
+  /*
+   * Require agreement.
+   */
+
+  if (
+    confidence <
+    CONFIG.BOT_MIN_CONFIDENCE
+  ) {
+
+    signal =
+      "WAIT";
+
+  }
+
+  let reason =
+    `Hot ${hottest} ${Math.round(
+      hotRate * 100
+    )}%, ` +
+    `cold ${coldest} ${Math.round(
+      coldRate * 100
+    )}%. ` +
     `Even ${Math.round(
       evenPct * 100
-    )}%, ` +
-    `Odd ${Math.round(
+    )}% / Odd ${Math.round(
       oddPct * 100
-    )}%, ` +
+    )}%. ` +
     `Over ${Math.round(
       overPct * 100
-    )}%, ` +
-    `Under ${Math.round(
+    )}% / Under ${Math.round(
       underPct * 100
-    )}%.`;
+    )}%. ` +
+    `Momentum ${Math.round(
+      momentum
+    )}/100. ` +
+    `Agreement ${agreement}%.`;
+
+  if (
+    signal ===
+    "WAIT"
+  ) {
+
+    reason +=
+      " WEAK SIGNAL — waiting for stronger agreement.";
+
+  }
 
   return {
 
-    prediction,
+    market,
 
-    strategy,
+    total,
 
-    score,
-
-    confidence,
-
-    reason,
+    counts,
 
     hottest,
 
-    coldest
+    coldest,
+
+    hotRate,
+
+    coldRate,
+
+    evenPct,
+
+    oddPct,
+
+    overPct,
+
+    underPct,
+
+    momentum,
+
+    volatility,
+
+    pressure,
+
+    agreement,
+
+    dataQuality,
+
+    beastScore,
+
+    confidence,
+
+    signal,
+
+    strategy:
+      best.strategy,
+
+    prediction:
+      best.prediction,
+
+    reason
 
   };
 
 }
 
 
-function renderDigitStats(
-  counts,
-  total
-) {
+/* =========================================================
+   MULTI-MARKET BEAST SCANNER
+   ========================================================= */
 
-  if (
-    !els.digitStatsGrid
-  ) {
+function scanAllMarkets() {
 
-    return;
+  const results = [];
 
-  }
+  CONFIG.MARKETS.forEach(
+    market => {
 
-  els.digitStatsGrid.innerHTML =
-    "";
+      const list =
+        state.ticks[market] ||
+        [];
 
-  const max =
-    Math.max(
-      ...counts,
-      1
-    );
-
-  counts.forEach(
-    (
-      count,
-      digit
-    ) => {
-
-      const pct =
-        total
-          ? Math.round(
-              (
-                count /
-                total
-              ) * 100
-            )
-          : 0;
-
-      const cell =
-        document.createElement(
-          "div"
+      const analysis =
+        analyzeMarket(
+          market,
+          list
         );
 
-      cell.className =
-        "digit-cell";
+      if (analysis) {
 
-      cell.innerHTML = `
-        <strong>${digit}</strong>
-        <span>${count} · ${pct}%</span>
-        <div
-          class="digit-bar"
-          style="width:${Math.max(
-            4,
-            (count / max) * 100
-          )}%">
-        </div>
-      `;
-
-      els.digitStatsGrid
-        .appendChild(
-          cell
+        results.push(
+          analysis
         );
+
+      }
 
     }
   );
+
+  results.sort(
+    (
+      a,
+      b
+    ) => {
+
+      const scoreA =
+        a.beastScore +
+        a.confidence * 0.25;
+
+      const scoreB =
+        b.beastScore +
+        b.confidence * 0.25;
+
+      return scoreB - scoreA;
+
+    }
+  );
+
+  state.marketScanner =
+    results;
+
+  state.strongestMarket =
+    results[0] ||
+    null;
+
+  return results;
 
 }
 
@@ -1624,23 +2160,23 @@ function startCircularAI() {
 
   }
 
-  if (
-    els.circularStatusText
-  ) {
+  if (els.circularStatusText) {
 
     els.circularStatusText.textContent =
       "RUNNING";
 
   }
 
-  if (
-    els.engineStatusText
-  ) {
+  if (els.engineStatusText) {
 
     els.engineStatusText.textContent =
       "CIRCULAR AI ACTIVE";
 
   }
+
+  updateStatus(
+    "Circular AI started: 10s analysis → 5s prediction → 3s trade → 3s cooldown."
+  );
 
   runCircularPhase();
 
@@ -1652,88 +2188,69 @@ function stopCircularAI() {
   state.circularRunning =
     false;
 
-  if (
+  clearInterval(
     state.circularInterval
-  ) {
+  );
 
-    clearInterval(
-      state.circularInterval
-    );
-
-    state.circularInterval =
-      null;
-
-  }
+  state.circularInterval =
+    null;
 
   state.circularPhase =
     "IDLE";
 
-  if (
-    els.aiCircleStatus
-  ) {
+  state.circularTimer =
+    0;
+
+  if (els.aiCircleStatus) {
 
     els.aiCircleStatus.textContent =
       "IDLE";
 
   }
 
-  if (
-    els.circularStatusText
-  ) {
+  if (els.circularStatusText) {
 
     els.circularStatusText.textContent =
       "READY";
 
   }
 
-  if (
-    els.startAI
-  ) {
+  if (els.startAI) {
 
     els.startAI.textContent =
       "START CIRCULAR AI";
 
   }
 
-  if (
-    els.aiCircleLabel
-  ) {
+  if (els.aiCircleLabel) {
 
     els.aiCircleLabel.textContent =
       "AI";
 
   }
 
-  if (
-    els.aiCircleTimer
-  ) {
+  if (els.aiCircleTimer) {
 
     els.aiCircleTimer.textContent =
       "--";
 
   }
 
-  if (
-    els.cycleAnalysis
-  ) {
+  if (els.cycleAnalysis) {
 
     els.cycleAnalysis.textContent =
       "STOPPED";
 
   }
 
-  if (
-    els.cycleTrade
-  ) {
+  if (els.cycleTrade) {
 
     els.cycleTrade.textContent =
       "WAITING";
 
   }
 
-  if (
-    els.cycleCooldown
-  ) {
+  if (els.cycleCooldown) {
 
     els.cycleCooldown.textContent =
       "0";
@@ -1789,191 +2306,349 @@ function runCircularPhase() {
 
   ];
 
-  let index =
-    0;
+  let phaseIndex = 0;
 
-  const nextPhase =
-    () => {
+  function beginPhase() {
 
-      if (
-        !state.circularRunning
-      ) {
+    if (
+      !state.circularRunning
+    ) {
 
-        return;
+      return;
+
+    }
+
+    const phase =
+      phases[phaseIndex];
+
+    let remaining =
+      phase.seconds;
+
+    state.circularPhase =
+      phase.name;
+
+    state.circularTimer =
+      remaining;
+
+    /*
+     * 10-second analysis.
+     */
+
+    if (
+      phase.name ===
+      "ANALYZING"
+    ) {
+
+      const scan =
+        scanAllMarkets();
+
+      const best =
+        scan[0];
+
+      if (best) {
+
+        state.currentMarket =
+          best.market;
+
+        subscribeMarket(
+          best.market
+        );
+
+        state.currentAnalysis =
+          best;
+
+        renderAnalysis(
+          best
+        );
+
+        if (els.aiCircleLabel) {
+
+          els.aiCircleLabel.textContent =
+            `BEAST ${best.beastScore}`;
+
+        }
 
       }
 
-      const phase =
-        phases[index];
-
-      let remaining =
-        phase.seconds;
-
-      state.circularPhase =
-        phase.name;
-
-      state.circularTimer =
-        remaining;
-
-      if (
-        els.aiCircleStatus
-      ) {
-
-        els.aiCircleStatus.textContent =
-          phase.name;
-
-      }
-
-      if (
-        els.cycleAnalysis
-      ) {
+      if (els.cycleAnalysis) {
 
         els.cycleAnalysis.textContent =
-          phase.name;
+          best
+            ? `SCANNING ${best.market}`
+            : "COLLECTING DATA";
 
       }
 
-      if (
-        els.aiCircleTimer
-      ) {
+      updateStatus(
+        best
+          ? `BEAST selected ${best.market} — ${best.signal} ${best.beastScore}/100`
+          : "Circular AI collecting market data..."
+      );
 
-        els.aiCircleTimer.textContent =
-          remaining;
+    }
+
+    /*
+     * 5-second prediction.
+     */
+
+    if (
+      phase.name ===
+      "PREDICTING"
+    ) {
+
+      const analysis =
+        analyzeCurrent();
+
+      state.currentAnalysis =
+        analysis;
+
+      if (analysis) {
+
+        renderAnalysis(
+          analysis
+        );
+
+        if (els.aiCircleLabel) {
+
+          els.aiCircleLabel.textContent =
+            analysis.signal;
+
+        }
+
+        if (els.cycleAnalysis) {
+
+          els.cycleAnalysis.textContent =
+            `${analysis.prediction} · ${analysis.confidence}%`;
+
+        }
 
       }
 
-      if (
-        els.cycleTrade
-      ) {
+    }
+
+    /*
+     * 3-second trade window.
+     */
+
+    if (
+      phase.name ===
+      "TRADE WINDOW"
+    ) {
+
+      executeCircularPaperTrade();
+
+    }
+
+    /*
+     * 3-second cooldown.
+     */
+
+    if (
+      phase.name ===
+      "COOLDOWN"
+    ) {
+
+      if (els.cycleTrade) {
 
         els.cycleTrade.textContent =
-          phase.name ===
-          "TRADE WINDOW"
-            ? "ACTIVE"
-            : "WAITING";
+          "SETTLING";
 
       }
 
-      if (
-        els.cycleCooldown
-      ) {
+    }
 
-        els.cycleCooldown.textContent =
-          phase.name ===
-          "COOLDOWN"
-            ? remaining
-            : "0";
+    updateCircularUI(
+      phase,
+      remaining
+    );
 
-      }
+    clearInterval(
+      state.circularInterval
+    );
 
-      if (
-        phase.name ===
-        "PREDICTING"
-      ) {
+    state.circularInterval =
+      setInterval(
+        () => {
 
-        updateAnalysis();
+          remaining--;
 
-      }
-
-      if (
-        phase.name ===
-        "TRADE WINDOW"
-      ) {
-
-        executeCircularPaperTrade();
-
-      }
-
-      if (
-        state.circularInterval
-      ) {
-
-        clearInterval(
-          state.circularInterval
-        );
-
-      }
-
-      state.circularInterval =
-        setInterval(
-          () => {
-
-            remaining--;
-
-            state.circularTimer =
-              Math.max(
-                remaining,
-                0
-              );
-
-            if (
-              els.aiCircleTimer
-            ) {
-
-              els.aiCircleTimer.textContent =
-                Math.max(
-                  remaining,
-                  0
-                );
-
-            }
-
-            if (
-              phase.name ===
-              "COOLDOWN" &&
-              els.cycleCooldown
-            ) {
-
-              els.cycleCooldown.textContent =
-                Math.max(
-                  remaining,
-                  0
-                );
-
-            }
-
-            if (
-              remaining <=
+          state.circularTimer =
+            Math.max(
+              remaining,
               0
-            ) {
+            );
 
-              clearInterval(
-                state.circularInterval
-              );
+          updateCircularTimer(
+            phase,
+            remaining
+          );
 
-              state.circularInterval =
-                null;
+          if (
+            remaining <=
+            0
+          ) {
 
-              index =
-                (
-                  index + 1
-                ) %
-                phases.length;
+            clearInterval(
+              state.circularInterval
+            );
 
-              nextPhase();
+            state.circularInterval =
+              null;
 
-            }
+            phaseIndex =
+              (
+                phaseIndex +
+                1
+              ) %
+              phases.length;
 
-          },
-          1000
-        );
+            beginPhase();
 
-    };
+          }
 
-  nextPhase();
+        },
+        1000
+      );
+
+  }
+
+  beginPhase();
 
 }
 
 
+function updateCircularUI(
+  phase,
+  remaining
+) {
+
+  if (els.aiCircleStatus) {
+
+    els.aiCircleStatus.textContent =
+      phase.name;
+
+  }
+
+  if (els.aiCircleTimer) {
+
+    els.aiCircleTimer.textContent =
+      remaining;
+
+  }
+
+  if (els.cycleTrade) {
+
+    if (
+      phase.name ===
+      "TRADE WINDOW"
+    ) {
+
+      els.cycleTrade.textContent =
+        "TRADE NOW";
+
+    } else if (
+      phase.name ===
+      "COOLDOWN"
+    ) {
+
+      els.cycleTrade.textContent =
+        "COOLDOWN";
+
+    } else {
+
+      els.cycleTrade.textContent =
+        "WAITING";
+
+    }
+
+  }
+
+  if (els.cycleCooldown) {
+
+    els.cycleCooldown.textContent =
+      phase.name ===
+      "COOLDOWN"
+        ? remaining
+        : "0";
+
+  }
+
+}
+
+
+function updateCircularTimer(
+  phase,
+  remaining
+) {
+
+  if (els.aiCircleTimer) {
+
+    els.aiCircleTimer.textContent =
+      Math.max(
+        remaining,
+        0
+      );
+
+  }
+
+  if (
+    phase.name ===
+    "COOLDOWN" &&
+    els.cycleCooldown
+  ) {
+
+    els.cycleCooldown.textContent =
+      Math.max(
+        remaining,
+        0
+      );
+
+  }
+
+}
+
+
+/* =========================================================
+   CIRCULAR PAPER ENTRY
+   ========================================================= */
+
 function executeCircularPaperTrade() {
 
   const analysis =
+    state.currentAnalysis ||
     analyzeCurrent();
 
   if (!analysis) {
 
+    setCircularDecision(
+      "WAIT — NOT ENOUGH DATA"
+    );
+
+    return;
+
+  }
+
+  /*
+   * THIS IS IMPORTANT:
+   *
+   * Circular AI NEVER forces a trade.
+   */
+
+  if (
+    analysis.signal ===
+      "WAIT" ||
+    analysis.confidence <
+      CONFIG.BOT_MIN_CONFIDENCE ||
+    analysis.beastScore <
+      60
+  ) {
+
+    setCircularDecision(
+      `WAIT — WEAK SIGNAL ${analysis.confidence}%`
+    );
+
     showToast(
-      "Circular AI waiting for more data."
+      `Circular AI: WAIT — ${analysis.market} signal is weak.`
     );
 
     return;
@@ -1982,19 +2657,13 @@ function executeCircularPaperTrade() {
 
   let strategy =
     els.circularStrategyLabel
-      ? els.circularStrategyLabel
-          .textContent
-      : "AUTO";
-
-  /*
-   * AUTO means use the current analysis.
-   */
+      ?.textContent ||
+    "AUTO";
 
   if (
-    strategy === "AUTO" ||
-    !isValidStrategy(
-      strategy
-    )
+    strategy ===
+      "AUTO" ||
+    !isValidStrategy(strategy)
   ) {
 
     strategy =
@@ -2002,11 +2671,11 @@ function executeCircularPaperTrade() {
 
   }
 
-  const stake =
-    Number(
-      els.circularStakeInput?.value
-    ) ||
-    CONFIG.MIN_STAKE;
+  /*
+   * If the manually selected strategy
+   * conflicts strongly with the AI,
+   * use AI only when AUTO is selected.
+   */
 
   const target =
     (
@@ -2018,46 +2687,61 @@ function executeCircularPaperTrade() {
       ? analysis.hottest
       : null;
 
+  const stake =
+    Number(
+      els.circularStakeInput?.value
+    ) ||
+    CONFIG.MIN_STAKE;
+
+  setCircularDecision(
+    `TRADE NOW · ${strategy} · ${analysis.confidence}%`
+  );
+
   createPaperTrade({
 
     engine:
       "CIRCULAR AI",
 
     market:
-      state.currentMarket,
+      analysis.market,
 
     strategy,
 
     target,
 
-    stake
+    stake,
+
+    confidence:
+      analysis.confidence,
+
+    beastScore:
+      analysis.beastScore,
+
+    reason:
+      analysis.reason
 
   });
 
 }
 
 
-function analyzeCurrent() {
+function setCircularDecision(
+  text
+) {
 
-  const list =
-    state.ticks[
-      state.currentMarket
-    ] || [];
+  if (els.cycleTrade) {
 
-  if (
-    list.length <
-    CONFIG.MIN_ANALYSIS_TICKS
-  ) {
-
-    return null;
+    els.cycleTrade.textContent =
+      text;
 
   }
 
-  return analyzeDigits(
-    list.map(
-      t => t.digit
-    )
-  );
+  if (els.circularStatusText) {
+
+    els.circularStatusText.textContent =
+      text;
+
+  }
 
 }
 
@@ -2074,6 +2758,21 @@ function toggleBot() {
 
     stopBot();
 
+  } else {
+
+    startBot();
+
+  }
+
+}
+
+
+function startBot() {
+
+  if (
+    state.botRunning
+  ) {
+
     return;
 
   }
@@ -2081,44 +2780,36 @@ function toggleBot() {
   state.botRunning =
     true;
 
-  if (
-    els.startBotBtn
-  ) {
+  if (els.startBotBtn) {
 
     els.startBotBtn.textContent =
       "STOP AI BOT";
 
   }
 
-  if (
-    els.botStatusDash
-  ) {
+  if (els.botStatusDash) {
 
     els.botStatusDash.textContent =
-      "RUNNING";
+      "SCANNING";
 
   }
 
-  if (
-    els.engineStatusText
-  ) {
+  if (els.engineStatusText) {
 
     els.engineStatusText.textContent =
       "AI BOT ACTIVE";
 
   }
 
+  updateStatus(
+    "AI BOT: scanning all markets..."
+  );
+
   runBotCycle();
 
-  if (
+  clearInterval(
     state.botInterval
-  ) {
-
-    clearInterval(
-      state.botInterval
-    );
-
-  }
+  );
 
   state.botInterval =
     setInterval(
@@ -2134,40 +2825,28 @@ function stopBot() {
   state.botRunning =
     false;
 
-  if (
+  clearInterval(
     state.botInterval
-  ) {
+  );
 
-    clearInterval(
-      state.botInterval
-    );
+  state.botInterval =
+    null;
 
-    state.botInterval =
-      null;
-
-  }
-
-  if (
-    els.startBotBtn
-  ) {
+  if (els.startBotBtn) {
 
     els.startBotBtn.textContent =
       "START AI BOT";
 
   }
 
-  if (
-    els.botStatusDash
-  ) {
+  if (els.botStatusDash) {
 
     els.botStatusDash.textContent =
       "STOPPED";
 
   }
 
-  if (
-    els.engineStatusText
-  ) {
+  if (els.engineStatusText) {
 
     els.engineStatusText.textContent =
       "PAPER MODE";
@@ -2187,19 +2866,12 @@ function runBotCycle() {
 
   }
 
-  const list =
-    state.ticks[
-      state.currentMarket
-    ] || [];
+  const scanner =
+    scanAllMarkets();
 
-  if (
-    list.length <
-    CONFIG.MIN_ANALYSIS_TICKS
-  ) {
+  if (!scanner.length) {
 
-    if (
-      els.botStatusDash
-    ) {
+    if (els.botStatusDash) {
 
       els.botStatusDash.textContent =
         "COLLECTING DATA";
@@ -2210,23 +2882,52 @@ function runBotCycle() {
 
   }
 
-  const analysis =
-    analyzeCurrent();
+  const best =
+    scanner[0];
 
-  if (!analysis) {
+  /*
+   * Automatically select the strongest
+   * market.
+   */
 
-    return;
+  if (
+    best.market !==
+    state.currentMarket
+  ) {
+
+    subscribeMarket(
+      best.market
+    );
 
   }
 
-  let strategy =
-    analysis.strategy;
+  state.currentAnalysis =
+    best;
+
+  renderAnalysis(
+    best
+  );
+
+  if (els.botSelectedMarket) {
+
+    els.botSelectedMarket.textContent =
+      best.market;
+
+  }
+
+  if (els.botScore) {
+
+    els.botScore.textContent =
+      best.beastScore;
+
+  }
 
   /*
-   * If the analyzed strategy is not
-   * enabled for the bot, use the
-   * first selected strategy.
+   * Respect selected bot strategies.
    */
+
+  let strategy =
+    best.strategy;
 
   if (
     !state.botStrategies.includes(
@@ -2235,8 +2936,9 @@ function runBotCycle() {
   ) {
 
     strategy =
-      state.botStrategies[0] ||
-      "EVEN";
+      chooseBestAllowedStrategy(
+        best
+      );
 
   }
 
@@ -2247,21 +2949,17 @@ function runBotCycle() {
       strategy ===
         "DIFFERS"
     )
-      ? analysis.hottest
+      ? best.hottest
       : null;
 
-  if (
-    els.botScore
-  ) {
+  if (els.botStrategyLabel) {
 
-    els.botScore.textContent =
-      analysis.score;
+    els.botStrategyLabel.textContent =
+      strategy;
 
   }
 
-  if (
-    els.aiPredictionLarge
-  ) {
+  if (els.aiPredictionLarge) {
 
     els.aiPredictionLarge.textContent =
       target !== null
@@ -2270,77 +2968,222 @@ function runBotCycle() {
 
   }
 
-  if (
-    els.predictionConfidence
-  ) {
+  if (els.predictionConfidence) {
 
     els.predictionConfidence.textContent =
-      `${analysis.confidence}% confidence`;
-
-  }
-
-  if (
-    els.botStatusDash
-  ) {
-
-    els.botStatusDash.textContent =
-      `${strategy} · ${analysis.confidence}%`;
+      `${best.confidence}% confidence`;
 
   }
 
   /*
-   * The current HTML has botStrategyLabel,
-   * so use that instead of the missing
-   * botSelectedStrategy element.
+   * Strong signal gate.
    */
 
   if (
-    els.botStrategyLabel
+    best.signal ===
+      "WAIT" ||
+    best.confidence <
+      CONFIG.BOT_MIN_CONFIDENCE ||
+    best.beastScore <
+      60
   ) {
 
-    els.botStrategyLabel.textContent =
-      strategy;
+    if (els.botStatusDash) {
+
+      els.botStatusDash.textContent =
+        `WAIT · ${best.market} · ${best.confidence}%`;
+
+    }
+
+    updateStatus(
+      `AI BOT WAIT — ${best.market}: ${best.reason}`
+    );
+
+    return;
 
   }
 
-  /*
-   * Paper-only entry.
-   */
+  const stake =
+    Number(
+      els.stakeInput?.value
+    ) ||
+    CONFIG.MIN_STAKE;
+
+  createPaperTrade({
+
+    engine:
+      "AI BOT",
+
+    market:
+      best.market,
+
+    strategy,
+
+    target,
+
+    stake,
+
+    confidence:
+      best.confidence,
+
+    beastScore:
+      best.beastScore,
+
+    reason:
+      best.reason
+
+  });
+
+}
+
+
+function chooseBestAllowedStrategy(
+  analysis
+) {
+
+  const candidates = [];
 
   if (
-    analysis.confidence >=
-    CONFIG.BOT_MIN_CONFIDENCE
+    state.botStrategies.includes(
+      "OVER"
+    )
   ) {
 
-    const stake =
-      Number(
-        els.stakeInput?.value
-      ) ||
-      CONFIG.MIN_STAKE;
+    candidates.push({
 
-    createPaperTrade({
+      strategy:
+        "OVER",
 
-      engine:
-        "AI BOT",
-
-      market:
-        state.currentMarket,
-
-      strategy,
-
-      target,
-
-      stake
+      score:
+        Math.abs(
+          analysis.overPct -
+          analysis.underPct
+        )
 
     });
 
   }
 
+  if (
+    state.botStrategies.includes(
+      "UNDER"
+    )
+  ) {
+
+    candidates.push({
+
+      strategy:
+        "UNDER",
+
+      score:
+        Math.abs(
+          analysis.overPct -
+          analysis.underPct
+        )
+
+    });
+
+  }
+
+  if (
+    state.botStrategies.includes(
+      "EVEN"
+    )
+  ) {
+
+    candidates.push({
+
+      strategy:
+        "EVEN",
+
+      score:
+        Math.abs(
+          analysis.evenPct -
+          analysis.oddPct
+        )
+
+    });
+
+  }
+
+  if (
+    state.botStrategies.includes(
+      "ODD"
+    )
+  ) {
+
+    candidates.push({
+
+      strategy:
+        "ODD",
+
+      score:
+        Math.abs(
+          analysis.evenPct -
+          analysis.oddPct
+        )
+
+    });
+
+  }
+
+  if (
+    state.botStrategies.includes(
+      "MATCHES"
+    )
+  ) {
+
+    candidates.push({
+
+      strategy:
+        "MATCHES",
+
+      score:
+        analysis.hotRate
+
+    });
+
+  }
+
+  if (
+    state.botStrategies.includes(
+      "DIFFERS"
+    )
+  ) {
+
+    candidates.push({
+
+      strategy:
+        "DIFFERS",
+
+      score:
+        0.10 -
+        analysis.coldRate
+
+    });
+
+  }
+
+  candidates.sort(
+    (
+      a,
+      b
+    ) =>
+      b.score -
+      a.score
+  );
+
+  return (
+    candidates[0]?.strategy ||
+    state.botStrategies[0] ||
+    "EVEN"
+  );
+
 }
 
 
 /* =========================================================
-   MANUAL
+   MANUAL PAPER TRADE
    ========================================================= */
 
 function placeManualTrade() {
@@ -2377,9 +3220,7 @@ function placeManualTrade() {
       );
 
     if (
-      !Number.isInteger(
-        target
-      ) ||
+      !Number.isInteger(target) ||
       target < 0 ||
       target > 9
     ) {
@@ -2405,7 +3246,16 @@ function placeManualTrade() {
 
     target,
 
-    stake
+    stake,
+
+    confidence:
+      null,
+
+    beastScore:
+      null,
+
+    reason:
+      "Manual paper trade."
 
   });
 
@@ -2413,7 +3263,7 @@ function placeManualTrade() {
 
 
 /* =========================================================
-   PAPER TRADING
+   CREATE PAPER TRADE
    ========================================================= */
 
 function createPaperTrade({
@@ -2421,13 +3271,17 @@ function createPaperTrade({
   market,
   strategy,
   target,
-  stake
+  stake,
+  confidence = null,
+  beastScore = null,
+  reason = ""
 }) {
 
+  stake =
+    Number(stake);
+
   if (
-    !Number.isFinite(
-      stake
-    ) ||
+    !Number.isFinite(stake) ||
     stake <
       CONFIG.MIN_STAKE
   ) {
@@ -2436,7 +3290,7 @@ function createPaperTrade({
       `Minimum stake is ${CONFIG.MIN_STAKE}.`
     );
 
-    return;
+    return null;
 
   }
 
@@ -2449,34 +3303,32 @@ function createPaperTrade({
       "Maximum active paper trades reached."
     );
 
-    return;
+    return null;
 
   }
 
   if (
-    state.balance <
+    state.paperBalance <
     stake
   ) {
 
     showToast(
-      "Insufficient demo balance."
+      "Insufficient KRISHWAVE paper balance."
     );
 
-    return;
+    return null;
 
   }
 
   if (
-    !isValidStrategy(
-      strategy
-    )
+    !isValidStrategy(strategy)
   ) {
 
     showToast(
       "Invalid strategy."
     );
 
-    return;
+    return null;
 
   }
 
@@ -2500,7 +3352,24 @@ function createPaperTrade({
       "Invalid target digit."
     );
 
-    return;
+    return null;
+
+  }
+
+  const list =
+    state.ticks[market] ||
+    [];
+
+  const latest =
+    list[list.length - 1];
+
+  if (!latest) {
+
+    showToast(
+      "Waiting for market tick."
+    );
+
+    return null;
 
   }
 
@@ -2521,11 +3390,23 @@ function createPaperTrade({
 
     stake,
 
-    entryDigit: null,
+    entryDigit:
+      latest.digit,
 
-    entryPrice: null,
+    entryPrice:
+      latest.price,
 
-    exitDigit: null,
+    exitDigit:
+      null,
+
+    exitPrice:
+      null,
+
+    confidence,
+
+    beastScore,
+
+    reason,
 
     createdAt:
       new Date(),
@@ -2535,26 +3416,13 @@ function createPaperTrade({
 
   };
 
-  const list =
-    state.ticks[market] ||
-    [];
+  /*
+   * This is PAPER BALANCE only.
+   * It never changes the Deriv
+   * account balance.
+   */
 
-  const latest =
-    list[
-      list.length - 1
-    ];
-
-  if (latest) {
-
-    trade.entryDigit =
-      latest.digit;
-
-    trade.entryPrice =
-      latest.price;
-
-  }
-
-  state.balance -=
+  state.paperBalance -=
     stake;
 
   state.activeTrades.push(
@@ -2564,19 +3432,25 @@ function createPaperTrade({
   state.stats.stake +=
     stake;
 
+  savePaperBalance();
+
   renderActiveTrades();
 
-  updateBalance();
+  updateStatsUI();
+
+  updatePaperBalance();
 
   showToast(
-    `${engine}: ${strategy} paper trade opened`
+    `${engine}: ${strategy} PAPER trade opened`
   );
+
+  return trade;
 
 }
 
 
 /* =========================================================
-   SETTLEMENT
+   PAPER SETTLEMENT
    ========================================================= */
 
 function settlePaperTrades(
@@ -2591,9 +3465,7 @@ function settlePaperTrades(
         market
     );
 
-  if (
-    !matching.length
-  ) {
+  if (!matching.length) {
 
     return;
 
@@ -2603,13 +3475,15 @@ function settlePaperTrades(
     trade => {
 
       /*
-       * Don't settle on the exact
-       * tick that created the trade.
+       * Give the trade at least
+       * one tick after entry.
        */
 
       if (
         trade.entryPrice ===
-        tick.price
+        tick.price &&
+        trade.entryDigit ===
+        tick.digit
       ) {
 
         return;
@@ -2641,9 +3515,7 @@ function evaluateStrategy(
   digit
 ) {
 
-  switch (
-    strategy
-  ) {
+  switch(strategy) {
 
     case "MATCHES":
 
@@ -2708,16 +3580,18 @@ function settleTrade(
     1
   );
 
+  const payoutMultiplier =
+    CONFIG.PAYOUT[
+      trade.strategy
+    ] ??
+    0.95;
+
   const payout =
     win
       ? trade.stake *
         (
           1 +
-          (
-            CONFIG.PAYOUT[
-              trade.strategy
-            ] || .95
-          )
+          payoutMultiplier
         )
       : 0;
 
@@ -2727,7 +3601,7 @@ function settleTrade(
 
   if (win) {
 
-    state.balance +=
+    state.paperBalance +=
       payout;
 
     state.stats.wins++;
@@ -2752,6 +3626,9 @@ function settleTrade(
   trade.exitDigit =
     tick.digit;
 
+  trade.exitPrice =
+    tick.price;
+
   trade.status =
     win
       ? "WIN"
@@ -2763,9 +3640,6 @@ function settleTrade(
   trade.profit =
     profit;
 
-  trade.exitPrice =
-    tick.price;
-
   trade.closedAt =
     new Date();
 
@@ -2775,13 +3649,60 @@ function settleTrade(
 
   saveHistory();
 
-  updateStatsUI();
+  savePaperBalance();
 
-  renderActiveTrades();
+  updateStatsUI();
 
   updateHistoryUI();
 
-  updateBalance();
+  renderActiveTrades();
+
+  updatePaperBalance();
+
+  updateRiskStatus();
+
+  showToast(
+    `${trade.engine}: ${win ? "WIN" : "LOSS"} ${money(profit)}`
+  );
+
+}
+
+
+/* =========================================================
+   PAPER BALANCE
+   ========================================================= */
+
+function savePaperBalance() {
+
+  localStorage.setItem(
+    "krishwave_paper_balance",
+    String(
+      state.paperBalance
+    )
+  );
+
+}
+
+
+function updatePaperBalance() {
+
+  /*
+   * The existing HTML only has one balance
+   * display, so keep it truthful to the
+   * connected Deriv account.
+   *
+   * Paper balance is shown in trade status
+   * and used internally for trades.
+   */
+
+  if (
+    els.tradingStatusLabel
+  ) {
+
+    els.tradingStatusLabel.textContent =
+      `PAPER $${state.paperBalance.toFixed(2)}`;
+
+  }
 
 }
 
@@ -2792,27 +3713,21 @@ function settleTrade(
 
 function updateStatsUI() {
 
-  if (
-    els.paperTotal
-  ) {
+  if (els.paperTotal) {
 
     els.paperTotal.textContent =
       state.stats.total;
 
   }
 
-  if (
-    els.paperWins
-  ) {
+  if (els.paperWins) {
 
     els.paperWins.textContent =
       state.stats.wins;
 
   }
 
-  if (
-    els.paperLosses
-  ) {
+  if (els.paperLosses) {
 
     els.paperLosses.textContent =
       state.stats.losses;
@@ -2825,13 +3740,12 @@ function updateStatsUI() {
           (
             state.stats.wins /
             state.stats.total
-          ) * 100
+          ) *
+          100
         )
       : 0;
 
-  if (
-    els.paperAccuracy
-  ) {
+  if (els.paperAccuracy) {
 
     els.paperAccuracy.textContent =
       `${accuracy}%`;
@@ -2860,9 +3774,11 @@ function renderActiveTrades() {
   ) {
 
     els.activeTradesList.innerHTML =
-      `<div class="empty">
+      `
+      <div class="empty">
         No active trades.
-      </div>`;
+      </div>
+      `;
 
     return;
 
@@ -2873,43 +3789,47 @@ function renderActiveTrades() {
       .map(
         trade => `
 
-          <div class="active-trade">
+        <div class="active-trade">
 
-            <div>
+          <div>
 
-              <strong>
-                ${escapeHtml(
-                  trade.strategy
-                )}
-              </strong>
+            <strong>
+              ${escapeHtml(
+                trade.strategy
+              )}
+            </strong>
 
-              <small>
-                ${escapeHtml(
-                  trade.engine
-                )}
-                ·
-                ${escapeHtml(
-                  trade.market
-                )}
-              </small>
-
-            </div>
-
-            <div>
-
-              <strong>
-                $${Number(
-                  trade.stake
-                ).toFixed(2)}
-              </strong>
-
-              <small>
-                #${trade.id}
-              </small>
-
-            </div>
+            <small>
+              ${escapeHtml(
+                trade.engine
+              )}
+              ·
+              ${escapeHtml(
+                trade.market
+              )}
+            </small>
 
           </div>
+
+          <div>
+
+            <strong>
+              ${money(
+                trade.stake
+              )}
+            </strong>
+
+            <small>
+              ${
+                trade.beastScore
+                  ? `BEAST ${trade.beastScore}`
+                  : `#${trade.id}`
+              }
+            </small>
+
+          </div>
+
+        </div>
 
         `
       )
@@ -2954,33 +3874,21 @@ function loadHistory() {
         "krishwave_history"
       );
 
-    if (!raw) {
+    if (raw) {
 
-      updateHistoryUI();
+      const parsed =
+        JSON.parse(raw);
 
-      return;
+      if (
+        Array.isArray(parsed)
+      ) {
 
-    }
+        state.paperTrades =
+          parsed;
 
-    state.paperTrades =
-      JSON.parse(
-        raw
-      );
-
-    if (
-      !Array.isArray(
-        state.paperTrades
-      )
-    ) {
-
-      state.paperTrades =
-        [];
+      }
 
     }
-
-    recalculateStats();
-
-    updateHistoryUI();
 
   } catch(error) {
 
@@ -2992,6 +3900,10 @@ function loadHistory() {
       [];
 
   }
+
+  recalculateStats();
+
+  updateHistoryUI();
 
 }
 
@@ -3070,7 +3982,7 @@ function recalculateStats() {
 function updateHistoryUI() {
 
   if (
-    !els.historyTotalStake
+    !els.historyCardsList
   ) {
 
     return;
@@ -3119,45 +4031,58 @@ function updateHistoryUI() {
       0
     );
 
-  els.historyTotalStake.textContent =
-    money(
-      totalStake
-    );
+  if (els.historyTotalStake) {
 
-  els.historyAmountWon.textContent =
-    money(
-      amountWon
-    );
+    els.historyTotalStake.textContent =
+      money(totalStake);
 
-  els.historyNetProfit.textContent =
-    money(
-      netProfit
-    );
+  }
 
-  els.totalProfitDisplay.textContent =
-    money(
-      netProfit
-    );
+  if (els.historyAmountWon) {
 
-  els.sessionProfitDisplay.textContent =
-    money(
-      state.sessionProfit
-    );
+    els.historyAmountWon.textContent =
+      money(amountWon);
 
-  els.sessionProfitDisplay.className =
-    state.sessionProfit >=
-    0
-      ? "positive"
-      : "negative";
+  }
+
+  if (els.historyNetProfit) {
+
+    els.historyNetProfit.textContent =
+      money(netProfit);
+
+  }
+
+  if (els.totalProfitDisplay) {
+
+    els.totalProfitDisplay.textContent =
+      money(netProfit);
+
+  }
+
+  if (els.sessionProfitDisplay) {
+
+    els.sessionProfitDisplay.textContent =
+      money(
+        state.sessionProfit
+      );
+
+    els.sessionProfitDisplay.className =
+      state.sessionProfit >= 0
+        ? "positive"
+        : "negative";
+
+  }
 
   if (
     !state.paperTrades.length
   ) {
 
     els.historyCardsList.innerHTML =
-      `<div class="empty">
+      `
+      <div class="empty">
         No completed trades yet.
-      </div>`;
+      </div>
+      `;
 
     return;
 
@@ -3178,122 +4103,155 @@ function updateHistoryUI() {
 
           return `
 
-            <div class="history-card ${
-              win
-                ? "history-win"
-                : "history-loss"
-            }">
+          <div class="history-card ${
+            win
+              ? "history-win"
+              : "history-loss"
+          }">
 
-              <div class="history-top">
+            <div class="history-top">
 
+              <strong>
+                ${escapeHtml(
+                  trade.engine
+                )}
+              </strong>
+
+              <strong class="result">
+
+                ${
+                  win
+                    ? "WIN"
+                    : "LOSS"
+                }
+
+                ${
+                  win
+                    ? ` +${money(
+                        trade.profit
+                      )}`
+                    : ` ${money(
+                        trade.profit
+                      )}`
+                }
+
+              </strong>
+
+            </div>
+
+            <div class="history-details">
+
+              <div>
+                <span>MARKET</span>
                 <strong>
                   ${escapeHtml(
-                    trade.engine
+                    trade.market
                   )}
                 </strong>
-
-                <strong class="result">
-
-                  ${
-                    win
-                      ? "WIN"
-                      : "LOSS"
-                  }
-
-                  ${
-                    win
-                      ? ` +${money(
-                          trade.profit
-                        )}`
-                      : ` ${money(
-                          trade.profit
-                        )}`
-                  }
-
-                </strong>
-
               </div>
 
-              <div class="history-details">
+              <div>
+                <span>STRATEGY</span>
+                <strong>
+                  ${escapeHtml(
+                    trade.strategy
+                  )}
+                </strong>
+              </div>
 
-                <div>
-                  <span>MARKET</span>
-                  <strong>
-                    ${escapeHtml(
-                      trade.market
-                    )}
-                  </strong>
-                </div>
+              <div>
+                <span>STAKE</span>
+                <strong>
+                  ${money(
+                    trade.stake
+                  )}
+                </strong>
+              </div>
 
-                <div>
-                  <span>STRATEGY</span>
-                  <strong>
-                    ${escapeHtml(
-                      trade.strategy
-                    )}
-                  </strong>
-                </div>
+              <div>
+                <span>AMOUNT WON</span>
+                <strong>
+                  ${money(
+                    trade.amountWon
+                  )}
+                </strong>
+              </div>
 
-                <div>
-                  <span>STAKE</span>
-                  <strong>
-                    ${money(
-                      trade.stake
-                    )}
-                  </strong>
-                </div>
+              <div>
+                <span>ENTRY</span>
+                <strong>
+                  ${
+                    trade.entryDigit ??
+                    "-"
+                  }
+                </strong>
+              </div>
 
-                <div>
-                  <span>AMOUNT WON</span>
-                  <strong>
-                    ${money(
-                      trade.amountWon
-                    )}
-                  </strong>
-                </div>
+              <div>
+                <span>EXIT</span>
+                <strong>
+                  ${
+                    trade.exitDigit ??
+                    "-"
+                  }
+                </strong>
+              </div>
 
-                <div>
-                  <span>ENTRY</span>
-                  <strong>
-                    ${
-                      trade.entryDigit ??
-                      "-"
-                    }
-                  </strong>
-                </div>
+              <div>
+                <span>TARGET</span>
+                <strong>
+                  ${
+                    trade.target ??
+                    "-"
+                  }
+                </strong>
+              </div>
 
-                <div>
-                  <span>EXIT</span>
-                  <strong>
-                    ${
-                      trade.exitDigit ??
-                      "-"
-                    }
-                  </strong>
-                </div>
+              <div>
+                <span>BEAST</span>
+                <strong>
+                  ${
+                    trade.beastScore ??
+                    "-"
+                  }
+                </strong>
+              </div>
 
-                <div>
-                  <span>TARGET</span>
-                  <strong>
-                    ${
-                      trade.target ??
-                      "-"
-                    }
-                  </strong>
-                </div>
+              <div>
+                <span>CONFIDENCE</span>
+                <strong>
+                  ${
+                    trade.confidence != null
+                      ? `${trade.confidence}%`
+                      : "-"
+                  }
+                </strong>
+              </div>
 
-                <div>
-                  <span>TIME</span>
-                  <strong>
-                    ${formatTime(
-                      trade.closedAt
-                    )}
-                  </strong>
-                </div>
-
+              <div>
+                <span>TIME</span>
+                <strong>
+                  ${formatTime(
+                    trade.closedAt
+                  )}
+                </strong>
               </div>
 
             </div>
+
+            ${
+              trade.reason
+                ? `
+                <div class="history-reason">
+                  ${escapeHtml(
+                    trade.reason
+                  )}
+                </div>
+                `
+                : ""
+            }
+
+          </div>
 
           `;
 
@@ -3305,37 +4263,59 @@ function updateHistoryUI() {
 
 
 /* =========================================================
-   CLOUD / OAUTH
+   RISK STATUS
+   ========================================================= */
+
+function updateRiskStatus() {
+
+  if (
+    state.sessionProfit >=
+    state.takeProfit
+  ) {
+
+    stopBot();
+
+    stopCircularAI();
+
+    showToast(
+      "Take profit reached. AI engines stopped."
+    );
+
+  }
+
+  if (
+    state.sessionProfit <=
+    -Math.abs(
+      state.stopLoss
+    )
+  ) {
+
+    stopBot();
+
+    stopCircularAI();
+
+    showToast(
+      "Stop loss reached. AI engines stopped."
+    );
+
+  }
+
+}
+
+
+/* =========================================================
+   DERIV OAUTH
    ========================================================= */
 
 async function startDerivOAuth() {
 
-  if (
-    !CONFIG.CLOUD_API ||
-    CONFIG.CLOUD_API.includes(
-      "REPLACE-WITH"
-    )
-  ) {
-
-    showToast(
-      "Cloudflare Worker URL is missing."
-    );
-
-    return;
-
-  }
-
   try {
 
     const verifier =
-      randomString(
-        64
-      );
+      randomString(64);
 
     const stateValue =
-      randomString(
-        32
-      );
+      randomString(32);
 
     const challenge =
       await sha256Base64Url(
@@ -3401,9 +4381,7 @@ async function startDerivOAuth() {
 
   } catch(error) {
 
-    console.error(
-      error
-    );
+    console.error(error);
 
     showToast(
       "Unable to start Deriv login."
@@ -3422,19 +4400,13 @@ async function handleOAuthCallback() {
     );
 
   const code =
-    params.get(
-      "code"
-    );
+    params.get("code");
 
   const returnedState =
-    params.get(
-      "state"
-    );
+    params.get("state");
 
   const error =
-    params.get(
-      "error"
-    );
+    params.get("error");
 
   if (error) {
 
@@ -3469,7 +4441,6 @@ async function handleOAuthCallback() {
 
   if (
     !savedState ||
-    !returnedState ||
     savedState !==
       returnedState
   ) {
@@ -3500,29 +4471,35 @@ async function handleOAuthCallback() {
 
   }
 
-  updateStatus(
-    "Completing secure Deriv login..."
-  );
-
   try {
+
+    updateStatus(
+      "Completing secure Deriv login..."
+    );
 
     const response =
       await fetch(
         `${CONFIG.CLOUD_API}/api/oauth/exchange`,
         {
+
           method:
             "POST",
 
           headers: {
+
             "Content-Type":
               "application/json"
+
           },
 
           body:
             JSON.stringify({
+
               code,
+
               code_verifier:
                 verifier
+
             })
 
         }
@@ -3568,23 +4545,18 @@ async function handleOAuthCallback() {
     await restoreCloudSession();
 
     showToast(
-      "Deriv demo account connected."
+      "Deriv DEMO account connected."
     );
 
   } catch(error) {
 
     console.error(
-      "OAuth callback error:",
       error
     );
 
     showToast(
       error.message ||
       "Deriv connection failed."
-    );
-
-    updateStatus(
-      "Deriv authentication failed."
     );
 
     cleanOAuthStorage();
@@ -3595,6 +4567,10 @@ async function handleOAuthCallback() {
 
 }
 
+
+/* =========================================================
+   CLOUD SESSION
+   ========================================================= */
 
 async function restoreCloudSession() {
 
@@ -3635,14 +4611,12 @@ async function restoreCloudSession() {
     }
 
     const account =
-      selectDemoAccount(
-        data
-      );
+      selectDemoAccount(data);
 
     if (!account) {
 
       throw new Error(
-        "No Deriv demo account was returned."
+        "No demo account returned."
       );
 
     }
@@ -3671,12 +4645,6 @@ async function restoreCloudSession() {
       "Deriv DEMO account connected."
     );
 
-    /*
-     * Request a short-lived OTP and
-     * immediately connect to the
-     * authenticated WebSocket.
-     */
-
     if (
       state.accountId
     ) {
@@ -3688,7 +4656,6 @@ async function restoreCloudSession() {
   } catch(error) {
 
     console.error(
-      "Restore session error:",
       error
     );
 
@@ -3697,15 +4664,11 @@ async function restoreCloudSession() {
 
     updateConnectionUI();
 
-    /*
-     * Don't immediately erase the session
-     * for every transient network error.
-     */
-
     if (
-      /401|unauthorized|expired|invalid/i.test(
-        error.message || ""
-      )
+      /401|unauthorized|expired|invalid/i
+        .test(
+          error.message || ""
+        )
     ) {
 
       clearCloudSession();
@@ -3722,9 +4685,7 @@ async function restoreCloudSession() {
 }
 
 
-function selectDemoAccount(
-  data
-) {
+function selectDemoAccount(data) {
 
   const accounts =
     Array.isArray(
@@ -3762,9 +4723,7 @@ function selectDemoAccount(
 }
 
 
-function isDemoAccount(
-  account
-) {
+function isDemoAccount(account) {
 
   if (!account) {
 
@@ -3788,19 +4747,19 @@ function isDemoAccount(
 
   return (
     type === "demo" ||
-    id.startsWith(
-      "DOT"
-    )
+    id.startsWith("DOT")
   );
 
 }
 
 
+/* =========================================================
+   AUTHENTICATED WS
+   ========================================================= */
+
 async function requestAuthenticatedWs() {
 
-  if (
-    !state.accountId
-  ) {
+  if (!state.accountId) {
 
     return;
 
@@ -3808,25 +4767,15 @@ async function requestAuthenticatedWs() {
 
   try {
 
-    updateStatus(
-      "Preparing authenticated Deriv DEMO connection..."
-    );
-
     const response =
       await cloudFetch(
         `/api/otp?accountId=${encodeURIComponent(
           state.accountId
-        )}`,
-        {
-          method:
-            "GET"
-        }
+        )}`
       );
 
     const data =
-      await safeJson(
-        response
-      );
+      await safeJson(response);
 
     if (
       !response.ok
@@ -3835,17 +4784,15 @@ async function requestAuthenticatedWs() {
       throw new Error(
         data.error ||
         data.message ||
-        "Could not get authenticated WebSocket."
+        "Could not get WebSocket."
       );
 
     }
 
-    if (
-      !data.wsUrl
-    ) {
+    if (!data.wsUrl) {
 
       throw new Error(
-        "Deriv did not return a WebSocket URL."
+        "No authenticated WebSocket URL returned."
       );
 
     }
@@ -3857,13 +4804,12 @@ async function requestAuthenticatedWs() {
   } catch(error) {
 
     console.error(
-      "OTP error:",
       error
     );
 
     showToast(
       error.message ||
-      "Could not connect to Deriv demo account."
+      "Could not connect to demo account."
     );
 
   }
@@ -3871,19 +4817,9 @@ async function requestAuthenticatedWs() {
 }
 
 
-/* =========================================================
-   AUTHENTICATED DERIV WEBSOCKET
-   ========================================================= */
+function connectAuthenticatedWs(wsUrl) {
 
-function connectAuthenticatedWs(
-  wsUrl
-) {
-
-  if (!wsUrl) {
-
-    return;
-
-  }
+  if (!wsUrl) return;
 
   if (state.authWs) {
 
@@ -3892,9 +4828,6 @@ function connectAuthenticatedWs(
       state.authWs.close();
 
     } catch {}
-
-    state.authWs =
-      null;
 
   }
 
@@ -3953,12 +4886,7 @@ function connectAuthenticatedWs(
       error => {
 
         console.error(
-          "Authenticated WS error:",
           error
-        );
-
-        updateStatus(
-          "Authenticated Deriv connection error."
         );
 
       };
@@ -3974,45 +4902,25 @@ function connectAuthenticatedWs(
 
         updateConnectionUI();
 
-        updateStatus(
-          "Authenticated Deriv connection closed."
-        );
-
-        /*
-         * Don't spam OTP requests.
-         * The user can reconnect through
-         * the Deriv button.
-         */
-
       };
 
   } catch(error) {
 
-    console.error(
-      error
-    );
-
-    showToast(
-      "Could not open authenticated Deriv connection."
-    );
+    console.error(error);
 
   }
 
 }
 
 
-function processAuthenticatedMessage(
-  data
-) {
+function processAuthenticatedMessage(data) {
 
   if (
     data.msg_type ===
     "balance"
   ) {
 
-    if (
-      data.balance
-    ) {
+    if (data.balance) {
 
       state.balance =
         Number(
@@ -4041,13 +4949,10 @@ function processAuthenticatedMessage(
     const tick =
       data.tick;
 
-    if (!tick) {
-
-      return;
-
-    }
+    if (!tick) return;
 
     addTick(
+
       tick.symbol ||
       state.currentMarket,
 
@@ -4059,20 +4964,16 @@ function processAuthenticatedMessage(
         tick.epoch ||
         Date.now() / 1000
       )
+
     );
 
   }
 
   if (data.error) {
 
-    console.error(
-      "Authenticated Deriv API error:",
-      data.error
-    );
-
     updateStatus(
       data.error.message ||
-      "Authenticated Deriv API error."
+      "Authenticated Deriv error."
     );
 
   }
@@ -4080,9 +4981,7 @@ function processAuthenticatedMessage(
 }
 
 
-function sendAuthenticated(
-  payload
-) {
+function sendAuthenticated(payload) {
 
   if (
     state.authWs &&
@@ -4091,9 +4990,7 @@ function sendAuthenticated(
   ) {
 
     state.authWs.send(
-      JSON.stringify(
-        payload
-      )
+      JSON.stringify(payload)
     );
 
     return true;
@@ -4109,20 +5006,21 @@ function requestBalance() {
 
   sendAuthenticated({
 
-    balance: 1,
+    balance:
+      1,
 
-    subscribe: 1,
+    subscribe:
+      1,
 
-    req_id: 501
+    req_id:
+      501
 
   });
 
 }
 
 
-function requestAuthenticatedTicks(
-  symbol
-) {
+function requestAuthenticatedTicks(symbol) {
 
   sendAuthenticated({
 
@@ -4172,9 +5070,7 @@ async function cloudFetch(
 }
 
 
-async function safeJson(
-  response
-) {
+async function safeJson(response) {
 
   try {
 
@@ -4239,17 +5135,13 @@ function cleanOAuthStorage() {
    PKCE
    ========================================================= */
 
-function randomString(
-  length
-) {
+function randomString(length) {
 
   const chars =
     "ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789-._~";
 
   const values =
-    new Uint8Array(
-      length
-    );
+    new Uint8Array(length);
 
   crypto.getRandomValues(
     values
@@ -4267,15 +5159,11 @@ function randomString(
 }
 
 
-async function sha256Base64Url(
-  value
-) {
+async function sha256Base64Url(value) {
 
   const data =
     new TextEncoder()
-      .encode(
-        value
-      );
+      .encode(value);
 
   const hash =
     await crypto.subtle.digest(
@@ -4284,17 +5172,13 @@ async function sha256Base64Url(
     );
 
   return base64Url(
-    new Uint8Array(
-      hash
-    )
+    new Uint8Array(hash)
   );
 
 }
 
 
-function base64Url(
-  bytes
-) {
+function base64Url(bytes) {
 
   let binary =
     "";
@@ -4310,9 +5194,7 @@ function base64Url(
     }
   );
 
-  return btoa(
-    binary
-  )
+  return btoa(binary)
     .replace(
       /\+/g,
       "-"
@@ -4330,14 +5212,12 @@ function base64Url(
 
 
 /* =========================================================
-   ACCOUNT / CONNECTION UI
+   ACCOUNT UI
    ========================================================= */
 
 function updateAccountUI() {
 
-  if (
-    els.accountId
-  ) {
+  if (els.accountId) {
 
     els.accountId.textContent =
       state.accountId ||
@@ -4345,9 +5225,7 @@ function updateAccountUI() {
 
   }
 
-  if (
-    els.currency
-  ) {
+  if (els.currency) {
 
     els.currency.textContent =
       state.currency ||
@@ -4366,40 +5244,22 @@ function updateAccountUI() {
 
 function updateBalance() {
 
-  if (
-    !els.balanceDisplay
-  ) {
-
-    return;
-
-  }
+  if (!els.balanceDisplay) return;
 
   els.balanceDisplay.textContent =
-    `${state.currency} ${
-      Number(
-        state.balance
-      ).toFixed(2)
-    }`;
+    `${state.currency} ${Number(
+      state.balance
+    ).toFixed(2)}`;
 
 }
 
 
 function updateModeUI() {
 
-  if (
-    !els.modeBadge
-  ) {
-
-    return;
-
-  }
-
-  /*
-   * This application remains demo/paper.
-   */
-
   state.realMode =
     false;
+
+  if (!els.modeBadge) return;
 
   els.modeBadge.textContent =
     "DEMO";
@@ -4417,9 +5277,7 @@ function updateModeUI() {
 
 function updateConnectionUI() {
 
-  if (
-    els.connectionDot
-  ) {
+  if (els.connectionDot) {
 
     els.connectionDot.className =
       `dot ${
@@ -4430,9 +5288,7 @@ function updateConnectionUI() {
 
   }
 
-  if (
-    els.connectionText
-  ) {
+  if (els.connectionText) {
 
     els.connectionText.textContent =
       state.connectedToDeriv
@@ -4453,9 +5309,7 @@ function setConnection(
   text
 ) {
 
-  if (
-    els.connectionDot
-  ) {
+  if (els.connectionDot) {
 
     els.connectionDot.className =
       `dot ${
@@ -4466,9 +5320,7 @@ function setConnection(
 
   }
 
-  if (
-    els.connectionText
-  ) {
+  if (els.connectionText) {
 
     els.connectionText.textContent =
       text;
@@ -4478,13 +5330,9 @@ function setConnection(
 }
 
 
-function updateStatus(
-  message
-) {
+function updateStatus(message) {
 
-  if (
-    els.dataStatus
-  ) {
+  if (els.dataStatus) {
 
     els.dataStatus.textContent =
       message;
@@ -4494,21 +5342,16 @@ function updateStatus(
 }
 
 
-function money(
-  value
-) {
+function money(value) {
 
   return `$${Number(
-    value ||
-    0
+    value || 0
   ).toFixed(2)}`;
 
 }
 
 
-function showToast(
-  message
-) {
+function showToast(message) {
 
   if (
     !els.toast ||
@@ -4559,64 +5402,100 @@ function cleanUrl() {
 
 function setupNavigation() {
 
+  const navItems =
+    document.querySelectorAll(
+      ".nav-item"
+    );
+
+  navItems.forEach(
+    button => {
+
+      button.addEventListener(
+        "click",
+        event => {
+
+          event.preventDefault();
+
+          const page =
+            button.dataset.page;
+
+          showPage(page);
+
+        }
+      );
+
+    }
+  );
+
+  /*
+   * Force Analysis as initial page.
+   */
+
+  showPage("analysis");
+
+}
+
+
+function showPage(page) {
+
+  const pages =
+    document.querySelectorAll(
+      ".page"
+    );
+
+  pages.forEach(
+    item => {
+
+      item.classList.remove(
+        "active"
+      );
+
+    }
+  );
+
+  const target =
+    $(`${page}Page`);
+
+  if (target) {
+
+    target.classList.add(
+      "active"
+    );
+
+  }
+
   document
     .querySelectorAll(
       ".nav-item"
     )
     .forEach(
-      button => {
+      item => {
 
-        button.addEventListener(
-          "click",
-          () => {
-
-            const page =
-              button.dataset.page;
-
-            document
-              .querySelectorAll(
-                ".page"
-              )
-              .forEach(
-                item =>
-                  item.classList.remove(
-                    "active"
-                  )
-              );
-
-            const target =
-              $(
-                `${page}Page`
-              );
-
-            if (target) {
-
-              target.classList.add(
-                "active"
-              );
-
-            }
-
-            document
-              .querySelectorAll(
-                ".nav-item"
-              )
-              .forEach(
-                item =>
-                  item.classList.remove(
-                    "active"
-                  )
-              );
-
-            button.classList.add(
-              "active"
-            );
-
-          }
+        item.classList.toggle(
+          "active",
+          item.dataset.page ===
+            page
         );
 
       }
     );
+
+  /*
+   * Redraw chart when returning
+   * to analysis page.
+   */
+
+  if (
+    page ===
+    "analysis"
+  ) {
+
+    setTimeout(
+      drawChart,
+      50
+    );
+
+  }
 
 }
 
@@ -4669,21 +5548,13 @@ function setupTabs() {
               [b, p]
             ) => {
 
-              if (b) {
+              b?.classList.remove(
+                "active"
+              );
 
-                b.classList.remove(
-                  "active"
-                );
-
-              }
-
-              if (p) {
-
-                p.classList.remove(
-                  "active"
-                );
-
-              }
+              p?.classList.remove(
+                "active"
+              );
 
             }
           );
@@ -4706,97 +5577,55 @@ function setupTabs() {
 
 
 /* =========================================================
-   STRATEGY CONTROLS
+   STRATEGY
    ========================================================= */
 
 function setupStrategyControls() {
 
-  /*
-   * IMPORTANT FIX:
-   *
-   * The old code attached TWO click
-   * listeners to botStrategyTrigger.
-   * That could open both modals.
-   *
-   * Now:
-   *
-   * Bot strategy button -> bot strategy modal
-   * Circular/manual buttons -> normal strategy modal
-   */
+  els.botStrategyTrigger?.addEventListener(
+    "click",
+    () =>
+      els.botStrategyModal
+        ?.classList.add(
+          "show"
+        )
+  );
 
-  if (
-    els.botStrategyTrigger
-  ) {
+  els.circularStrategyTrigger?.addEventListener(
+    "click",
+    openStrategyModal
+  );
 
-    els.botStrategyTrigger.addEventListener(
-      "click",
-      () =>
-        els.botStrategyModal
-          ?.classList.add(
-            "show"
-          )
-    );
+  els.manualStrategyTrigger?.addEventListener(
+    "click",
+    openStrategyModal
+  );
 
-  }
+  els.strategyOptions
+    ?.querySelectorAll(
+      "[data-strategy]"
+    )
+    .forEach(
+      button => {
 
-  if (
-    els.circularStrategyTrigger
-  ) {
+        button.addEventListener(
+          "click",
+          () => {
 
-    els.circularStrategyTrigger
-      .addEventListener(
-        "click",
-        openStrategyModal
-      );
+            applySelectedStrategy(
+              button.dataset.strategy
+            );
 
-  }
-
-  if (
-    els.manualStrategyTrigger
-  ) {
-
-    els.manualStrategyTrigger
-      .addEventListener(
-        "click",
-        openStrategyModal
-      );
-
-  }
-
-  if (
-    els.strategyOptions
-  ) {
-
-    els.strategyOptions
-      .querySelectorAll(
-        "[data-strategy]"
-      )
-      .forEach(
-        button => {
-
-          button.addEventListener(
-            "click",
-            () => {
-
-              const strategy =
-                button.dataset.strategy;
-
-              applySelectedStrategy(
-                strategy
+            els.strategyModal
+              ?.classList.remove(
+                "show"
               );
 
-              els.strategyModal
-                ?.classList.remove(
-                  "show"
-                );
+          }
+        );
 
-            }
-          );
-
-        }
-      );
-
-  }
+      }
+    );
 
 }
 
@@ -4816,9 +5645,7 @@ function applySelectedStrategy(
 ) {
 
   if (
-    !isValidStrategy(
-      strategy
-    )
+    !isValidStrategy(strategy)
   ) {
 
     return;
@@ -4829,8 +5656,7 @@ function applySelectedStrategy(
     els.circularStrategyLabel
   ) {
 
-    els.circularStrategyLabel
-      .textContent =
+    els.circularStrategyLabel.textContent =
       strategy;
 
   }
@@ -4839,8 +5665,7 @@ function applySelectedStrategy(
     els.manualSelectedStrategyLabel
   ) {
 
-    els.manualSelectedStrategyLabel
-      .textContent =
+    els.manualSelectedStrategyLabel.textContent =
       strategy;
 
   }
@@ -4861,7 +5686,7 @@ function updateStrategyUI() {
     state.strategy ||
     "MATCHES";
 
-  const digitRequired =
+  const requiresDigit =
     strategy ===
       "MATCHES" ||
     strategy ===
@@ -4872,7 +5697,7 @@ function updateStrategyUI() {
   ) {
 
     els.targetDigitContainer.style.display =
-      digitRequired
+      requiresDigit
         ? "block"
         : "none";
 
@@ -4881,20 +5706,18 @@ function updateStrategyUI() {
 }
 
 
-function isValidStrategy(
-  strategy
-) {
+function isValidStrategy(strategy) {
 
   return [
+
     "MATCHES",
     "DIFFERS",
     "OVER",
     "UNDER",
     "EVEN",
     "ODD"
-  ].includes(
-    strategy
-  );
+
+  ].includes(strategy);
 
 }
 
@@ -4905,312 +5728,190 @@ function isValidStrategy(
 
 function setupButtons() {
 
-  if (
-    els.connectDerivBtn
-  ) {
+  els.connectDerivBtn?.addEventListener(
+    "click",
+    startDerivOAuth
+  );
 
-    els.connectDerivBtn
-      .addEventListener(
-        "click",
-        startDerivOAuth
+  els.startAI?.addEventListener(
+    "click",
+    () => {
+
+      state.circularRunning
+        ? stopCircularAI()
+        : startCircularAI();
+
+    }
+  );
+
+  els.stopAI?.addEventListener(
+    "click",
+    stopCircularAI
+  );
+
+  els.startBotBtn?.addEventListener(
+    "click",
+    toggleBot
+  );
+
+  els.startCircularTradeBtn?.addEventListener(
+    "click",
+    () => {
+
+      if (
+        state.circularRunning
+      ) {
+
+        stopCircularAI();
+
+      } else {
+
+        startCircularAI();
+
+      }
+
+    }
+  );
+
+  els.placeTradeBtn?.addEventListener(
+    "click",
+    placeManualTrade
+  );
+
+  els.closeStrategyModal?.addEventListener(
+    "click",
+    () =>
+      els.strategyModal
+        ?.classList.remove(
+          "show"
+        )
+  );
+
+  els.closeBotStrategyModal?.addEventListener(
+    "click",
+    () =>
+      els.botStrategyModal
+        ?.classList.remove(
+          "show"
+        )
+  );
+
+  els.applyBotStrategies?.addEventListener(
+    "click",
+    applyBotStrategies
+  );
+
+  els.clearLogsBtn?.addEventListener(
+    "click",
+    clearHistory
+  );
+
+  els.stopTradingBtn?.addEventListener(
+    "click",
+    () => {
+
+      stopBot();
+
+      stopCircularAI();
+
+      showToast(
+        "All AI trading engines stopped."
       );
 
-  }
+    }
+  );
 
-  if (
-    els.startAI
-  ) {
+  setupMarketSelectors();
 
-    els.startAI
-      .addEventListener(
-        "click",
-        () => {
+  els.confirmRealBtn?.addEventListener(
+    "click",
+    () => {
 
-          if (
-            state.circularRunning
-          ) {
+      state.realMode =
+        false;
 
-            stopCircularAI();
+      els.realConfirmModal
+        ?.classList.remove(
+          "show"
+        );
 
-          } else {
-
-            startCircularAI();
-
-          }
-
-        }
+      showToast(
+        "Real trading is disabled in this build."
       );
 
-  }
+    }
+  );
 
-  if (
-    els.stopAI
-  ) {
+  els.cancelRealBtn?.addEventListener(
+    "click",
+    () =>
+      els.realConfirmModal
+        ?.classList.remove(
+          "show"
+        )
+  );
 
-    els.stopAI
-      .addEventListener(
-        "click",
-        stopCircularAI
-      );
+}
 
-  }
 
-  if (
-    els.startBotBtn
-  ) {
+function setupMarketSelectors() {
 
-    els.startBotBtn
-      .addEventListener(
-        "click",
-        toggleBot
-      );
-
-  }
-
-  if (
-    els.startCircularTradeBtn
-  ) {
-
-    els.startCircularTradeBtn
-      .addEventListener(
-        "click",
-        () => {
-
-          if (
-            !state.circularRunning
-          ) {
-
-            startCircularAI();
-
-            showToast(
-              "Circular AI started in demo paper mode."
-            );
-
-          } else {
-
-            stopCircularAI();
-
-          }
-
-        }
-      );
-
-  }
-
-  if (
-    els.placeTradeBtn
-  ) {
-
-    els.placeTradeBtn
-      .addEventListener(
-        "click",
-        placeManualTrade
-      );
-
-  }
-
-  if (
-    els.closeStrategyModal
-  ) {
-
-    els.closeStrategyModal
-      .addEventListener(
-        "click",
-        () =>
-          els.strategyModal
-            ?.classList.remove(
-              "show"
-            )
-      );
-
-  }
-
-  if (
-    els.closeBotStrategyModal
-  ) {
-
-    els.closeBotStrategyModal
-      .addEventListener(
-        "click",
-        () =>
-          els.botStrategyModal
-            ?.classList.remove(
-              "show"
-            )
-      );
-
-  }
-
-  if (
-    els.applyBotStrategies
-  ) {
-
-    els.applyBotStrategies
-      .addEventListener(
-        "click",
-        applyBotStrategies
-      );
-
-  }
-
-  if (
-    els.clearLogsBtn
-  ) {
-
-    els.clearLogsBtn
-      .addEventListener(
-        "click",
-        clearHistory
-      );
-
-  }
-
-  if (
-    els.stopTradingBtn
-  ) {
-
-    els.stopTradingBtn
-      .addEventListener(
-        "click",
-        () => {
-
-          stopBot();
-
-          stopCircularAI();
-
-          showToast(
-            "Trading engines stopped."
-          );
-
-        }
-      );
-
-  }
-
-  if (
-    els.analysisMarketSelect
-  ) {
-
-    els.analysisMarketSelect
-      .addEventListener(
-        "change",
-        event =>
-          subscribeMarket(
-            event.target.value
-          )
-      );
-
-  }
-
-  if (
-    els.botMarketSelect
-  ) {
-
-    els.botMarketSelect
-      .addEventListener(
-        "change",
-        event => {
-
-          subscribeMarket(
-            event.target.value
-          );
-
-        }
-      );
-
-  }
-
-  if (
-    els.circularMarketSelect
-  ) {
-
-    els.circularMarketSelect
-      .addEventListener(
-        "change",
-        event => {
-
-          subscribeMarket(
-            event.target.value
-          );
-
-        }
-      );
-
-  }
-
-  if (
-    els.manualMarketSelect
-  ) {
-
-    els.manualMarketSelect
-      .addEventListener(
-        "change",
-        event => {
-
-          state.currentMarket =
-            event.target.value;
-
-          if (
-            els.currentChartMarket
-          ) {
-
-            els.currentChartMarket
-              .textContent =
-              state.currentMarket;
-
-          }
-
-        }
-      );
-
-  }
+  els.analysisMarketSelect?.addEventListener(
+    "change",
+    event =>
+      subscribeMarket(
+        event.target.value
+      )
+  );
 
   /*
-   * Real-money controls are intentionally
-   * disabled in this build.
+   * AI Bot is allowed to manually choose
+   * a starting market, but the Beast scanner
+   * can automatically move to a stronger one.
    */
 
-  if (
-    els.confirmRealBtn
-  ) {
+  els.botMarketSelect?.addEventListener(
+    "change",
+    event =>
+      subscribeMarket(
+        event.target.value
+      )
+  );
 
-    els.confirmRealBtn
-      .addEventListener(
-        "click",
-        () => {
+  els.circularMarketSelect?.addEventListener(
+    "change",
+    event =>
+      subscribeMarket(
+        event.target.value
+      )
+  );
 
-          state.realMode =
-            false;
+  els.manualMarketSelect?.addEventListener(
+    "change",
+    event => {
 
-          els.realConfirmModal
-            ?.classList.remove(
-              "show"
-            );
+      if (
+        CONFIG.MARKETS.includes(
+          event.target.value
+        )
+      ) {
 
-          showToast(
-            "Real trading is disabled in this build."
-          );
+        state.currentMarket =
+          event.target.value;
+
+        if (
+          els.manualStatusText
+        ) {
+
+          els.manualStatusText.textContent =
+            event.target.value;
 
         }
-      );
 
-  }
+      }
 
-  if (
-    els.cancelRealBtn
-  ) {
-
-    els.cancelRealBtn
-      .addEventListener(
-        "click",
-        () =>
-          els.realConfirmModal
-            ?.classList.remove(
-              "show"
-            )
-      );
-
-  }
+    }
+  );
 
 }
 
@@ -5246,13 +5947,10 @@ function applyBotStrategies() {
   state.botStrategies =
     checked;
 
-  if (
-    els.botStrategyLabel
-  ) {
+  if (els.botStrategyLabel) {
 
     els.botStrategyLabel.textContent =
-      checked.length ===
-      6
+      checked.length === 6
         ? "AUTO"
         : checked.join(
             " / "
@@ -5288,34 +5986,53 @@ function setupTheme() {
       "light"
     );
 
+  } else {
+
+    document.body.classList.remove(
+      "light"
+    );
+
   }
 
-  if (
-    els.themeToggle
-  ) {
+  updateThemeButton();
 
-    els.themeToggle
-      .addEventListener(
-        "click",
-        () => {
+  els.themeToggle?.addEventListener(
+    "click",
+    () => {
 
-          document.body.classList.toggle(
-            "light"
-          );
-
-          localStorage.setItem(
-            "krishwave_theme",
-            document.body.classList.contains(
-              "light"
-            )
-              ? "light"
-              : "dark"
-          );
-
-        }
+      document.body.classList.toggle(
+        "light"
       );
 
-  }
+      localStorage.setItem(
+        "krishwave_theme",
+        document.body.classList.contains(
+          "light"
+        )
+          ? "light"
+          : "dark"
+      );
+
+      updateThemeButton();
+
+      drawChart();
+
+    }
+  );
+
+}
+
+
+function updateThemeButton() {
+
+  if (!els.themeToggle) return;
+
+  els.themeToggle.textContent =
+    document.body.classList.contains(
+      "light"
+    )
+      ? "☀️"
+      : "🌙";
 
 }
 
@@ -5329,11 +6046,7 @@ function drawChart() {
   const canvas =
     els.priceChartCanvas;
 
-  if (!canvas) {
-
-    return;
-
-  }
+  if (!canvas) return;
 
   const rect =
     canvas.getBoundingClientRect();
@@ -5444,8 +6157,7 @@ function drawChart() {
           height -
           20
         ) -
-        10
-        );
+        10;
 
       if (
         index ===
@@ -5469,8 +6181,17 @@ function drawChart() {
     }
   );
 
+  /*
+   * Use a color that remains visible
+   * in both themes.
+   */
+
   ctx.strokeStyle =
-    "#00e5ff";
+    document.body.classList.contains(
+      "light"
+    )
+      ? "#0066ff"
+      : "#00e5ff";
 
   ctx.lineWidth =
     2;
@@ -5505,8 +6226,14 @@ function clearHistory() {
   state.paperTrades =
     [];
 
+  state.activeTrades =
+    [];
+
   state.tradeCounter =
     0;
+
+  state.paperBalance =
+    CONFIG.START_PAPER_BALANCE;
 
   recalculateStats();
 
@@ -5514,12 +6241,18 @@ function clearHistory() {
     "krishwave_history"
   );
 
+  savePaperBalance();
+
   updateStatsUI();
 
   updateHistoryUI();
 
+  renderActiveTrades();
+
+  updatePaperBalance();
+
   showToast(
-    "Trading history cleared."
+    "History cleared. Paper balance reset to $1000."
   );
 
 }
@@ -5529,9 +6262,100 @@ function clearHistory() {
    HELPERS
    ========================================================= */
 
-function escapeHtml(
-  value
+function average(values) {
+
+  if (
+    !values ||
+    !values.length
+  ) {
+
+    return 0;
+
+  }
+
+  return (
+    values.reduce(
+      (
+        sum,
+        value
+      ) =>
+        sum +
+        Number(value),
+      0
+    ) /
+    values.length
+  );
+
+}
+
+
+function clamp(
+  value,
+  min,
+  max
 ) {
+
+  return Math.max(
+    min,
+    Math.min(
+      max,
+      value
+    )
+  );
+
+}
+
+
+function normalizeVolatility(
+  range,
+  ticks
+) {
+
+  if (
+    !ticks ||
+    ticks.length <
+      2
+  ) {
+
+    return 0;
+
+  }
+
+  const prices =
+    ticks.map(
+      tick =>
+        tick.price
+    );
+
+  const averagePrice =
+    average(prices);
+
+  if (
+    !averagePrice
+  ) {
+
+    return 0;
+
+  }
+
+  const percentage =
+    (
+      range /
+      averagePrice
+    ) *
+    100;
+
+  return clamp(
+    percentage *
+      500,
+    0,
+    100
+  );
+
+}
+
+
+function escapeHtml(value) {
 
   return String(
     value ??
@@ -5561,9 +6385,7 @@ function escapeHtml(
 }
 
 
-function formatTime(
-  value
-) {
+function formatTime(value) {
 
   if (!value) {
 
@@ -5572,9 +6394,7 @@ function formatTime(
   }
 
   const date =
-    new Date(
-      value
-    );
+    new Date(value);
 
   if (
     Number.isNaN(
@@ -5589,6 +6409,7 @@ function formatTime(
   return date.toLocaleTimeString(
     [],
     {
+
       hour:
         "2-digit",
 
@@ -5597,6 +6418,7 @@ function formatTime(
 
       second:
         "2-digit"
+
     }
   );
 
@@ -5604,7 +6426,7 @@ function formatTime(
 
 
 /* =========================================================
-   INITIAL UI SAFETY
+   GLOBAL DEBUG / APP INFO
    ========================================================= */
 
 if (
@@ -5612,18 +6434,33 @@ if (
   "undefined"
 ) {
 
-  window.KRISHWAVE =
-    {
+  window.KRISHWAVE = {
 
-      version:
-        "7.2",
+    version:
+      CONFIG.VERSION,
 
-      mode:
-        "DEMO / PAPER",
+    mode:
+      "DEMO / PAPER",
 
-      cloud:
-        CONFIG.CLOUD_API
+    cloud:
+      CONFIG.CLOUD_API,
 
-    };
+    getState:
+      () => state,
+
+    scanMarkets:
+      () =>
+        scanAllMarkets(),
+
+    stopAll:
+      () => {
+
+        stopBot();
+
+        stopCircularAI();
+
+      }
+
+  };
 
 }
