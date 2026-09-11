@@ -160,10 +160,25 @@ const state = {
 
     strongestMarket: null,
 
-    strategy: "MATCHES",
+    /*
+       MANUAL AND CIRCULAR AI NOW HAVE
+       COMPLETELY SEPARATE STRATEGY CARDS.
+    */
+    manualStrategy: "MATCHES",
 
     /*
-       IMPORTANT:
+       AUTO preserves the original Circular AI
+       automatic strategy behavior.
+    */
+    circularStrategy: "AUTO",
+
+    /*
+       Used only to know which strategy card
+       opened the shared strategy modal.
+    */
+    activeStrategySelector: null,
+
+    /*
        AI BOT HAS ITS OWN STRATEGY LIST.
        It can contain:
        MATCHES + DIFFERS
@@ -2234,11 +2249,26 @@ function executeCircularPaperTrade(
         symbol
     ] = latest.seq;
 
-    const strategy =
+    /*
+       CIRCULAR AI CARD IS INDEPENDENT
+       FROM THE MANUAL STRATEGY CARD.
+
+       AUTO means Circular AI uses the
+       strategy selected by its analysis.
+    */
+    const selectedCircularStrategy =
+        state.circularStrategy ||
         DOM.circularStrategyLabel?.dataset
             ?.strategy ||
-        analysis.strategy ||
-        state.strategy;
+        "AUTO";
+
+    const strategy =
+        selectedCircularStrategy === "AUTO"
+            ? (
+                analysis.strategy ||
+                "MATCHES"
+            )
+            : selectedCircularStrategy;
 
     const stake =
         getCircularStake();
@@ -2271,7 +2301,7 @@ function executeCircularPaperTrade(
 
 /* =========================================================
    AI BOT
-   ========================================================= */
+========================================================= */
 
 function startBot() {
 
@@ -2518,10 +2548,19 @@ function runBotCycle() {
             `PAPER TRADE • ${strategy}`
         );
 
+        /*
+           IMPORTANT:
+           Keep the AI Bot strategy card
+           showing the user's selected set.
+           Do NOT replace it with
+           ACTIVE: MATCHES.
+        */
         if (DOM.botStrategyLabel) {
 
             DOM.botStrategyLabel.textContent =
-                `ACTIVE: ${strategy}`;
+                state.botStrategies.join(
+                    " + "
+                );
         }
     }
 }
@@ -2533,11 +2572,19 @@ function runBotCycle() {
 
 function setupBotStrategyControls() {
 
+    /*
+       Make the checkbox state match the
+       saved AI Bot strategy state.
+    */
+    syncBotStrategyChecks();
+
     if (DOM.botStrategyTrigger) {
 
         DOM.botStrategyTrigger.addEventListener(
             "click",
             () => {
+
+                syncBotStrategyChecks();
 
                 if (
                     DOM.botStrategyModal
@@ -2559,6 +2606,13 @@ function setupBotStrategyControls() {
                 "click",
                 () => {
 
+                    /*
+                       If the user closes without
+                       pressing APPLY, restore the
+                       previous selected state.
+                    */
+                    syncBotStrategyChecks();
+
                     DOM.botStrategyModal
                         ?.classList.remove(
                             "active"
@@ -2575,9 +2629,13 @@ function setupBotStrategyControls() {
     checks.forEach(
         checkbox => {
 
+            /*
+               Checkbox changes are temporary
+               until APPLY is pressed.
+            */
             checkbox.addEventListener(
                 "change",
-                updateBotStrategyPreview
+                () => {}
             );
         }
     );
@@ -2591,29 +2649,45 @@ function setupBotStrategyControls() {
             );
     }
 
-    updateBotStrategyPreview();
+    updateBotStrategyCard();
 }
 
 
-function updateBotStrategyPreview() {
+function syncBotStrategyChecks() {
 
     const selected =
-        Array.from(
-            document.querySelectorAll(
-                ".bot-strategy-check:checked"
-            )
-        ).map(
-            checkbox =>
-                checkbox.value
+        new Set(
+            state.botStrategies
         );
 
-    if (DOM.botStrategyLabel) {
+    document
+        .querySelectorAll(
+            ".bot-strategy-check"
+        )
+        .forEach(
+            checkbox => {
 
-        DOM.botStrategyLabel.textContent =
-            selected.length
-                ? selected.join(" + ")
-                : "SELECT STRATEGIES";
+                checkbox.checked =
+                    selected.has(
+                        checkbox.value
+                    );
+            }
+        );
+}
+
+
+function updateBotStrategyCard() {
+
+    if (!DOM.botStrategyLabel) {
+        return;
     }
+
+    DOM.botStrategyLabel.textContent =
+        state.botStrategies.length
+            ? state.botStrategies.join(
+                " + "
+            )
+            : "SELECT STRATEGIES";
 }
 
 
@@ -2635,6 +2709,8 @@ function applyBotStrategies() {
             "Choose at least one strategy"
         );
 
+        syncBotStrategyChecks();
+
         return;
     }
 
@@ -2648,11 +2724,7 @@ function applyBotStrategies() {
     state.botStrategies =
         selected;
 
-    if (DOM.botStrategyLabel) {
-
-        DOM.botStrategyLabel.textContent =
-            selected.join(" + ");
-    }
+    updateBotStrategyCard();
 
     DOM.botStrategyModal
         ?.classList.remove(
@@ -3150,11 +3222,16 @@ function placeManualTrade() {
         DOM.manualMarketSelect?.value ||
         state.currentMarket;
 
+    /*
+       MANUAL NOW USES ONLY ITS OWN
+       STRATEGY CARD.
+    */
     const strategy =
+        state.manualStrategy ||
         DOM.manualSelectedStrategyLabel
             ?.dataset
             ?.strategy ||
-        state.strategy;
+        "MATCHES";
 
     const ticks =
         state.ticks[market] || [];
@@ -3483,7 +3560,9 @@ function setupTabs() {
 
 
 /* =========================================================
-   STRATEGY MODAL
+   STRATEGY CARDS
+   ONLY THIS SECTION CONTROLS
+   MANUAL + CIRCULAR AI STRATEGY CARDS.
 ========================================================= */
 
 function setupStrategyControls() {
@@ -3501,55 +3580,97 @@ function setupStrategyControls() {
                     const strategy =
                         button.dataset.strategy;
 
-                    state.strategy =
-                        strategy;
-
+                    /*
+                       MANUAL CARD
+                    */
                     if (
-                        DOM.circularStrategyLabel
+                        state.activeStrategySelector ===
+                        "manual"
                     ) {
 
-                        DOM.circularStrategyLabel
-                            .textContent =
+                        state.manualStrategy =
                             strategy;
 
-                        DOM.circularStrategyLabel
-                            .dataset.strategy =
-                            strategy;
+                        if (
+                            DOM.manualSelectedStrategyLabel
+                        ) {
+
+                            DOM.manualSelectedStrategyLabel
+                                .textContent =
+                                strategy;
+
+                            DOM.manualSelectedStrategyLabel
+                                .dataset.strategy =
+                                strategy;
+                        }
+
+                        updateManualTargetVisibility();
                     }
 
-                    if (
-                        DOM.manualSelectedStrategyLabel
+                    /*
+                       CIRCULAR AI CARD
+                    */
+                    else if (
+                        state.activeStrategySelector ===
+                        "circular"
                     ) {
 
-                        DOM.manualSelectedStrategyLabel
-                            .textContent =
+                        state.circularStrategy =
                             strategy;
 
-                        DOM.manualSelectedStrategyLabel
-                            .dataset.strategy =
-                            strategy;
+                        if (
+                            DOM.circularStrategyLabel
+                        ) {
+
+                            DOM.circularStrategyLabel
+                                .textContent =
+                                strategy;
+
+                            DOM.circularStrategyLabel
+                                .dataset.strategy =
+                                strategy;
+                        }
                     }
-
-                    updateManualTargetVisibility();
 
                     DOM.strategyModal
                         ?.classList.remove(
                             "active"
                         );
+
+                    state.activeStrategySelector =
+                        null;
                 }
             );
         });
 
-    DOM.circularStrategyTrigger
-        ?.addEventListener(
-            "click",
-            openStrategyModal
-        );
-
+    /*
+       Manual strategy card
+    */
     DOM.manualStrategyTrigger
         ?.addEventListener(
             "click",
-            openStrategyModal
+            () => {
+
+                state.activeStrategySelector =
+                    "manual";
+
+                openStrategyModal();
+            }
+        );
+
+    /*
+       Circular AI strategy card
+    */
+    DOM.circularStrategyTrigger
+        ?.addEventListener(
+            "click",
+            () => {
+
+                state.activeStrategySelector =
+                    "circular";
+
+                openStrategyModal();
+            }
         );
 
     DOM.closeStrategyModal
@@ -3561,8 +3682,44 @@ function setupStrategyControls() {
                     ?.classList.remove(
                         "active"
                     );
+
+                state.activeStrategySelector =
+                    null;
             }
         );
+
+    /*
+       Initialize Manual card
+    */
+    if (
+        DOM.manualSelectedStrategyLabel
+    ) {
+
+        DOM.manualSelectedStrategyLabel
+            .textContent =
+            state.manualStrategy;
+
+        DOM.manualSelectedStrategyLabel
+            .dataset.strategy =
+            state.manualStrategy;
+    }
+
+    /*
+       Initialize Circular AI card.
+       AUTO is kept as the default.
+    */
+    if (
+        DOM.circularStrategyLabel
+    ) {
+
+        DOM.circularStrategyLabel
+            .textContent =
+            state.circularStrategy;
+
+        DOM.circularStrategyLabel
+            .dataset.strategy =
+            state.circularStrategy;
+    }
 
     updateManualTargetVisibility();
 }
@@ -3580,10 +3737,11 @@ function openStrategyModal() {
 function updateManualTargetVisibility() {
 
     const strategy =
+        state.manualStrategy ||
         DOM.manualSelectedStrategyLabel
             ?.dataset
             ?.strategy ||
-        state.strategy;
+        "MATCHES";
 
     if (
         DOM.targetDigitContainer
@@ -3658,7 +3816,7 @@ function setupButtons() {
                     startCircularAI();
                 }
             }
-        );
+    );
 
     DOM.placeTradeBtn
         ?.addEventListener(
@@ -4953,6 +5111,38 @@ function updateAllUI() {
     renderHistory();
 
     updateDataStatus();
+
+    /*
+       Keep strategy cards displaying
+       their independent selections.
+    */
+    updateBotStrategyCard();
+
+    if (
+        DOM.manualSelectedStrategyLabel
+    ) {
+
+        DOM.manualSelectedStrategyLabel
+            .textContent =
+            state.manualStrategy;
+
+        DOM.manualSelectedStrategyLabel
+            .dataset.strategy =
+            state.manualStrategy;
+    }
+
+    if (
+        DOM.circularStrategyLabel
+    ) {
+
+        DOM.circularStrategyLabel
+            .textContent =
+            state.circularStrategy;
+
+        DOM.circularStrategyLabel
+            .dataset.strategy =
+            state.circularStrategy;
+    }
 
     if (state.currentAnalysis) {
 
