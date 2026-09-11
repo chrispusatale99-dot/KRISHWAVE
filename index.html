@@ -1,455 +1,253 @@
-Okay let make sure index is fine <!DOCTYPE html>
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Krishwave AI Trading Terminal</title>
+  <style>
+    :root {
+      --bg: #050b14;
+      --card: #0b1828;
+      --accent: #00e5ff;
+      --green: #19e68c;
+      --red: #ff4f6d;
+      --text: #eef8ff;
+      --muted: #91a7bd;
+      --line: #19334c;
+    }
+    body {
+      margin: 0;
+      background: var(--bg);
+      color: var(--text);
+      font-family: system-ui, -apple-system, sans-serif;
+      display: flex;
+      justify-content: center;
+      padding: 20px;
+    }
+    .app-container {
+      width: 100%;
+      max-width: 480px;
+      background: var(--card);
+      border: 1px solid var(--line);
+      border-radius: 16px;
+      padding: 20px;
+      box-shadow: 0 10px 30px rgba(0,0,0,0.5);
+    }
+    .header {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      border-bottom: 1px solid var(--line);
+      padding-bottom: 15px;
+      margin-bottom: 15px;
+    }
+    .title {
+      font-size: 18px;
+      font-weight: bold;
+      color: var(--accent);
+    }
+    .status {
+      font-size: 12px;
+      padding: 4px 8px;
+      border-radius: 12px;
+      background: rgba(255,255,255,0.05);
+    }
+    .btn {
+      width: 100%;
+      padding: 12px;
+      border: none;
+      border-radius: 8px;
+      font-weight: bold;
+      cursor: pointer;
+      margin-top: 10px;
+      transition: opacity 0.2s;
+    }
+    .btn:hover { opacity: 0.9; }
+    .btn-oauth { background: var(--accent); color: #000; }
+    .btn-buy { background: var(--green); color: #000; }
+    .btn-sell { background: var(--red); color: #fff; }
+    .btn-logout { background: transparent; color: var(--muted); border: 1px solid var(--line); }
+    .card {
+      background: rgba(255,255,255,0.02);
+      border: 1px solid var(--line);
+      border-radius: 8px;
+      padding: 12px;
+      margin-bottom: 12px;
+    }
+    .price {
+      font-size: 28px;
+      font-weight: bold;
+      text-align: center;
+      margin: 10px 0;
+    }
+    .hidden { display: none; }
+  </style>
+</head>
+<body>
 
-<html lang="en">  
-<head>  
-  <meta charset="UTF-8">  
-  <meta name="viewport" content="width=device-width,initial-scale=1,maximum-scale=1">  
-  <meta name="theme-color" content="#07111f">  
-  <title>KRISHWAVE AI BEAST V7.1</title>  
-  <link rel="stylesheet" href="style.css">  
-</head>  <body>  <header class="topbar">  
-  <div class="brand">  
-    <div class="brand-icon">K</div>  
-    <div>  
-      <div class="brand-name">KRISHWAVE</div>  
-      <div class="brand-sub">AI BEAST V7.1</div>  
-    </div>  
-  </div>    <div class="top-actions">  
-    <span class="connection">  
-      <span id="connectionDot" class="dot offline"></span>  
-      <span id="connectionText">OFFLINE</span>  
-    </span>  <span id="modeBadge" class="mode-badge demo-mode">DEMO</span>  
+<div class="app-container">
+  
+  <!-- Header -->
+  <div class="header">
+    <div class="title">KRISHWAVE AI</div>
+    <div id="connectionStatus" class="status">Disconnected</div>
+  </div>
 
-<button id="themeToggle" class="icon-btn">☀️</button>
+  <!-- Login Section (Only shown when logged out) -->
+  <div id="loginSection">
+    <p style="color: var(--muted); font-size: 14px;">Connect directly using your Deriv account to enable paper or live trading.</p>
+    <button class="btn btn-oauth" onclick="redirectToDerivOAuth()">Login via Deriv Account</button>
+  </div>
 
-  </div>  
-</header>  <main>  <section class="account-card">  
-  <div class="account-left">  
-    <div class="label">DERIV ACCOUNT</div>  
-    <div id="accountId" class="account-id">Not connected</div>  
-  </div>    <div class="balance-box">  
-    <div class="label">BALANCE</div>  
-    <strong id="balanceDisplay">$0.00</strong>  
-    <span id="currency">USD</span>  
-  </div>    <button id="connectDerivBtn" class="primary-btn">  
-    CONNECT DERIV  
-  </button>  
-</section>  <div id="dataStatus" class="status-bar">  
-  Waiting for Deriv connection...  
-</div>  <!-- ================= ANALYSIS ================= -->  <section id="analysisPage" class="page active">    <div class="section-title">  
-    <div>  
-      <h1>AI MARKET ANALYSIS</h1>  
-      <p>Live Deriv intelligence engine</p>  
-    </div>  
-    <select id="analysisMarketSelect" class="market-select"></select>  
-  </div>    <div class="grid-2">  <div class="card">  
-  <div class="card-head">  
-    <span>MARKET</span>  
-    <span id="currentChartMarket">R_100</span>  
-  </div>  
+  <!-- Dashboard Section (Shown when logged in) -->
+  <div id="dashboardSection" class="hidden">
+    <div class="card">
+      <small style="color:var(--muted)">ACCOUNT ID</small>
+      <div id="accountDisplay" style="font-weight:bold; font-size: 16px;">-</div>
+      <small style="color:var(--muted); margin-top: 8px; display:block;">BALANCE</small>
+      <div id="balanceDisplay" style="font-size: 20px; font-weight:bold; color: var(--green);">-</div>
+    </div>
 
-  <div class="price-main" id="currentLivePrice">0.00000</div>  
+    <div class="card">
+      <small style="color:var(--muted)">VOLATILITY 100 (1S) TICK</small>
+      <div id="tickDisplay" class="price">0.00</div>
+    </div>
 
-  <canvas id="priceChartCanvas"></canvas>  
+    <div style="display: flex; gap: 10px;">
+      <button class="btn btn-buy" onclick="executeTrade('CALL')">HIGHER / RISE</button>
+      <button class="btn btn-sell" onclick="executeTrade('PUT')">LOWER / FALL</button>
+    </div>
 
-  <div class="mini-grid">  
-    <div>  
-      <span>TICKS</span>  
-      <strong id="digitSampleCount">0</strong>  
-    </div>  
-    <div>  
-      <span>LAST DIGIT</span>  
-      <strong id="lastDigit">-</strong>  
-    </div>  
-    <div>  
-      <span>AI CONFIDENCE</span>  
-      <strong id="analysisConfidence">0%</strong>  
-    </div>  
-  </div>  
-</div>  
-
-<div class="card ai-card">  
-  <div class="ai-status" id="aiStatus">  
-    AI WAITING  
-  </div>  
-
-  <div class="ai-circle" id="aiCircle">  
-    <div class="circle-ring"></div>  
-    <div class="circle-core">  
-      <span id="aiCircleLabel">AI</span>  
-      <strong id="aiCirclePrediction">--</strong>  
-    </div>  
-  </div>  
-
-  <div class="prediction-box">  
-    <div class="label">AI PREDICTION</div>  
-    <div id="aiPrediction" class="prediction">WAITING</div>  
-    <div id="aiType" class="prediction-type">DIGIT</div>  
-    <div id="analysisMsg" class="analysis-msg">  
-      Waiting for enough market data.  
-    </div>  
-  </div>  
-</div>
-
-  </div>    <div class="card">  
-    <div class="card-head">  
-      <span>DIGIT DISTRIBUTION</span>  
-      <span id="aiMarket">R_100</span>  
-    </div>  <div id="digitStatsGrid" class="digit-grid"></div>
-
-  </div>    <div class="card">  
-    <div class="card-head">  
-      <span>CIRCULAR AI ENGINE</span>  
-      <span id="aiCircleStatus">IDLE</span>  
-    </div>  <div class="cycle-grid">  
-  <div>  
-    <span>PHASE</span>  
-    <strong id="cycleAnalysis">ANALYZING</strong>  
-  </div>  
-  <div>  
-    <span>TRADE</span>  
-    <strong id="cycleTrade">WAITING</strong>  
-  </div>  
-  <div>  
-    <span>TIMER</span>  
-    <strong id="aiCircleTimer">--</strong>  
-  </div>  
-  <div>  
-    <span>COOLDOWN</span>  
-    <strong id="cycleCooldown">0</strong>  
-  </div>  
-</div>  
-
-<div class="button-row">  
-  <button id="startAI" class="primary-btn">START CIRCULAR AI</button>  
-  <button id="stopAI" class="danger-btn">STOP AI</button>  
-</div>
-
-  </div>  </section>  <!-- ================= TRADE ================= -->  <section id="tradePage" class="page">    <div class="section-title">  
-    <div>  
-      <h1>TRADING ENGINE</h1>  
-      <p>Demo trading control center</p>  
-    </div>  
-    <span id="engineStatusText" class="engine-status">PAPER MODE</span>  
-  </div>    <div class="trade-tabs">  
-    <button id="tabAiBot" class="tab active">AI BOT</button>  
-    <button id="tabCircularAI" class="tab">CIRCULAR AI</button>  
-    <button id="tabManual" class="tab">MANUAL</button>  
-  </div>    <!-- AI BOT -->    <div id="aiBotPanel" class="trade-panel active">  <div class="card">  
-
-  <div class="bot-header">  
-    <div>  
-      <span class="label">AI BOT STATUS</span>  
-      <strong id="botStatusDash">STOPPED</strong>  
-    </div>  
-
-    <div>  
-      <span class="label">MARKET</span>  
-      <strong id="botSelectedMarket">R_100</strong>  
-    </div>  
-  </div>  
-
-  <div class="ai-result-large">  
-    <div class="bot-score">  
-      <span>SCORE</span>  
-      <strong id="botScore">0</strong>  
-    </div>  
-
-    <div>  
-      <span class="label">PREDICTION</span>  
-      <div id="aiPredictionLarge">WAITING</div>  
-      <small id="predictionConfidence">0% confidence</small>  
-    </div>  
-  </div>  
-
-  <div class="form-grid">  
-
-    <label>  
-      MARKET  
-      <select id="botMarketSelect"></select>  
-    </label>  
-
-    <label>  
-      STRATEGY  
-      <button id="botStrategyTrigger" class="select-button">  
-        <span id="botStrategyLabel">AUTO</span>  
-      </button>  
-    </label>  
-
-    <label>  
-      STAKE  
-      <input id="stakeInput" type="number" value="1" min="0.35" step="0.01">  
-    </label>  
-
-    <label>  
-      TAKE PROFIT  
-      <input id="takeProfitInput" type="number" value="20" step="0.01">  
-    </label>  
-
-    <label>  
-      STOP LOSS  
-      <input id="stopLossInput" type="number" value="20" step="0.01">  
-    </label>  
-
-    <label>  
-      MARTINGALE  
-      <input id="martingaleInput" type="number" value="1" min="1" step="0.1">  
-    </label>  
-
-  </div>  
-
-  <button id="startBotBtn" class="primary-btn wide">  
-    START AI BOT  
-  </button>  
+    <button class="btn btn-logout" onclick="logout()" style="margin-top: 20px;">Disconnect Account</button>
+  </div>
 
 </div>
 
-  </div>    <!-- CIRCULAR -->    <div id="circularPanel" class="trade-panel">  <div class="card circular-card">  
+<script>
+  // CONFIGURATION: Deriv App ID
+  const APP_ID = '68359'; 
+  
+  let ws;
+  let activeToken = localStorage.getItem('deriv_token');
+  let activeAccount = localStorage.getItem('deriv_account');
 
-  <div class="circular-visual">  
-    <div class="ai-circle big">  
-      <div class="circle-ring"></div>  
-      <div class="circle-core">  
-        <span>AI</span>  
-        <strong id="circularStatusText">READY</strong>  
-      </div>  
-    </div>  
-  </div>  
+  // 1. Check for OAuth Redirect parameters in URL
+  window.addEventListener('DOMContentLoaded', () => {
+    const urlParams = new URLSearchParams(window.location.search);
+    const token1 = urlParams.get('token1');
+    const acct1 = urlParams.get('acct1');
 
-  <div class="form-grid">  
+    if (token1 && acct1) {
+      // Save credentials locally
+      localStorage.setItem('deriv_token', token1);
+      localStorage.setItem('deriv_account', acct1);
+      
+      // Clean URL params
+      window.history.replaceState({}, document.title, window.location.pathname);
+      
+      activeToken = token1;
+      activeAccount = acct1;
+    }
 
-    <label>  
-      MARKET  
-      <select id="circularMarketSelect"></select>  
-    </label>  
+    if (activeToken) {
+      showDashboard();
+      initWebSocket();
+    }
+  });
 
-    <label>  
-      STRATEGY  
-      <button id="circularStrategyTrigger" class="select-button">  
-        <span id="circularStrategyLabel">AUTO</span>  
-      </button>  
-    </label>  
+  // 2. Redirect user to Deriv OAuth URL
+  function redirectToDerivOAuth() {
+    const redirectUrl = encodeURIComponent('https://chrispusatale99-dot.github.io/KRISHWAVE/');
+    const derivAuthUrl = `https://oauth.deriv.com/oauth2/authorize?app_id=${APP_ID}&l=en&redirect_uri=${redirectUrl}`;
+    window.location.href = derivAuthUrl;
+  }
 
-    <label>  
-      STAKE  
-      <input id="circularStakeInput" type="number" value="1" min="0.35" step="0.01">  
-    </label>  
+  // 3. Initialize WebSocket Connection
+  function initWebSocket() {
+    ws = new WebSocket(`wss://ws.derivws.com/websockets/v3?app_id=${APP_ID}`);
 
-    <label>  
-      TAKE PROFIT  
-      <input id="circularTakeProfitInput" type="number" value="20">  
-    </label>  
+    ws.onopen = () => {
+      document.getElementById('connectionStatus').innerText = 'Online';
+      document.getElementById('connectionStatus').style.color = 'var(--green)';
+      
+      // Authorize session
+      ws.send(JSON.stringify({ authorize: activeToken }));
+    };
 
-    <label>  
-      STOP LOSS  
-      <input id="circularStopLossInput" type="number" value="20">  
-    </label>  
+    ws.onmessage = (event) => {
+      const data = JSON.parse(event.data);
 
-  </div>  
+      // Handle Authorization Response
+      if (data.msg_type === 'authorize') {
+        if (data.error) {
+          alert('Authentication failed: ' + data.error.message);
+          logout();
+          return;
+        }
+        document.getElementById('accountDisplay').innerText = data.authorize.loginid;
+        document.getElementById('balanceDisplay').innerText = `$${parseFloat(data.authorize.balance).toFixed(2)} ${data.authorize.currency}`;
+        
+        // Subscribe to Volatility 100 (1s) tick data
+        ws.send(JSON.stringify({ ticks: '1HZ100V' }));
+      }
 
-  <button id="startCircularTradeBtn" class="primary-btn wide">  
-    START CIRCULAR TRADING  
-  </button>  
+      // Handle Live Price Ticks
+      if (data.msg_type === 'tick') {
+        document.getElementById('tickDisplay').innerText = data.tick.quote;
+      }
 
-</div>
+      // Handle Trade Execution Response
+      if (data.msg_type === 'buy') {
+        if (data.error) {
+          alert('Trade Error: ' + data.error.message);
+        } else {
+          alert(`Trade Executed Successfully! Contract ID: ${data.buy.contract_id}`);
+        }
+      }
+    };
 
-  </div>    <!-- MANUAL -->    <div id="manualPanel" class="trade-panel">  <div class="card">  
+    ws.onclose = () => {
+      document.getElementById('connectionStatus').innerText = 'Offline';
+      document.getElementById('connectionStatus').style.color = 'var(--red)';
+    };
+  }
 
-  <div class="manual-status">  
-    <span>MANUAL ENGINE</span>  
-    <strong id="manualStatusText">READY</strong>  
-  </div>  
+  // 4. Trade Execution
+  function executeTrade(type) {
+    if (!ws || ws.readyState !== WebSocket.OPEN) {
+      alert('WebSocket is not connected.');
+      return;
+    }
 
-  <div class="form-grid">  
+    const tradeProposal = {
+      buy: 1,
+      price: 10,
+      parameters: {
+        amount: 10,
+        basis: 'stake',
+        contract_type: type,
+        currency: 'USD',
+        duration: 5,
+        duration_unit: 't',
+        symbol: '1HZ100V'
+      }
+    };
 
-    <label>  
-      MARKET  
-      <select id="manualMarketSelect"></select>  
-    </label>  
+    ws.send(JSON.stringify(tradeProposal));
+  }
 
-    <label>  
-      STRATEGY  
-      <button id="manualStrategyTrigger" class="select-button">  
-        <span id="manualSelectedStrategyLabel">MATCHES</span>  
-      </button>  
-    </label>  
+  // 5. Interface toggles & Logout
+  function showDashboard() {
+    document.getElementById('loginSection').classList.add('hidden');
+    document.getElementById('dashboardSection').classList.remove('hidden');
+  }
 
-    <div id="targetDigitContainer" class="target-container">  
-      <label>  
-        TARGET DIGIT  
-        <input id="manualTargetDigitInput"  
-               type="number"  
-               min="0"  
-               max="9"  
-               value="5">  
-      </label>  
-    </div>  
+  function logout() {
+    localStorage.removeItem('deriv_token');
+    localStorage.removeItem('deriv_account');
+    window.location.reload();
+  }
+</script>
 
-    <label>  
-      STAKE  
-      <input id="manualStakeInput" type="number" value="1" min="0.35" step="0.01">  
-    </label>  
-
-    <label>  
-      TAKE PROFIT  
-      <input id="manualTakeProfitInput" type="number" value="20">  
-    </label>  
-
-    <label>  
-      STOP LOSS  
-      <input id="manualStopLossInput" type="number" value="20">  
-    </label>  
-
-  </div>  
-
-  <button id="placeTradeBtn" class="primary-btn wide">  
-    PLACE DEMO TRADE  
-  </button>  
-
-</div>
-
-  </div>    <!-- STATS -->    <div class="stats-grid">  <div class="stat">  
-  <span>TRADES</span>  
-  <strong id="paperTotal">0</strong>  
-</div>  
-
-<div class="stat">  
-  <span>WINS</span>  
-  <strong id="paperWins">0</strong>  
-</div>  
-
-<div class="stat">  
-  <span>LOSSES</span>  
-  <strong id="paperLosses">0</strong>  
-</div>  
-
-<div class="stat">  
-  <span>ACCURACY</span>  
-  <strong id="paperAccuracy">0%</strong>  
-</div>
-
-  </div>    <div class="card">  
-    <div class="card-head">  
-      <span>ACTIVE TRADES</span>  
-      <strong id="activeTradeCount">0</strong>  
-    </div>  <div id="activeTradesList" class="list"></div>
-
-  </div>  </section>  <!-- ================= HISTORY ================= -->  <section id="historyPage" class="page">    <div class="section-title">  
-    <div>  
-      <h1>TRADING HISTORY</h1>  
-      <p>Performance and completed trades</p>  
-    </div>  <button id="clearLogsBtn" class="danger-btn">  
-  CLEAR  
-</button>
-
-  </div>    <div class="history-summary">  <div class="summary-card">  
-  <span>TOTAL STAKE</span>  
-  <strong id="historyTotalStake">$0.00</strong>  
-</div>  
-
-<div class="summary-card">  
-  <span>AMOUNT WON</span>  
-  <strong id="historyAmountWon">$0.00</strong>  
-</div>  
-
-<div class="summary-card">  
-  <span>NET PROFIT</span>  
-  <strong id="historyNetProfit">$0.00</strong>  
-</div>
-
-  </div>    <div class="card">  <div class="history-head">  
-  <span id="tradingStatusLabel">DEMO SESSION</span>  
-  <span id="sessionProfitDisplay">$0.00</span>  
-</div>  
-
-<div class="stop-row">  
-  <span>TOTAL PROFIT</span>  
-  <strong id="totalProfitDisplay">$0.00</strong>  
-  <button id="stopTradingBtn" class="danger-btn">STOP</button>  
-</div>  
-
-<div id="historyCardsList" class="history-list"></div>
-
-  </div>  </section>  </main>  <!-- ================= STRATEGY MODAL ================= -->  <div id="strategyModal" class="modal">  
-  <div class="modal-box">  <div class="modal-head">  
-  <h2>SELECT STRATEGY</h2>  
-  <button id="closeStrategyModal">×</button>  
-</div>  
-
-<div id="strategyOptions" class="strategy-options">  
-
-  <button data-strategy="MATCHES">MATCHES</button>  
-  <button data-strategy="DIFFERS">DIFFERS</button>  
-  <button data-strategy="OVER">OVER</button>  
-  <button data-strategy="UNDER">UNDER</button>  
-  <button data-strategy="EVEN">EVEN</button>  
-  <button data-strategy="ODD">ODD</button>  
-
-</div>
-
-  </div>  
-</div>  <!-- ================= BOT STRATEGY MODAL ================= -->  <div id="botStrategyModal" class="modal">    <div class="modal-box">  <div class="modal-head">  
-  <h2>AI BOT STRATEGIES</h2>  
-  <button id="closeBotStrategyModal">×</button>  
-</div>  
-
-<label class="check-row">  
-  <input class="bot-strategy-check" type="checkbox" value="MATCHES">  
-  MATCHES  
-</label>  
-
-<label class="check-row">  
-  <input class="bot-strategy-check" type="checkbox" value="DIFFERS">  
-  DIFFERS  
-</label>  
-
-<label class="check-row">  
-  <input class="bot-strategy-check" type="checkbox" value="OVER">  
-  OVER  
-</label>  
-
-<label class="check-row">  
-  <input class="bot-strategy-check" type="checkbox" value="UNDER">  
-  UNDER  
-</label>  
-
-<label class="check-row">  
-  <input class="bot-strategy-check" type="checkbox" value="EVEN">  
-  EVEN  
-</label>  
-
-<label class="check-row">  
-  <input class="bot-strategy-check" type="checkbox" value="ODD">  
-  ODD  
-</label>  
-
-<button id="applyBotStrategies" class="primary-btn wide">  
-  APPLY  
-</button>
-
-  </div>  </div>  <!-- ================= REAL CONFIRMATION ================= -->  <div id="realConfirmModal" class="modal">    <div class="modal-box">  <div class="modal-head">  
-  <h2>REAL MONEY MODE</h2>  
-</div>  
-
-<p class="warning">  
-  Real trading can lose money. Confirm only if you understand the risk.  
-</p>  
-
-<div class="button-row">  
-  <button id="cancelRealBtn" class="danger-btn">CANCEL</button>  
-  <button id="confirmRealBtn" class="primary-btn">CONFIRM</button>  
-</div>
-
-  </div>  </div>  <!-- ================= TOAST ================= -->  <div id="toast" class="toast">  
-  <span id="toastMessage"></span>  
-</div>  <!-- ================= NAV ================= -->  <nav class="bottom-nav">    <button data-page="analysis" class="nav-item active">  
-    <span>◉</span>  
-    <small>Analysis</small>  
-  </button>    <button data-page="trade" class="nav-item">  
-    <span>⚡</span>  
-    <small>Trade</small>  
-  </button>    <button data-page="history" class="nav-item">  
-    <span>▤</span>  
-    <small>History</small>  
-  </button>  </nav>  <script src="app.js"></script>  </body>  
+</body>
 </html>
