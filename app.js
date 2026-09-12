@@ -64,7 +64,7 @@
 const CONFIG = {
     VERSION: "9.0",
 
-    CLIENT_ID: "34khasPjsT0PCRR8X3Z70",
+    CLIENT_ID: "34nw4IAw4CXiixJLUhBWu",
 
     REDIRECT_URI:
         "https://chrispusatale99-dot.github.io/KRISHWAVE/",
