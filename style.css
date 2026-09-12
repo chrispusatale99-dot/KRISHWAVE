@@ -445,13 +445,19 @@ main{
   line-height:1.5;
 }
 
+/* ---------------------------------------------------
+   DIGIT DISTRIBUTION GRID
+   Matches the classes app.js actually renders:
+   .digit-stat > .digit-number, .digit-bar > span, .digit-percent
+--------------------------------------------------- */
+
 .digit-grid{
   display:grid;
   grid-template-columns:repeat(10,1fr);
   gap:7px;
 }
 
-.digit-cell{
+.digit-stat{
   text-align:center;
   padding:9px 3px;
   border:1px solid var(--line);
@@ -459,21 +465,32 @@ main{
   background:rgba(255,255,255,.025);
 }
 
-.digit-cell strong{
+.digit-number{
   display:block;
   font-size:12px;
-}
-
-.digit-cell span{
-  color:var(--muted2);
-  font-size:8px;
+  font-weight:800;
 }
 
 .digit-bar{
   height:4px;
   margin-top:6px;
   border-radius:5px;
+  background:rgba(255,255,255,.08);
+  overflow:hidden;
+}
+
+.digit-bar span{
+  display:block;
+  height:100%;
   background:var(--accent);
+  border-radius:5px;
+}
+
+.digit-percent{
+  display:block;
+  color:var(--muted2);
+  font-size:8px;
+  margin-top:5px;
 }
 
 .button-row{
@@ -648,24 +665,22 @@ main{
   min-height:30px;
 }
 
-.active-trade{
+.active-trade-card{
   display:grid;
-  grid-template-columns:1fr auto;
-  gap:10px;
+  gap:4px;
   padding:12px;
   border-bottom:1px solid var(--line);
-}
-
-.active-trade:last-child{
-  border-bottom:0;
-}
-
-.active-trade small{
+  font-size:10px;
   color:var(--muted);
 }
 
-.active-trade strong{
+.active-trade-card:last-child{
+  border-bottom:0;
+}
+
+.active-trade-card strong{
   color:var(--accent);
+  font-size:11px;
 }
 
 .history-summary{
@@ -731,6 +746,12 @@ main{
   border-radius:13px;
   padding:12px;
   background:rgba(255,255,255,.02);
+  font-size:10px;
+  color:var(--muted);
+}
+
+.history-card strong{
+  color:var(--text);
 }
 
 .history-card.history-win{
@@ -778,6 +799,13 @@ main{
   font-size:9px;
 }
 
+/* ---------------------------------------------------
+   MODAL
+   app.js toggles the "active" class on open/close;
+   this used to only be wired up for "show", so modals
+   never appeared. Both classes now work.
+--------------------------------------------------- */
+
 .modal{
   position:fixed;
   inset:0;
@@ -789,7 +817,8 @@ main{
   padding:15px;
 }
 
-.modal.show{
+.modal.show,
+.modal.active{
   display:flex;
 }
 
